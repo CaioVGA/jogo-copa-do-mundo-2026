@@ -1,0 +1,27 @@
+# ─── Raiz do monorepo ─────────────────────────────────────────────────────────
+node_modules
+.git
+.gitignore
+*.log
+*.md
+!README.md
+
+# ─── Backend ──────────────────────────────────────────────────────────────────
+apps/backend/node_modules
+apps/backend/dist
+apps/backend/.env
+apps/backend/.env.*
+apps/backend/coverage
+apps/backend/**/*.spec.ts
+
+# ─── Frontend ─────────────────────────────────────────────────────────────────
+apps/frontend/node_modules
+apps/frontend/.next
+apps/frontend/.env
+apps/frontend/.env.*
+apps/frontend/coverage
+apps/frontend/cypress
+apps/frontend/cypress.config.ts
+apps/frontend/jest.config.ts
+apps/frontend/jest.setup.ts
+apps/frontend/src/__tests__

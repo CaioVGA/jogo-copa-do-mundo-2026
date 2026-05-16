@@ -1,0 +1,16 @@
+# .dockerignore — Frontend
+node_modules
+.next
+.env
+.env.*
+!.env.example
+coverage
+*.log
+.git
+.gitignore
+README.md
+cypress
+cypress.config.ts
+jest.config.ts
+jest.setup.ts
+src/__tests__

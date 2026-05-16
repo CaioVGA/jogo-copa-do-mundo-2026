@@ -1,0 +1,17 @@
+{
+  "name": "jogo-copa-do-mundo-2026",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "backend": "npm run start:dev --workspace=apps/backend",
+    "frontend": "npm run dev --workspace=apps/frontend",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "build": "npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
