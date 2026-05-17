@@ -8,6 +8,7 @@ RUN apk add --no-cache libc6-compat
 # Copia manifests do workspace e do frontend
 COPY package.json package-lock.json ./
 COPY apps/frontend/package.json ./apps/frontend/
+COPY apps/backend/package.json ./apps/backend/
 
 # Instala apenas dependências de produção
 RUN npm ci --workspace=apps/frontend --omit=dev
@@ -21,9 +22,11 @@ RUN apk add --no-cache libc6-compat
 
 COPY package.json package-lock.json ./
 COPY apps/frontend/package.json ./apps/frontend/
+COPY apps/backend/package.json ./apps/backend/
 
 # Instala todas as dependências (incluindo devDependencies para build)
 RUN npm ci --workspace=apps/frontend
+RUN mkdir -p /app/apps/frontend/node_modules
 
 # Copia código-fonte do frontend
 COPY apps/frontend/src ./apps/frontend/src

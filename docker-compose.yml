@@ -29,7 +29,7 @@ services:
     container_name: copa2026_migrate
     command: >
       sh -c "cd /app/apps/backend &&
-             npx prisma migrate deploy &&
+             npx prisma db push --accept-data-loss &&
              echo 'Migrations concluídas!'"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-copa2026}:${POSTGRES_PASSWORD:-copa2026_secret}@postgres:5432/${POSTGRES_DB:-copa2026}

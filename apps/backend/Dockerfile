@@ -9,9 +9,11 @@ RUN apk add --no-cache libc6-compat
 # Copia manifests do workspace e do backend
 COPY package.json package-lock.json ./
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
 
 # Instala APENAS dependências de produção do backend
 RUN npm ci --workspace=apps/backend --omit=dev
+RUN mkdir -p /app/apps/backend/node_modules
 
 # ─── Stage 2: Build ───────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
@@ -23,6 +25,7 @@ RUN apk add --no-cache libc6-compat
 # Copia manifests
 COPY package.json package-lock.json ./
 COPY apps/backend/package.json ./apps/backend/
+COPY apps/frontend/package.json ./apps/frontend/
 
 # Instala todas as dependências (incluindo devDependencies para build)
 RUN npm ci --workspace=apps/backend
