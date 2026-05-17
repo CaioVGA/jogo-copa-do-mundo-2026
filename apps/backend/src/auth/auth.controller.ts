@@ -17,6 +17,12 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @Post('activate')
+  @HttpCode(HttpStatus.OK)
+  activate(@Body('token') token: string) {
+    return this.authService.activateAccount(token);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {

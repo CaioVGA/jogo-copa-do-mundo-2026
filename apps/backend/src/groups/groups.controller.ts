@@ -49,6 +49,12 @@ export class GroupsController {
     return this.groupsService.leave(groupId, req.user.id);
   }
 
+  // GET /api/groups/:id
+  @Get(':id')
+  getGroupById(@Param('id') groupId: string, @Request() req: any) {
+    return this.groupsService.getGroupById(groupId, req.user.id);
+  }
+
   // DELETE /api/groups/:id
   @Delete(':id')
   deleteGroup(@Param('id') groupId: string, @Request() req: any) {

@@ -139,6 +139,27 @@ export class GroupsService {
     return { message: 'Você entrou no grupo com sucesso!', groupId: group.id, groupName: group.name };
   }
 
+  // ─── Buscar detalhes de um grupo por ID ───────────────────────────────────
+  async getGroupById(groupId: string, userId: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      include: {
+        owner: { select: { id: true, name: true } },
+        members: {
+          include: { user: { select: { id: true, name: true } } },
+          orderBy: { joinedAt: 'asc' },
+        },
+      },
+    });
+
+    if (!group) throw new NotFoundException('Grupo não encontrado');
+
+    const isMember = group.members.some((m) => m.userId === userId);
+    if (!isMember) throw new ForbiddenException('Você não faz parte deste grupo');
+
+    return group;
+  }
+
   // ─── Sair de um grupo ─────────────────────────────────────────────────────
   async leave(groupId: string, userId: string) {
     const group = await this.prisma.group.findUnique({ where: { id: groupId } });

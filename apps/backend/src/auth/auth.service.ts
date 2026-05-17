@@ -36,12 +36,37 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
+    // Gerar token de ativação
+    const activationToken = require('crypto').randomBytes(32).toString('hex');
+    
     const user = await this.prisma.user.create({
-      data: { name: dto.name, email: dto.email, passwordHash },
+      data: { 
+        name: dto.name, 
+        email: dto.email, 
+        passwordHash,
+        active: false,
+        activationToken 
+      },
     });
 
-    const token = this.generateToken(user.id, user.email);
-    return { user: this.sanitizeUser(user), token };
+    await this.mailService.sendActivationEmail(user.email, user.name, activationToken);
+
+    return { message: 'Conta criada! Verifique seu email para ativar a conta.' };
+  }
+
+  // ─── ACTIVATE ACCOUNT ──────────────────────────────────────────────────────
+  async activateAccount(token: string) {
+    const user = await this.prisma.user.findFirst({ where: { activationToken: token } });
+    if (!user) {
+      throw new BadRequestException('Token de ativação inválido ou conta já ativada.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { active: true, activationToken: null },
+    });
+
+    return { message: 'Conta ativada com sucesso!' };
   }
 
   // ─── LOGIN ─────────────────────────────────────────────────────────────────
@@ -49,6 +74,10 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user) {
       throw new UnauthorizedException('Email ou senha inválidos');
+    }
+
+    if (!user.active) {
+      throw new UnauthorizedException('Conta inativa. Por favor, verifique seu email para ativar a conta.');
     }
 
     const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);

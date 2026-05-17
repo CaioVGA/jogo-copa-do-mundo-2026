@@ -10,18 +10,51 @@ datasource db {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  name         String
-  email        String        @unique
-  passwordHash String
-  otpCode      String?
-  otpExpiresAt DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  ownedGroups  Group[]       @relation("OwnedGroups")
-  groupMembers GroupMember[]
+  id              String        @id @default(cuid())
+  name            String
+  email           String        @unique
+  passwordHash    String
+  active          Boolean       @default(false)
+  activationToken String?
+  otpCode         String?
+  otpExpiresAt    DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  ownedGroups     Group[]       @relation("OwnedGroups")
+  groupMembers    GroupMember[]
 
   @@map("users")
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  flag        String?
+  group       String?
+  homeMatches Match[]  @relation("HomeTeam")
+  awayMatches Match[]  @relation("AwayTeam")
+
+  @@map("teams")
+}
+
+model Match {
+  id           String   @id @default(cuid())
+  homeTeamId   String?
+  awayTeamId   String?
+  homeTeam     Team?    @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam     Team?    @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeamName String?
+  awayTeamName String?
+  date         DateTime
+  stadium      String?
+  city         String?
+  stage        String
+  status       String   @default("PENDING")
+  homeScore    Int?
+  awayScore    Int?
+
+  @@map("matches")
 }
 
 model Group {

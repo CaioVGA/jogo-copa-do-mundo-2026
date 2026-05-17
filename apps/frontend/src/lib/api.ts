@@ -141,6 +141,9 @@ export const groupsApi = {
   getMyGroups: () =>
     api.get<MyGroupsResponse>("/groups/my").then((r) => r.data),
 
+  getGroupById: (id: string) =>
+    api.get(`/groups/${id}`).then((r) => r.data),
+
   lookupGroup: (code: string) =>
     api.get<GroupPreview>(`/groups/lookup?code=${code}`).then((r) => r.data),
 

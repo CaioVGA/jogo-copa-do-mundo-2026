@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Users, Crown, Trash2, LogOut, Plus, UserPlus, Copy, Check, Loader2 } from "lucide-react";
 import { groupsApi, GroupData } from "@/lib/api";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
@@ -13,19 +14,22 @@ interface GroupCardProps {
 }
 
 function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
+  const router = useRouter();
   const [copiedCode, setCopiedCode] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const memberCount = group._count?.members ?? 0;
   const occupancy = (memberCount / group.maxMembers) * 100;
 
-  async function handleCopyCode() {
+  async function handleCopyCode(e: React.MouseEvent) {
+    e.stopPropagation();
     await navigator.clipboard.writeText(group.inviteCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   }
 
-  async function handleLeave() {
+  async function handleLeave(e: React.MouseEvent) {
+    e.stopPropagation();
     setActionLoading(true);
     try {
       await groupsApi.leaveGroup(group.id);
@@ -37,7 +41,8 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
     }
   }
 
-  async function handleDelete() {
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setActionLoading(true);
     try {
@@ -52,7 +57,10 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
   }
 
   return (
-    <div className="auth-card p-5 border border-white/10 hover:border-white/20 transition-all group">
+    <div 
+      onClick={() => router.push(`/dashboard/grupos/${group.id}`)}
+      className="auth-card p-5 border border-white/10 hover:border-white/20 transition-all group cursor-pointer"
+    >
       {/* Top row */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 min-w-0">
@@ -172,120 +180,122 @@ export default function GruposPage() {
   const totalGroups = ownedGroups.length + joinedGroups.length;
 
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
-            <Users className="w-8 h-8 text-[#ffd700]" />
-            Grupos
-          </h1>
-          <p className="text-white/60 mt-1">
-            {totalGroups === 0 ? "Crie ou entre em um grupo para competir com amigos" : `Você participa de ${totalGroups} grupo${totalGroups !== 1 ? "s" : ""}`}
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowJoin(true)}
-            className="copa-btn-ghost px-5 py-3 text-sm flex items-center gap-2"
-          >
-            <UserPlus className="w-4 h-4" />
-            Participar de Grupo
-          </button>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="copa-btn-primary px-5 py-3 text-sm flex items-center gap-2 shadow-lg shadow-[#ffd700]/15"
-          >
-            <Plus className="w-4 h-4" />
-            Criar Grupo
-          </button>
-        </div>
-      </div>
-
-      {/* Loading skeleton */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="auth-card p-5 border border-white/10 animate-pulse">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-white/10" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-white/10 rounded w-2/3" />
-                  <div className="h-3 bg-white/5 rounded w-1/2" />
-                </div>
-              </div>
-              <div className="h-12 bg-white/5 rounded-lg mb-4" />
-              <div className="h-1.5 bg-white/10 rounded mb-4" />
-              <div className="h-9 bg-white/5 rounded-lg" />
-            </div>
-          ))}
-        </div>
-      ) : totalGroups === 0 ? (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
-            <Users className="w-10 h-10 text-white/20" />
+    <>
+      <div className="space-y-8 animate-fade-in-up">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
+              <Users className="w-8 h-8 text-[#ffd700]" />
+              Grupos
+            </h1>
+            <p className="text-white/60 mt-1">
+              {totalGroups === 0 ? "Crie ou entre em um grupo para competir com amigos" : `Você participa de ${totalGroups} grupo${totalGroups !== 1 ? "s" : ""}`}
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Nenhum grupo ainda</h2>
-          <p className="text-white/50 max-w-sm mb-8">
-            Crie um grupo e convide seus amigos, ou entre em um grupo com um código de convite.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex gap-3">
             <button
               onClick={() => setShowJoin(true)}
-              className="copa-btn-ghost px-6 py-3 text-sm flex items-center gap-2"
+              className="copa-btn-ghost px-5 py-3 text-sm flex items-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
-              Participar com código
+              Participar de Grupo
             </button>
             <button
               onClick={() => setShowCreate(true)}
-              className="copa-btn-primary px-6 py-3 text-sm flex items-center gap-2"
+              className="copa-btn-primary px-5 py-3 text-sm flex items-center gap-2 shadow-lg shadow-[#ffd700]/15"
             >
               <Plus className="w-4 h-4" />
-              Criar meu primeiro grupo
+              Criar Grupo
             </button>
           </div>
         </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Owned groups */}
-          {ownedGroups.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Crown className="w-4 h-4 text-[#ffd700]" />
-                <h2 className="text-lg font-semibold text-white">Meus Grupos</h2>
-                <span className="ml-1 text-xs bg-[#ffd700]/15 text-[#ffd700] border border-[#ffd700]/20 px-2 py-0.5 rounded-full font-semibold">
-                  {ownedGroups.length}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {ownedGroups.map((g) => (
-                  <GroupCard key={g.id} group={g} isOwner onAction={fetchGroups} />
-                ))}
-              </div>
-            </section>
-          )}
 
-          {/* Joined groups */}
-          {joinedGroups.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-4 h-4 text-blue-400" />
-                <h2 className="text-lg font-semibold text-white">Grupos que Participo</h2>
-                <span className="ml-1 text-xs bg-blue-400/15 text-blue-400 border border-blue-400/20 px-2 py-0.5 rounded-full font-semibold">
-                  {joinedGroups.length}
-                </span>
+        {/* Loading skeleton */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="auth-card p-5 border border-white/10 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/10" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-white/10 rounded w-2/3" />
+                    <div className="h-3 bg-white/5 rounded w-1/2" />
+                  </div>
+                </div>
+                <div className="h-12 bg-white/5 rounded-lg mb-4" />
+                <div className="h-1.5 bg-white/10 rounded mb-4" />
+                <div className="h-9 bg-white/5 rounded-lg" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {joinedGroups.map((g) => (
-                  <GroupCard key={g.id} group={g} isOwner={false} onAction={fetchGroups} />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : totalGroups === 0 ? (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+              <Users className="w-10 h-10 text-white/20" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Nenhum grupo ainda</h2>
+            <p className="text-white/50 max-w-sm mb-8">
+              Crie um grupo e convide seus amigos, ou entre em um grupo com um código de convite.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowJoin(true)}
+                className="copa-btn-ghost px-6 py-3 text-sm flex items-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                Participar com código
+              </button>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="copa-btn-primary px-6 py-3 text-sm flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Criar meu primeiro grupo
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Owned groups */}
+            {ownedGroups.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <Crown className="w-4 h-4 text-[#ffd700]" />
+                  <h2 className="text-lg font-semibold text-white">Meus Grupos</h2>
+                  <span className="ml-1 text-xs bg-[#ffd700]/15 text-[#ffd700] border border-[#ffd700]/20 px-2 py-0.5 rounded-full font-semibold">
+                    {ownedGroups.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {ownedGroups.map((g) => (
+                    <GroupCard key={g.id} group={g} isOwner onAction={fetchGroups} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Joined groups */}
+            {joinedGroups.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-4 h-4 text-blue-400" />
+                  <h2 className="text-lg font-semibold text-white">Grupos que Participo</h2>
+                  <span className="ml-1 text-xs bg-blue-400/15 text-blue-400 border border-blue-400/20 px-2 py-0.5 rounded-full font-semibold">
+                    {joinedGroups.length}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {joinedGroups.map((g) => (
+                    <GroupCard key={g.id} group={g} isOwner={false} onAction={fetchGroups} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Modals */}
       {showCreate && (
@@ -300,6 +310,6 @@ export default function GruposPage() {
           onJoined={() => { fetchGroups(); setShowJoin(false); }}
         />
       )}
-    </div>
+    </>
   );
 }
