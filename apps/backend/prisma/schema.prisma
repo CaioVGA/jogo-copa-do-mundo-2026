@@ -10,14 +10,42 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
+  id           String        @id @default(cuid())
   name         String
-  email        String    @unique
+  email        String        @unique
   passwordHash String
   otpCode      String?
   otpExpiresAt DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  ownedGroups  Group[]       @relation("OwnedGroups")
+  groupMembers GroupMember[]
 
   @@map("users")
+}
+
+model Group {
+  id         String        @id @default(cuid())
+  name       String
+  inviteCode String        @unique
+  maxMembers Int           @default(20)
+  ownerId    String
+  owner      User          @relation("OwnedGroups", fields: [ownerId], references: [id])
+  members    GroupMember[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@map("group_members")
 }

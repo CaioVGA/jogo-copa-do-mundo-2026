@@ -99,4 +99,61 @@ export const authApi = {
       .then((r) => r.data),
 };
 
+// ─── Groups endpoints ──────────────────────────────────────────────────────
+
+export interface GroupOwner {
+  id: string;
+  name: string;
+}
+
+export interface GroupData {
+  id: string;
+  name: string;
+  inviteCode: string;
+  maxMembers: number;
+  ownerId: string;
+  owner: GroupOwner;
+  _count: { members: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GroupPreview {
+  id: string;
+  name: string;
+  inviteCode: string;
+  maxMembers: number;
+  memberCount: number;
+  owner: GroupOwner;
+  isFull: boolean;
+  alreadyMember: boolean;
+}
+
+export interface MyGroupsResponse {
+  owned: GroupData[];
+  joined: GroupData[];
+}
+
+export const groupsApi = {
+  createGroup: (name: string) =>
+    api.post<GroupData>("/groups", { name }).then((r) => r.data),
+
+  getMyGroups: () =>
+    api.get<MyGroupsResponse>("/groups/my").then((r) => r.data),
+
+  lookupGroup: (code: string) =>
+    api.get<GroupPreview>(`/groups/lookup?code=${code}`).then((r) => r.data),
+
+  joinGroup: (code: string) =>
+    api
+      .post<{ message: string; groupId: string; groupName: string }>("/groups/join", { code })
+      .then((r) => r.data),
+
+  leaveGroup: (groupId: string) =>
+    api.delete<{ message: string }>(`/groups/${groupId}/leave`).then((r) => r.data),
+
+  deleteGroup: (groupId: string) =>
+    api.delete<{ message: string }>(`/groups/${groupId}`).then((r) => r.data),
+};
+
 export default api;

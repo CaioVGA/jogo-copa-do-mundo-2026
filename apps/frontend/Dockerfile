@@ -68,7 +68,8 @@ COPY --from=builder /app/apps/frontend/public ./public
 # Copia o build do Next.js
 # Usando modo padrão (sem standalone) — copia .next inteiro
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next ./.next
-COPY --from=builder /app/apps/frontend/node_modules ./node_modules
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
 COPY --from=builder /app/apps/frontend/package.json ./package.json
 COPY --from=builder /app/apps/frontend/next.config.ts ./next.config.ts
 
