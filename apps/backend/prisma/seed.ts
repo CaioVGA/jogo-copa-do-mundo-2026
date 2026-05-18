@@ -69,7 +69,7 @@ async function main() {
     { name: 'Portugal', code: 'POR', iso2: 'pt', group: 'K' },
     { name: 'Colômbia', code: 'COL', iso2: 'co', group: 'K' },
     { name: 'Uzbequistão', code: 'UZB', iso2: 'uz', group: 'K' },
-    { name: 'República Democrática do Congo', code: 'COD', iso2: 'cd', group: 'K' },
+    { name: 'Rep. Dem. do Congo', code: 'COD', iso2: 'cd', group: 'K' },
     // Grupo L
     { name: 'Inglaterra', code: 'ENG', iso2: 'gb-eng', group: 'L' },
     { name: 'Croácia', code: 'CRO', iso2: 'hr', group: 'L' },
@@ -94,7 +94,7 @@ async function main() {
 
     const team = await prisma.team.upsert({
       where: { code: t.code },
-      update: { flag: flagBase64, group: t.group },
+      update: { name: t.name, flag: flagBase64, group: t.group },
       create: { ...teamCreateData, flag: flagBase64 },
     });
     teams.push(team);
@@ -980,7 +980,7 @@ async function main() {
       stage: 'Semifinais',
     },
 
-    // 🗓️ DISPUTA DO TERCEIRO LUGAR
+    // 🗓️ TERCEIRO LUGAR
     // 18 de julho
     {
       homeTeamName: 'Perdedor 103',
@@ -988,10 +988,10 @@ async function main() {
       date: new Date('2026-07-18T18:00:00-03:00'),
       stadium: 'Hard Rock Stadium',
       city: 'Miami',
-      stage: 'Disputa do Terceiro Lugar',
+      stage: 'Terceiro Lugar',
     },
 
-    // 👑 GRANDE FINAL
+    // 👑 FINAL
     // 19 de julho
     {
       homeTeamName: 'Vencedor 103',
@@ -999,7 +999,7 @@ async function main() {
       date: new Date('2026-07-19T16:00:00-03:00'),
       stadium: 'MetLife Stadium',
       city: 'Nova York/NJ',
-      stage: 'Grande Final',
+      stage: 'Final',
     },
   ];
 

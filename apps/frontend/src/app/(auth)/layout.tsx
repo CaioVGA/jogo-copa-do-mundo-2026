@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <img 
             src="/fifa-world-cup-2026.png" 
             alt="FIFA 2026 logo" 
-            className="w-full h-full object-cover brightness-110 filter drop-shadow-[0_0_12px_rgba(255,215,0,0.35)] animate-pulse"
+            className="w-full h-full object-cover brightness-110 filter drop-shadow-[0_0_12px_rgba(255,215,0,0.35)]"
           />
         </div>
         <h2

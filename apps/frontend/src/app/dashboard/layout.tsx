@@ -84,7 +84,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <img 
               src="/fifa-world-cup-2026.png" 
               alt="FIFA World Cup 2026 Logo" 
-              className="w-full h-full object-cover brightness-110 filter drop-shadow-[0_0_8px_rgba(255,215,0,0.45)] animate-pulse" 
+              className="w-full h-full object-cover brightness-110 filter drop-shadow-[0_0_8px_rgba(255,215,0,0.45)]" 
             />
           </div>
           <Link href="/dashboard" className="flex flex-col select-none hover:opacity-90 transition-opacity">

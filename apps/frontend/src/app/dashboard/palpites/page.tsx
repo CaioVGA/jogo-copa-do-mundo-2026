@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import { predictionsApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/toast";
 const ALL_GROUPS = [
   "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
   "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L",
-  "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Disputa do Terceiro Lugar", "Grande Final"
+  "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"
 ];
 
 const GRUPOS_SUB = [
@@ -18,7 +18,7 @@ const GRUPOS_SUB = [
 ];
 
 const MATA_MATA_SUB = [
-  "ALL_MATA_MATA", "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Disputa do Terceiro Lugar", "Grande Final"
+  "ALL_MATA_MATA", "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"
 ];
 
 const ITEMS_PER_PAGE = 9;
@@ -32,6 +32,22 @@ export default function CopaGamesPage() {
   // Selected filter tab: "ALL" or specific group
   const [activeCategory, setActiveCategory] = useState<"GRUPOS" | "MATA_MATA">("GRUPOS");
   const [selectedGroup, setSelectedGroup] = useState<string>("ALL_GRUPOS");
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll the active filter tab into view
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const activeElement = scrollContainerRef.current.querySelector('[data-active="true"]');
+      if (activeElement) {
+        activeElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  }, [selectedGroup, activeCategory]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -286,12 +302,16 @@ export default function CopaGamesPage() {
 
         <div className="flex-1 overflow-hidden min-w-0">
           {activeCategory === "GRUPOS" ? (
-            <div className="bg-black/20 p-2 rounded-2xl border border-white/5 flex gap-2 overflow-x-auto copa-scrollbar max-w-full justify-start">
+            <div 
+              ref={scrollContainerRef}
+              className="bg-black/20 p-2 rounded-2xl border border-white/5 flex gap-2 overflow-x-auto copa-scrollbar max-w-full justify-start"
+            >
               <button
                 onClick={() => {
                   setSelectedGroup("ALL_GRUPOS");
                   setCurrentPage(1);
                 }}
+                data-active={selectedGroup === "ALL_GRUPOS"}
                 className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
                   selectedGroup === "ALL_GRUPOS"
                     ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
@@ -307,6 +327,7 @@ export default function CopaGamesPage() {
                     setSelectedGroup(gKey);
                     setCurrentPage(1);
                   }}
+                  data-active={selectedGroup === gKey}
                   className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-wider transition-all duration-300 shrink-0 cursor-pointer min-w-[50px] text-center whitespace-nowrap ${
                     selectedGroup === gKey
                       ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
@@ -318,12 +339,16 @@ export default function CopaGamesPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-black/20 p-2 rounded-2xl border border-white/5 flex gap-2 overflow-x-auto copa-scrollbar max-w-full justify-start">
+            <div 
+              ref={scrollContainerRef}
+              className="bg-black/20 p-2 rounded-2xl border border-white/5 flex gap-2 overflow-x-auto copa-scrollbar max-w-full justify-start"
+            >
               <button
                 onClick={() => {
                   setSelectedGroup("ALL_MATA_MATA");
                   setCurrentPage(1);
                 }}
+                data-active={selectedGroup === "ALL_MATA_MATA"}
                 className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
                   selectedGroup === "ALL_MATA_MATA"
                     ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
@@ -332,13 +357,14 @@ export default function CopaGamesPage() {
               >
                 Todo o Mata-Mata
               </button>
-              {["Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Disputa do Terceiro Lugar", "Grande Final"].map((gKey) => (
+              {["Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"].map((gKey) => (
                 <button
                   key={gKey}
                   onClick={() => {
                     setSelectedGroup(gKey);
                     setCurrentPage(1);
                   }}
+                  data-active={selectedGroup === gKey}
                   className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
                     selectedGroup === gKey
                       ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
@@ -354,7 +380,7 @@ export default function CopaGamesPage() {
 
         <button
           onClick={handleNextSub}
-          disabled={activeCategory === "GRUPOS" ? selectedGroup === "Grupo L" : selectedGroup === "Grande Final"}
+          disabled={activeCategory === "GRUPOS" ? selectedGroup === "Grupo L" : selectedGroup === "Final"}
           className="p-2.5 rounded-xl border border-white/5 bg-black/30 hover:bg-black/50 text-white hover:text-[#ffd700] disabled:opacity-30 disabled:pointer-events-none transition-all duration-300 shrink-0 cursor-pointer shadow-md"
           title="Próxima fase"
         >
@@ -426,7 +452,7 @@ export default function CopaGamesPage() {
                           )}
                         </div>
                         <span 
-                          className="font-bold text-xs text-white truncate text-center w-full uppercase tracking-wide cursor-help"
+                          className="font-bold text-[10px] md:text-[11px] text-white text-center w-full uppercase tracking-wide cursor-help whitespace-normal break-words"
                           title={game.homeTeam.name}
                         >
                           {game.homeTeam.name}
@@ -515,7 +541,7 @@ export default function CopaGamesPage() {
                           )}
                         </div>
                         <span 
-                          className="font-bold text-xs text-white truncate text-center w-full uppercase tracking-wide cursor-help"
+                          className="font-bold text-[10px] md:text-[11px] text-white text-center w-full uppercase tracking-wide cursor-help whitespace-normal break-words"
                           title={game.awayTeam.name}
                         >
                           {game.awayTeam.name}
