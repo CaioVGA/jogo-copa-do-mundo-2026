@@ -227,7 +227,7 @@ export default function GroupDetailsPage() {
             activeTab === "geral" ? "text-[#0d2b1a]" : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
-          <Users className="w-4 h-4 shrink-0" />
+          <Trophy className="w-4 h-4 shrink-0" />
           <span className="truncate">Geral</span>
         </button>
         <button

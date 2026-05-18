@@ -61,8 +61,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         {/* Logo Section */}
         <div className="p-6 border-b border-white/5 relative flex items-center gap-2.5">
-          <div className="bg-gradient-to-b from-[#ffd700]/25 to-transparent p-1.5 rounded-lg border border-[#ffd700]/20 shadow-inner">
-            <Trophy className="w-5 h-5 text-[#ffd700] animate-pulse" />
+          <div className="bg-gradient-to-b from-[#ffd700]/25 to-transparent p-0 rounded-lg border border-[#ffd700]/20 shadow-inner flex items-center justify-center w-8 h-8 shrink-0 overflow-hidden">
+            <img 
+              src="/fifa-world-cup-2026.png" 
+              alt="FIFA World Cup 2026 Logo" 
+              className="w-full h-full object-cover brightness-110 filter drop-shadow-[0_0_8px_rgba(255,215,0,0.45)] animate-pulse" 
+            />
           </div>
           <Link href="/dashboard" className="copa-logo text-xl tracking-wider font-black select-none">
             COPA <span className="bg-gradient-to-r from-[#ffd700] to-[#f5c800] bg-clip-text text-transparent">2026</span>
@@ -129,7 +133,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-gradient-to-r from-[#0d2b1a] to-[#040e09] backdrop-blur-md sticky top-0 z-50 shadow-md">
         <div className="flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-[#ffd700]" />
+          <img 
+            src="/fifa-world-cup-2026.png" 
+            alt="FIFA World Cup 2026 Logo" 
+            className="w-7 h-7 object-cover rounded-md overflow-hidden brightness-110" 
+          />
           <Link href="/dashboard" className="copa-logo text-lg tracking-wider font-black">
             COPA <span className="text-[#ffd700]">2026</span>
           </Link>

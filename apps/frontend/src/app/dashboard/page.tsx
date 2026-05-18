@@ -179,7 +179,7 @@ export default function DashboardPage() {
           className="copa-btn-primary px-7 py-3.5 text-sm inline-flex items-center gap-2 max-w-fit shadow-xl shadow-[#ffd700]/15 hover:scale-102 transition-all duration-300 relative z-10"
         >
           <CalendarDays className="w-4.5 h-4.5" />
-          Fazer Palpites
+          Ver Jogos
         </Link>
       </div>
 
@@ -302,7 +302,7 @@ export default function DashboardPage() {
                           ) : (
                             <>
                               <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Palpite</p>
-                              <Link href="/dashboard/palpites" className="text-[10px] font-bold text-[#ffd700] hover:underline block mt-0.5">
+                              <Link href="/dashboard/grupos" className="text-[10px] font-bold text-[#ffd700] hover:underline block mt-0.5">
                                 Palpitar
                               </Link>
                             </>
