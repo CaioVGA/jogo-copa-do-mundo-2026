@@ -80,15 +80,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         {/* Logo Section */}
         <div className="p-6 border-b border-white/5 relative flex items-center gap-2.5">
-          <div className="bg-gradient-to-b from-[#ffd700]/25 to-transparent p-0 rounded-lg border border-[#ffd700]/20 shadow-inner flex items-center justify-center w-8 h-8 shrink-0 overflow-hidden">
+          <div className="bg-black rounded-xl border border-[#ffd700]/20 shadow-inner flex items-center justify-center w-9 h-9 shrink-0 overflow-hidden p-0">
             <img 
               src="/fifa-world-cup-2026.png" 
               alt="FIFA World Cup 2026 Logo" 
               className="w-full h-full object-cover brightness-110 filter drop-shadow-[0_0_8px_rgba(255,215,0,0.45)] animate-pulse" 
             />
           </div>
-          <Link href="/dashboard" className="copa-logo text-xl tracking-wider font-black select-none">
-            COPA <span className="bg-gradient-to-r from-[#ffd700] to-[#f5c800] bg-clip-text text-transparent">2026</span>
+          <Link href="/dashboard" className="flex flex-col select-none hover:opacity-90 transition-opacity">
+            <span className="font-light text-[10px] tracking-widest text-white/70 uppercase leading-none">Copa do</span>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="font-black text-sm tracking-tight bg-gradient-to-r from-[#ffd700] via-[#ffe135] to-[#f5c800] bg-clip-text text-transparent uppercase leading-none">Mundo</span>
+              <span className="text-[8px] font-black text-white/40 tracking-wider bg-white/5 border border-white/10 px-1 py-0.2 rounded-md leading-none">2026</span>
+            </div>
           </Link>
         </div>
 
@@ -158,14 +162,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Mobile Header */}
       <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-gradient-to-r from-[#0d2b1a] to-[#040e09] backdrop-blur-md sticky top-0 z-50 shadow-md">
-        <div className="flex items-center gap-2">
-          <img 
-            src="/fifa-world-cup-2026.png" 
-            alt="FIFA World Cup 2026 Logo" 
-            className="w-7 h-7 object-cover rounded-md overflow-hidden brightness-110" 
-          />
-          <Link href="/dashboard" className="copa-logo text-lg tracking-wider font-black">
-            COPA <span className="text-[#ffd700]">2026</span>
+        <div className="flex items-center gap-2.5">
+          <div className="bg-black rounded-lg border border-[#ffd700]/20 shadow-sm flex items-center justify-center w-7 h-7 shrink-0 overflow-hidden p-0">
+            <img 
+              src="/fifa-world-cup-2026.png" 
+              alt="FIFA World Cup 2026 Logo" 
+              className="w-full h-full object-cover brightness-110" 
+            />
+          </div>
+          <Link href="/dashboard" className="flex flex-col select-none">
+            <span className="font-light text-[9px] tracking-widest text-white/70 uppercase leading-none">Copa do</span>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="font-black text-xs tracking-tight bg-gradient-to-r from-[#ffd700] via-[#ffe135] to-[#f5c800] bg-clip-text text-transparent uppercase leading-none">Mundo</span>
+              <span className="text-[7px] font-black text-white/40 tracking-wider bg-white/5 border border-white/10 px-0.5 rounded leading-none">26</span>
+            </div>
           </Link>
         </div>
         <nav className="flex items-center gap-1.5">

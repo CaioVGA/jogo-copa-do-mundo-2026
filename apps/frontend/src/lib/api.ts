@@ -187,6 +187,7 @@ export interface TeamData {
   code: string;
   name: string;
   flag: string | null;
+  group: string | null;
 }
 
 export const teamsApi = {

@@ -344,7 +344,7 @@ export default function GroupDetailsPage() {
                                   <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0">
                                     {game.homeTeam.flag ? <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" /> : game.homeTeam.code}
                                   </div>
-                                  <span className="font-bold text-xs text-white/90 truncate">{game.homeTeam.name}</span>
+                                  <span className="font-bold text-xs text-white/90 truncate cursor-help" title={game.homeTeam.name}>{game.homeTeam.name}</span>
                                 </div>
 
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-black/40 rounded-lg border border-white/5 font-extrabold text-xs shrink-0">
@@ -360,7 +360,7 @@ export default function GroupDetailsPage() {
                                 </div>
 
                                 <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                                  <span className="font-bold text-xs text-white/90 truncate text-right">{game.awayTeam.name}</span>
+                                  <span className="font-bold text-xs text-white/90 truncate text-right cursor-help" title={game.awayTeam.name}>{game.awayTeam.name}</span>
                                   <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0">
                                     {game.awayTeam.flag ? <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" /> : game.awayTeam.code}
                                   </div>
@@ -505,7 +505,7 @@ export default function GroupDetailsPage() {
                                   game.homeTeam.code
                                 )}
                               </div>
-                              <span className="font-bold text-xs text-white/80 truncate text-center w-full">{game.homeTeam.name}</span>
+                              <span className="font-bold text-xs text-white/80 truncate text-center w-full cursor-help" title={game.homeTeam.name}>{game.homeTeam.name}</span>
                             </div>
 
                             {/* Score / Inputs */}
@@ -579,7 +579,7 @@ export default function GroupDetailsPage() {
                                   game.awayTeam.code
                                 )}
                               </div>
-                              <span className="font-bold text-xs text-white/80 truncate text-center w-full">{game.awayTeam.name}</span>
+                              <span className="font-bold text-xs text-white/80 truncate text-center w-full cursor-help" title={game.awayTeam.name}>{game.awayTeam.name}</span>
                             </div>
                           </div>
                           {!isClosed && (

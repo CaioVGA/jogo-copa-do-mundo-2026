@@ -21,6 +21,7 @@ export class AppController {
         code: true,
         name: true,
         flag: true,
+        group: true,
       },
     });
   }

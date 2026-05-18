@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Trophy, Calendar, Users, Activity, Star, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { predictionsApi } from "@/lib/api";
-import type { MatchPredictionData } from "@/lib/api";
+import { predictionsApi, teamsApi } from "@/lib/api";
+import type { MatchPredictionData, TeamData } from "@/lib/api";
 
 const GROUPS_LIST = [
   "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
@@ -15,9 +15,11 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState("Jogador");
   const [loading, setLoading] = useState(true);
   const [gamesData, setGamesData] = useState<Record<string, MatchPredictionData[]>>({});
+  const [teams, setTeams] = useState<TeamData[]>([]);
   const [allGames, setAllGames] = useState<MatchPredictionData[]>([]);
   const [upcomingGames, setUpcomingGames] = useState<MatchPredictionData[]>([]);
   const [selectedGroup, setSelectedGroup] = useState("Grupo A");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -32,8 +34,12 @@ export default function DashboardPage() {
 
     async function loadDashboardData() {
       try {
-        const data = await predictionsApi.getPredictions();
+        const [data, fetchedTeams] = await Promise.all([
+          predictionsApi.getPredictions(),
+          teamsApi.getTeams(),
+        ]);
         setGamesData(data);
+        setTeams(fetchedTeams);
 
         const allMatches: MatchPredictionData[] = [];
         Object.values(data).forEach((groupMatches) => {
@@ -74,10 +80,32 @@ export default function DashboardPage() {
       gd: number;
     }> = {};
 
+    // 1. Pre-populate the table with all 4 teams belonging to the selected group
+    const groupLetter = selectedGroup.replace("Grupo ", "").trim(); // E.g. "Grupo A" -> "A"
+    const groupTeams = teams.filter((t) => t.group === groupLetter);
+
+    groupTeams.forEach((t) => {
+      table[t.code] = {
+        code: t.code,
+        name: t.name,
+        flag: t.flag,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        points: 0,
+        gf: 0,
+        ga: 0,
+        gd: 0,
+      };
+    });
+
+    // 2. Loop over matches to update statistics
     matches.forEach((match) => {
       const homeCode = match.homeTeam.code;
       const awayCode = match.awayTeam.code;
 
+      // Fallback in case a team is not in the groupTeams list (e.g. dynamic/TBD teams)
       if (!table[homeCode]) {
         table[homeCode] = {
           code: homeCode,
@@ -267,7 +295,12 @@ export default function DashboardPage() {
                               game.homeTeam.code
                             )}
                           </div>
-                          <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none">{game.homeTeam.name}</span>
+                          <span 
+                            className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none cursor-help"
+                            title={game.homeTeam.name}
+                          >
+                            {game.homeTeam.name}
+                          </span>
                         </div>
 
                         <span className="text-[10px] font-black text-white/20 shrink-0">VS</span>
@@ -281,33 +314,42 @@ export default function DashboardPage() {
                               game.awayTeam.code
                             )}
                           </div>
-                          <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none">{game.awayTeam.name}</span>
+                          <span 
+                            className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none cursor-help"
+                            title={game.awayTeam.name}
+                          >
+                            {game.awayTeam.name}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                       {isFinished ? (
-                        <div className="text-right shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
-                          <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Resultado</p>
+                        <div className="text-center shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl min-w-[90px]">
+                          <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Resultado</p>
                           <p className="text-sm font-black text-white mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
                         </div>
-                      ) : (
-                        <div className="text-right shrink-0 bg-black/40 border border-white/5 px-3 py-1.5 rounded-xl shadow-inner min-w-[70px]">
-                          {hasPredicted ? (
-                            <>
-                              <p className="text-[9px] font-bold text-[#ffd700] uppercase tracking-widest">Palpite</p>
-                              <p className="text-sm font-black text-white mt-0.5">{game.predictedHomeScore} - {game.predictedAwayScore}</p>
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Palpite</p>
-                              <Link href="/dashboard/grupos" className="text-[10px] font-bold text-[#ffd700] hover:underline block mt-0.5">
-                                Palpitar
-                              </Link>
-                            </>
-                          )}
+                      ) : hasPredicted ? (
+                        <div className="flex flex-col gap-1 text-center shrink-0">
+                          <div className="text-center bg-black/45 border border-[#ffd700]/30 px-3.5 py-1.5 rounded-xl shadow-inner min-w-[90px]">
+                            <p className="text-[8px] font-black text-[#ffd700] uppercase tracking-widest">Meu Palpite</p>
+                            <p className="text-xs font-black text-white mt-0.5">{game.predictedHomeScore} - {game.predictedAwayScore}</p>
+                          </div>
+                          <Link 
+                            href="/dashboard/grupos" 
+                            className="text-[9px] font-black text-[#ffd700] hover:text-white transition-all uppercase tracking-wider text-center"
+                          >
+                            Alterar
+                          </Link>
                         </div>
+                      ) : (
+                        <Link 
+                          href="/dashboard/grupos" 
+                          className="copa-btn-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-center shrink-0 min-w-[90px] justify-center block hover:scale-102 transition-all duration-300"
+                        >
+                          Palpitar
+                        </Link>
                       )}
                     </div>
                   </div>
@@ -344,18 +386,43 @@ export default function DashboardPage() {
             </button>
   
             <div className="relative flex-1">
-              <select
-                value={selectedGroup}
-                onChange={(e) => setSelectedGroup(e.target.value)}
-                className="w-full appearance-none bg-transparent hover:border-transparent rounded-xl px-4 py-2 text-xs font-black text-white outline-none cursor-pointer text-center pr-8"
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full bg-transparent border border-white/5 hover:border-white/10 rounded-xl px-4 py-2.5 text-xs font-black text-white outline-none cursor-pointer text-center flex items-center justify-center gap-1 bg-white/[0.01] hover:bg-white/[0.04] transition-all"
               >
-                {GROUPS_LIST.map((g) => (
-                  <option key={g} value={g} className="bg-[#0b1c11] text-white">
-                    {g}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-white/40 absolute right-3 top-2 pointer-events-none" />
+                {selectedGroup.toUpperCase()}
+                <ChevronDown className={`w-3.5 h-3.5 text-white/40 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {dropdownOpen && (
+                <>
+                  {/* Backdrop to close dropdown */}
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setDropdownOpen(false)}
+                  />
+                  
+                  {/* Floating glass dropdown menu */}
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-[#0d1627]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.7)] shadow-[#ffd700]/5 overflow-hidden z-50 py-1.5 max-h-56 overflow-y-auto copa-scrollbar animate-fade-in-up">
+                    {GROUPS_LIST.map((g) => (
+                      <button
+                        key={g}
+                        onClick={() => {
+                          setSelectedGroup(g);
+                          setDropdownOpen(false);
+                        }}
+                        className={`w-full text-center px-4 py-2 text-[11px] font-black uppercase transition-all duration-200 cursor-pointer ${
+                          selectedGroup === g
+                            ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] font-black"
+                            : "text-white/70 hover:text-white hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
   
             <button

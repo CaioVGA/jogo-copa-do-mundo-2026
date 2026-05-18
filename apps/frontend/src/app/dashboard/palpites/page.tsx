@@ -1,14 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert } from "lucide-react";
+import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import { predictionsApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 
 const ALL_GROUPS = [
   "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
-  "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L", "Fase Final"
+  "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L",
+  "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Disputa do Terceiro Lugar", "Grande Final"
+];
+
+const GRUPOS_SUB = [
+  "ALL_GRUPOS", "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
+  "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L"
+];
+
+const MATA_MATA_SUB = [
+  "ALL_MATA_MATA", "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Disputa do Terceiro Lugar", "Grande Final"
 ];
 
 const ITEMS_PER_PAGE = 9;
@@ -20,10 +30,43 @@ export default function CopaGamesPage() {
   const [error, setError] = useState<string | null>(null);
   
   // Selected filter tab: "ALL" or specific group
-  const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
+  const [activeCategory, setActiveCategory] = useState<"GRUPOS" | "MATA_MATA">("GRUPOS");
+  const [selectedGroup, setSelectedGroup] = useState<string>("ALL_GRUPOS");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+
+  const handlePrevSub = () => {
+    if (activeCategory === "GRUPOS") {
+      const idx = GRUPOS_SUB.indexOf(selectedGroup);
+      if (idx > 0) {
+        setSelectedGroup(GRUPOS_SUB[idx - 1]);
+        setCurrentPage(1);
+      }
+    } else {
+      const idx = MATA_MATA_SUB.indexOf(selectedGroup);
+      if (idx > 0) {
+        setSelectedGroup(MATA_MATA_SUB[idx - 1]);
+        setCurrentPage(1);
+      }
+    }
+  };
+
+  const handleNextSub = () => {
+    if (activeCategory === "GRUPOS") {
+      const idx = GRUPOS_SUB.indexOf(selectedGroup);
+      if (idx !== -1 && idx < GRUPOS_SUB.length - 1) {
+        setSelectedGroup(GRUPOS_SUB[idx + 1]);
+        setCurrentPage(1);
+      }
+    } else {
+      const idx = MATA_MATA_SUB.indexOf(selectedGroup);
+      if (idx !== -1 && idx < MATA_MATA_SUB.length - 1) {
+        setSelectedGroup(MATA_MATA_SUB[idx + 1]);
+        setCurrentPage(1);
+      }
+    }
+  };
 
   // Admin controls
   const [isAdmin, setIsAdmin] = useState(false);
@@ -131,9 +174,19 @@ export default function CopaGamesPage() {
     return valA - valB;
   });
 
-  const filteredGroups = selectedGroup === "ALL" 
-    ? sortedGroupKeys 
-    : [selectedGroup];
+  const filteredGroups = (() => {
+    if (activeCategory === "GRUPOS") {
+      if (selectedGroup === "ALL_GRUPOS" || !selectedGroup.startsWith("Grupo")) {
+        return sortedGroupKeys.filter((k) => k.startsWith("Grupo"));
+      }
+      return [selectedGroup];
+    } else {
+      if (selectedGroup === "ALL_MATA_MATA" || selectedGroup.startsWith("Grupo")) {
+        return sortedGroupKeys.filter((k) => !k.startsWith("Grupo"));
+      }
+      return [selectedGroup];
+    }
+  })();
 
   // Aplanar todos os confrontos dos grupos selecionados em uma única lista cronológica
   const allFilteredMatches: { groupName: string; match: MatchPredictionData }[] = [];
@@ -184,31 +237,129 @@ export default function CopaGamesPage() {
         </button>
       </div>
 
-       {/* Group Navigation Bar Tabs (Premium UX filter) */}
-      <div className="bg-black/20 p-2 rounded-2xl border border-white/5 flex gap-2 overflow-x-auto copa-scrollbar max-w-full">
-        <button
-          onClick={() => setSelectedGroup("ALL")}
-          className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer ${
-            selectedGroup === "ALL"
-              ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_4px_16px_rgba(255,215,0,0.15)] scale-102"
-              : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
-          }`}
-        >
-          Todos os Grupos
-        </button>
-        {ALL_GROUPS.map((gKey) => (
+       {/* Category Toggle (Fase de Grupos vs Mata-Mata) */}
+      <div className="flex justify-center">
+        <div className="bg-black/45 p-1 rounded-2xl border border-white/5 flex gap-1 shadow-inner shadow-black">
           <button
-            key={gKey}
-            onClick={() => setSelectedGroup(gKey)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer ${
-              selectedGroup === gKey
+            onClick={() => {
+              setActiveCategory("GRUPOS");
+              setSelectedGroup("ALL_GRUPOS");
+              setCurrentPage(1);
+            }}
+            className={`px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+              activeCategory === "GRUPOS"
                 ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_4px_16px_rgba(255,215,0,0.15)] scale-102"
-                : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                : "bg-transparent text-white/50 hover:text-white hover:bg-white/[0.03]"
             }`}
           >
-            {gKey}
+            <Trophy className="w-4 h-4 shrink-0" />
+            Fase de Grupos
           </button>
-        ))}
+          <button
+            onClick={() => {
+              setActiveCategory("MATA_MATA");
+              setSelectedGroup("ALL_MATA_MATA");
+              setCurrentPage(1);
+            }}
+            className={`px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+              activeCategory === "MATA_MATA"
+                ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_4px_16px_rgba(255,215,0,0.15)] scale-102"
+                : "bg-transparent text-white/50 hover:text-white hover:bg-white/[0.03]"
+            }`}
+          >
+            <CalendarDays className="w-4 h-4 shrink-0" />
+            Mata-Mata
+          </button>
+        </div>
+      </div>
+
+      {/* Sub-Filters based on Active Category with Prev/Next Chevrons */}
+      <div className="flex items-center gap-2 max-w-full justify-center">
+        <button
+          onClick={handlePrevSub}
+          disabled={activeCategory === "GRUPOS" ? selectedGroup === "ALL_GRUPOS" : selectedGroup === "ALL_MATA_MATA"}
+          className="p-2.5 rounded-xl border border-white/5 bg-black/30 hover:bg-black/50 text-white hover:text-[#ffd700] disabled:opacity-30 disabled:pointer-events-none transition-all duration-300 shrink-0 cursor-pointer shadow-md"
+          title="Fase anterior"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        <div className="flex-1 overflow-hidden min-w-0">
+          {activeCategory === "GRUPOS" ? (
+            <div className="bg-black/20 p-2 rounded-2xl border border-white/5 flex gap-2 overflow-x-auto copa-scrollbar max-w-full justify-start">
+              <button
+                onClick={() => {
+                  setSelectedGroup("ALL_GRUPOS");
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
+                  selectedGroup === "ALL_GRUPOS"
+                    ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                    : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                }`}
+              >
+                Todos os Grupos
+              </button>
+              {["Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F", "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L"].map((gKey) => (
+                <button
+                  key={gKey}
+                  onClick={() => {
+                    setSelectedGroup(gKey);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-wider transition-all duration-300 shrink-0 cursor-pointer min-w-[50px] text-center whitespace-nowrap ${
+                    selectedGroup === gKey
+                      ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                      : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                  }`}
+                >
+                  {gKey.replace("Grupo ", "GRUPO ")}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-black/20 p-2 rounded-2xl border border-white/5 flex gap-2 overflow-x-auto copa-scrollbar max-w-full justify-start">
+              <button
+                onClick={() => {
+                  setSelectedGroup("ALL_MATA_MATA");
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
+                  selectedGroup === "ALL_MATA_MATA"
+                    ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                    : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                }`}
+              >
+                Todo o Mata-Mata
+              </button>
+              {["Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Disputa do Terceiro Lugar", "Grande Final"].map((gKey) => (
+                <button
+                  key={gKey}
+                  onClick={() => {
+                    setSelectedGroup(gKey);
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
+                    selectedGroup === gKey
+                      ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                      : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                  }`}
+                >
+                  {gKey}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={handleNextSub}
+          disabled={activeCategory === "GRUPOS" ? selectedGroup === "Grupo L" : selectedGroup === "Grande Final"}
+          className="p-2.5 rounded-xl border border-white/5 bg-black/30 hover:bg-black/50 text-white hover:text-[#ffd700] disabled:opacity-30 disabled:pointer-events-none transition-all duration-300 shrink-0 cursor-pointer shadow-md"
+          title="Próxima fase"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Main List Grid */}
@@ -274,7 +425,10 @@ export default function CopaGamesPage() {
                             game.homeTeam.code
                           )}
                         </div>
-                        <span className="font-bold text-xs text-white truncate text-center w-full uppercase tracking-wide">
+                        <span 
+                          className="font-bold text-xs text-white truncate text-center w-full uppercase tracking-wide cursor-help"
+                          title={game.homeTeam.name}
+                        >
                           {game.homeTeam.name}
                         </span>
                       </div>
@@ -360,7 +514,10 @@ export default function CopaGamesPage() {
                             game.awayTeam.code
                           )}
                         </div>
-                        <span className="font-bold text-xs text-white truncate text-center w-full uppercase tracking-wide">
+                        <span 
+                          className="font-bold text-xs text-white truncate text-center w-full uppercase tracking-wide cursor-help"
+                          title={game.awayTeam.name}
+                        >
                           {game.awayTeam.name}
                         </span>
                       </div>

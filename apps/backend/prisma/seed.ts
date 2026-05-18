@@ -13,7 +13,7 @@ async function main() {
   await prisma.oraclePrediction.deleteMany();
   await prisma.team.deleteMany();
 
-  console.log('Seeding database with Teams and Matches...');
+  console.log('Seeding database with Teams...');
   const teamsData = [
     // Grupo A
     { name: 'México', code: 'MEX', iso2: 'mx', group: 'A' },
@@ -100,9 +100,10 @@ async function main() {
     teams.push(team);
   }
 
-  // ─── MATCHES ───────────────────────────────────────────────────────────────
+  console.log('Seeding database with Matches...');
   const matchesData = [
     // 🔵 1ª Rodada (11 a 17 de junho)
+    // 11 de junho
     {
       homeTeamId: teams.find((t) => t.code === 'MEX')?.id,
       awayTeamId: teams.find((t) => t.code === 'RSA')?.id,
@@ -119,6 +120,7 @@ async function main() {
       city: 'Nova York/NJ',
       stage: 'Fase de Grupos - Rodada 1',
     },
+    // 12 de junho
     {
       homeTeamId: teams.find((t) => t.code === 'CAN')?.id,
       awayTeamId: teams.find((t) => t.code === 'BIH')?.id,
@@ -135,6 +137,7 @@ async function main() {
       city: 'Los Angeles',
       stage: 'Fase de Grupos - Rodada 1',
     },
+    // 13 de junho
     {
       homeTeamId: teams.find((t) => t.code === 'QAT')?.id,
       awayTeamId: teams.find((t) => t.code === 'SUI')?.id,
@@ -159,6 +162,7 @@ async function main() {
       city: 'Houston',
       stage: 'Fase de Grupos - Rodada 1',
     },
+    // 14 de junho
     {
       homeTeamId: teams.find((t) => t.code === 'AUS')?.id,
       awayTeamId: teams.find((t) => t.code === 'TUR')?.id,
@@ -168,9 +172,100 @@ async function main() {
       stage: 'Fase de Grupos - Rodada 1',
     },
     {
+      homeTeamId: teams.find((t) => t.code === 'GER')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CUW')?.id,
+      date: new Date('2026-06-14T14:00:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'NED')?.id,
+      awayTeamId: teams.find((t) => t.code === 'JPN')?.id,
+      date: new Date('2026-06-14T17:00:00-03:00'),
+      stadium: 'Lincoln Financial Field',
+      city: 'Filadélfia',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'CIV')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ECU')?.id,
+      date: new Date('2026-06-14T20:00:00-03:00'),
+      stadium: 'Arrowhead Stadium',
+      city: 'Kansas City',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'SWE')?.id,
+      awayTeamId: teams.find((t) => t.code === 'TUN')?.id,
+      date: new Date('2026-06-14T23:00:00-03:00'),
+      stadium: 'BMO Field',
+      city: 'Toronto',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    // 15 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'ESP')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
+      date: new Date('2026-06-15T13:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'BEL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'EGY')?.id,
+      date: new Date('2026-06-15T16:00:00-03:00'),
+      stadium: 'Levi Stadium',
+      city: 'San Francisco',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'KSA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'URU')?.id,
+      date: new Date('2026-06-15T19:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'IRN')?.id,
+      awayTeamId: teams.find((t) => t.code === 'NZL')?.id,
+      date: new Date('2026-06-15T22:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    // 16 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'FRA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SEN')?.id,
+      date: new Date('2026-06-16T16:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'IRQ')?.id,
+      awayTeamId: teams.find((t) => t.code === 'NOR')?.id,
+      date: new Date('2026-06-16T19:00:00-03:00'),
+      stadium: 'Lincoln Financial Field',
+      city: 'Filadélfia',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'ARG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ALG')?.id,
+      date: new Date('2026-06-16T22:00:00-03:00'),
+      stadium: 'Hard Rock Stadium',
+      city: 'Miami',
+      stage: 'Fase de Grupos - Rodada 1',
+    },
+    // 17 de junho
+    {
       homeTeamId: teams.find((t) => t.code === 'AUT')?.id,
       awayTeamId: teams.find((t) => t.code === 'JOR')?.id,
-      date: new Date('2026-06-18T01:00:00-03:00'), // 17/06 01h BRT
+      date: new Date('2026-06-17T01:00:00-03:00'),
       stadium: 'Mercedes-Benz Stadium',
       city: 'Atlanta',
       stage: 'Fase de Grupos - Rodada 1',
@@ -187,16 +282,16 @@ async function main() {
       homeTeamId: teams.find((t) => t.code === 'ENG')?.id,
       awayTeamId: teams.find((t) => t.code === 'CRO')?.id,
       date: new Date('2026-06-17T17:00:00-03:00'),
-      stadium: 'Lincoln Financial Field',
-      city: 'Filadélfia',
+      stadium: 'Gillette Stadium',
+      city: 'Boston',
       stage: 'Fase de Grupos - Rodada 1',
     },
     {
       homeTeamId: teams.find((t) => t.code === 'GHA')?.id,
       awayTeamId: teams.find((t) => t.code === 'PAN')?.id,
       date: new Date('2026-06-17T20:00:00-03:00'),
-      stadium: 'Levi Stadium',
-      city: 'São Francisco',
+      stadium: 'BC Place',
+      city: 'Vancouver',
       stage: 'Fase de Grupos - Rodada 1',
     },
     {
@@ -209,6 +304,7 @@ async function main() {
     },
 
     // 🟡 2ª Rodada (18 a 23 de junho)
+    // 18 de junho
     {
       homeTeamId: teams.find((t) => t.code === 'CZE')?.id,
       awayTeamId: teams.find((t) => t.code === 'RSA')?.id,
@@ -241,6 +337,7 @@ async function main() {
       city: 'Cidade do México',
       stage: 'Fase de Grupos - Rodada 2',
     },
+    // 19 de junho
     {
       homeTeamId: teams.find((t) => t.code === 'USA')?.id,
       awayTeamId: teams.find((t) => t.code === 'AUS')?.id,
@@ -265,57 +362,644 @@ async function main() {
       city: 'Atlanta',
       stage: 'Fase de Grupos - Rodada 2',
     },
+    // 20 de junho
     {
       homeTeamId: teams.find((t) => t.code === 'TUR')?.id,
       awayTeamId: teams.find((t) => t.code === 'PAR')?.id,
-      date: new Date('2026-06-20T00:00:00-03:00'), // 19/06 00h BRT
+      date: new Date('2026-06-20T00:00:00-03:00'),
       stadium: 'Lumen Field',
       city: 'Seattle',
       stage: 'Fase de Grupos - Rodada 2',
     },
+    {
+      homeTeamId: teams.find((t) => t.code === 'NED')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SWE')?.id,
+      date: new Date('2026-06-20T14:00:00-03:00'),
+      stadium: 'BMO Field',
+      city: 'Toronto',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'GER')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CIV')?.id,
+      date: new Date('2026-06-20T17:00:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'ECU')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CUW')?.id,
+      date: new Date('2026-06-20T21:00:00-03:00'),
+      stadium: 'Arrowhead Stadium',
+      city: 'Kansas City',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    // 21 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'TUN')?.id,
+      awayTeamId: teams.find((t) => t.code === 'JPN')?.id,
+      date: new Date('2026-06-21T01:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'ESP')?.id,
+      awayTeamId: teams.find((t) => t.code === 'KSA')?.id,
+      date: new Date('2026-06-21T13:00:00-03:00'),
+      stadium: 'Hard Rock Stadium',
+      city: 'Miami',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'BEL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'IRN')?.id,
+      date: new Date('2026-06-21T16:00:00-03:00'),
+      stadium: 'Levi Stadium',
+      city: 'San Francisco',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'URU')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
+      date: new Date('2026-06-21T19:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'NZL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'EGY')?.id,
+      date: new Date('2026-06-21T22:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    // 22 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'ARG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'AUT')?.id,
+      date: new Date('2026-06-22T14:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'FRA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'IRQ')?.id,
+      date: new Date('2026-06-22T18:00:00-03:00'),
+      stadium: 'Lincoln Financial Field',
+      city: 'Filadélfia',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'NOR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SEN')?.id,
+      date: new Date('2026-06-22T21:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    // 23 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'JOR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ALG')?.id,
+      date: new Date('2026-06-23T00:00:00-03:00'),
+      stadium: 'Arrowhead Stadium',
+      city: 'Kansas City',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'POR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'UZB')?.id,
+      date: new Date('2026-06-23T14:00:00-03:00'),
+      stadium: 'BC Place',
+      city: 'Vancouver',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'ENG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'GHA')?.id,
+      date: new Date('2026-06-23T17:00:00-03:00'),
+      stadium: 'Gillette Stadium',
+      city: 'Boston',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'PAN')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CRO')?.id,
+      date: new Date('2026-06-23T20:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'COL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'COD')?.id,
+      date: new Date('2026-06-23T23:00:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Fase de Grupos - Rodada 2',
+    },
 
-    // 🔥 MATA-MATA (16-avos de final)
+    // 🟢 3ª Rodada (24 a 27 de junho)
+    // 24 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'SUI')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CAN')?.id,
+      date: new Date('2026-06-24T16:00:00-03:00'),
+      stadium: 'Gillette Stadium',
+      city: 'Boston',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'BIH')?.id,
+      awayTeamId: teams.find((t) => t.code === 'QAT')?.id,
+      date: new Date('2026-06-24T16:00:00-03:00'),
+      stadium: 'Hard Rock Stadium',
+      city: 'Miami',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'SCO')?.id,
+      awayTeamId: teams.find((t) => t.code === 'BRA')?.id,
+      date: new Date('2026-06-24T19:00:00-03:00'),
+      stadium: 'Lincoln Financial Field',
+      city: 'Filadélfia',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'MAR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'HAI')?.id,
+      date: new Date('2026-06-24T19:00:00-03:00'),
+      stadium: 'NRG Stadium',
+      city: 'Houston',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'CZE')?.id,
+      awayTeamId: teams.find((t) => t.code === 'MEX')?.id,
+      date: new Date('2026-06-24T22:00:00-03:00'),
+      stadium: 'Estádio Azteca',
+      city: 'Cidade do México',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'RSA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'KOR')?.id,
+      date: new Date('2026-06-24T22:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    // 25 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'CUW')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CIV')?.id,
+      date: new Date('2026-06-25T17:00:00-03:00'),
+      stadium: 'Arrowhead Stadium',
+      city: 'Kansas City',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'ECU')?.id,
+      awayTeamId: teams.find((t) => t.code === 'GER')?.id,
+      date: new Date('2026-06-25T17:00:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'JPN')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SWE')?.id,
+      date: new Date('2026-06-25T20:00:00-03:00'),
+      stadium: 'BMO Field',
+      city: 'Toronto',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'TUN')?.id,
+      awayTeamId: teams.find((t) => t.code === 'NED')?.id,
+      date: new Date('2026-06-25T20:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'TUR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'USA')?.id,
+      date: new Date('2026-06-25T23:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'PAR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'AUS')?.id,
+      date: new Date('2026-06-25T23:00:00-03:00'),
+      stadium: 'NRG Stadium',
+      city: 'Houston',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    // 26 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'NOR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'FRA')?.id,
+      date: new Date('2026-06-26T16:00:00-03:00'),
+      stadium: 'Lincoln Financial Field',
+      city: 'Filadélfia',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'SEN')?.id,
+      awayTeamId: teams.find((t) => t.code === 'IRQ')?.id,
+      date: new Date('2026-06-26T16:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'CPV')?.id,
+      awayTeamId: teams.find((t) => t.code === 'KSA')?.id,
+      date: new Date('2026-06-26T21:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'URU')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ESP')?.id,
+      date: new Date('2026-06-26T21:00:00-03:00'),
+      stadium: 'Hard Rock Stadium',
+      city: 'Miami',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    // 27 de junho
+    {
+      homeTeamId: teams.find((t) => t.code === 'NZL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'BEL')?.id,
+      date: new Date('2026-06-27T00:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'EGY')?.id,
+      awayTeamId: teams.find((t) => t.code === 'IRN')?.id,
+      date: new Date('2026-06-27T00:00:00-03:00'),
+      stadium: 'Levi Stadium',
+      city: 'San Francisco',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'PAN')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ENG')?.id,
+      date: new Date('2026-06-27T18:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'CRO')?.id,
+      awayTeamId: teams.find((t) => t.code === 'GHA')?.id,
+      date: new Date('2026-06-27T18:00:00-03:00'),
+      stadium: 'BC Place',
+      city: 'Vancouver',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'COL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'POR')?.id,
+      date: new Date('2026-06-27T20:30:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'COD')?.id,
+      awayTeamId: teams.find((t) => t.code === 'UZB')?.id,
+      date: new Date('2026-06-27T20:30:00-03:00'),
+      stadium: 'Arrowhead Stadium',
+      city: 'Kansas City',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'ALG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'AUT')?.id,
+      date: new Date('2026-06-27T23:00:00-03:00'),
+      stadium: 'BMO Field',
+      city: 'Toronto',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+    {
+      homeTeamId: teams.find((t) => t.code === 'JOR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ARG')?.id,
+      date: new Date('2026-06-27T23:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Fase de Grupos - Rodada 3',
+    },
+
+    // 🔥 DEZESSEISAVOS DE FINAL (Fase de 32)
+    // 28 de junho
     {
       homeTeamName: '2º Grupo A',
       awayTeamName: '2º Grupo B',
       date: new Date('2026-06-28T16:00:00-03:00'),
       stadium: 'Levi Stadium',
-      city: 'São Francisco',
-      stage: '16-avos de final',
+      city: 'San Francisco',
+      stage: 'Dezesseisavos de Final',
     },
     {
-      homeTeamName: '1º Grupo E',
-      awayTeamName: 'Melhor 3º Colocado',
-      date: new Date('2026-06-29T13:00:00-03:00'),
+      homeTeamName: '1º Grupo A',
+      awayTeamName: '3º Grupo C/D/E/H',
+      date: new Date('2026-06-28T19:30:00-03:00'),
       stadium: 'Hard Rock Stadium',
       city: 'Miami',
-      stage: '16-avos de final',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '1º Grupo B',
+      awayTeamName: '3º Grupo A/C/D/F/I',
+      date: new Date('2026-06-28T23:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Dezesseisavos de Final',
+    },
+    // 29 de junho
+    {
+      homeTeamName: '1º Grupo E',
+      awayTeamName: '2º Grupo F',
+      date: new Date('2026-06-29T14:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Dezesseisavos de Final',
     },
     {
       homeTeamName: '1º Grupo F',
-      awayTeamName: '2º Grupo C',
-      date: new Date('2026-06-29T16:00:00-03:00'),
+      awayTeamName: '2º Grupo E',
+      date: new Date('2026-06-29T17:30:00-03:00'),
       stadium: 'Arrowhead Stadium',
       city: 'Kansas City',
-      stage: '16-avos de final',
+      stage: 'Dezesseisavos de Final',
     },
     {
       homeTeamName: '1º Grupo C',
-      awayTeamName: '2º Grupo F',
-      date: new Date('2026-06-29T20:00:00-03:00'),
+      awayTeamName: '3º Grupo A/B/F/G/I',
+      date: new Date('2026-06-29T22:00:00-03:00'),
       stadium: 'AT&T Stadium',
       city: 'Dallas',
-      stage: '16-avos de final',
+      stage: 'Dezesseisavos de Final',
+    },
+    // 30 de junho
+    {
+      homeTeamName: '1º Grupo I',
+      awayTeamName: '3º Grupo C/D/E/G/H',
+      date: new Date('2026-06-30T14:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '2º Grupo C',
+      awayTeamName: '2º Grupo D',
+      date: new Date('2026-06-30T18:00:00-03:00'),
+      stadium: 'Gillette Stadium',
+      city: 'Boston',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '1º Grupo D',
+      awayTeamName: '3º Grupo B/E/F/I/J',
+      date: new Date('2026-06-30T22:00:00-03:00'),
+      stadium: 'Lincoln Financial Field',
+      city: 'Filadélfia',
+      stage: 'Dezesseisavos de Final',
+    },
+    // 1 de julho
+    {
+      homeTeamName: '1º Grupo G',
+      awayTeamName: '3º Grupo A/E/H/I/J',
+      date: new Date('2026-07-01T13:00:00-03:00'),
+      stadium: 'BC Place',
+      city: 'Vancouver',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '1º Grupo L',
+      awayTeamName: '3º Grupo E/H/I/J/K',
+      date: new Date('2026-07-01T17:00:00-03:00'),
+      stadium: 'BMO Field',
+      city: 'Toronto',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '1º Grupo H',
+      awayTeamName: '2º Grupo G',
+      date: new Date('2026-07-01T21:00:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Dezesseisavos de Final',
+    },
+    // 2 de julho
+    {
+      homeTeamName: '1º Grupo K',
+      awayTeamName: '2º Grupo L',
+      date: new Date('2026-07-02T16:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '2º Grupo I',
+      awayTeamName: '2º Grupo J',
+      date: new Date('2026-07-02T20:00:00-03:00'),
+      stadium: 'Hard Rock Stadium',
+      city: 'Miami',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '1º Grupo J',
+      awayTeamName: '2º Grupo K',
+      date: new Date('2026-07-02T23:59:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Dezesseisavos de Final',
+    },
+    // 3 de julho
+    {
+      homeTeamName: '2º Grupo G',
+      awayTeamName: '2º Grupo H',
+      date: new Date('2026-07-03T15:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '1º Grupo H',
+      awayTeamName: '3º Grupo I/J/K/L',
+      date: new Date('2026-07-03T19:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Dezesseisavos de Final',
+    },
+    {
+      homeTeamName: '2º Grupo E',
+      awayTeamName: '2º Grupo F',
+      date: new Date('2026-07-03T22:30:00-03:00'),
+      stadium: 'Levi Stadium',
+      city: 'San Francisco',
+      stage: 'Dezesseisavos de Final',
     },
 
-    // 🏆 FINAL
+    // 🗓️ OITAVAS DE FINAL
+    // 4 de julho
     {
-      homeTeamName: 'Vencedor Semifinal 1',
-      awayTeamName: 'Vencedor Semifinal 2',
+      homeTeamName: 'Vencedor 74',
+      awayTeamName: 'Vencedor 77',
+      date: new Date('2026-07-04T14:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Oitavas de Final',
+    },
+    {
+      homeTeamName: 'Vencedor 73',
+      awayTeamName: 'Vencedor 75',
+      date: new Date('2026-07-04T18:00:00-03:00'),
+      stadium: 'Hard Rock Stadium',
+      city: 'Miami',
+      stage: 'Oitavas de Final',
+    },
+    // 5 de julho
+    {
+      homeTeamName: 'Vencedor 76',
+      awayTeamName: 'Vencedor 78',
+      date: new Date('2026-07-05T17:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Oitavas de Final',
+    },
+    {
+      homeTeamName: 'Vencedor 79',
+      awayTeamName: 'Vencedor 80',
+      date: new Date('2026-07-05T21:00:00-03:00'),
+      stadium: 'Arrowhead Stadium',
+      city: 'Kansas City',
+      stage: 'Oitavas de Final',
+    },
+    // 6 de julho
+    {
+      homeTeamName: 'Vencedor 81',
+      awayTeamName: 'Vencedor 82',
+      date: new Date('2026-07-06T16:00:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Oitavas de Final',
+    },
+    {
+      homeTeamName: 'Vencedor 83',
+      awayTeamName: 'Vencedor 84',
+      date: new Date('2026-07-06T21:00:00-03:00'),
+      stadium: 'BC Place',
+      city: 'Vancouver',
+      stage: 'Oitavas de Final',
+    },
+    // 7 de julho
+    {
+      homeTeamName: 'Vencedor 86',
+      awayTeamName: 'Vencedor 88',
+      date: new Date('2026-07-07T13:00:00-03:00'),
+      stadium: 'Lincoln Financial Field',
+      city: 'Filadélfia',
+      stage: 'Oitavas de Final',
+    },
+    {
+      homeTeamName: 'Vencedor 85',
+      awayTeamName: 'Vencedor 87',
+      date: new Date('2026-07-07T17:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Oitavas de Final',
+    },
+
+    // 🗓️ QUARTAS DE FINAL
+    // 9 de julho
+    {
+      homeTeamName: 'Vencedor 91',
+      awayTeamName: 'Vencedor 93',
+      date: new Date('2026-07-09T17:00:00-03:00'),
+      stadium: 'Gillette Stadium',
+      city: 'Boston',
+      stage: 'Quartas de Final',
+    },
+    // 10 de julho
+    {
+      homeTeamName: 'Vencedor 92',
+      awayTeamName: 'Vencedor 94',
+      date: new Date('2026-07-10T16:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Los Angeles',
+      stage: 'Quartas de Final',
+    },
+    // 11 de julho
+    {
+      homeTeamName: 'Vencedor 95',
+      awayTeamName: 'Vencedor 97',
+      date: new Date('2026-07-11T18:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Quartas de Final',
+    },
+    {
+      homeTeamName: 'Vencedor 96',
+      awayTeamName: 'Vencedor 98',
+      date: new Date('2026-07-11T22:00:00-03:00'),
+      stadium: 'MetLife Stadium',
+      city: 'Nova York/NJ',
+      stage: 'Quartas de Final',
+    },
+
+    // 🗓️ SEMIFINAIS
+    // 14 de julho
+    {
+      homeTeamName: 'Vencedor 99',
+      awayTeamName: 'Vencedor 100',
+      date: new Date('2026-07-14T16:00:00-03:00'),
+      stadium: 'AT&T Stadium',
+      city: 'Dallas',
+      stage: 'Semifinais',
+    },
+    // 15 de julho
+    {
+      homeTeamName: 'Vencedor 101',
+      awayTeamName: 'Vencedor 102',
+      date: new Date('2026-07-15T16:00:00-03:00'),
+      stadium: 'Mercedes-Benz Stadium',
+      city: 'Atlanta',
+      stage: 'Semifinais',
+    },
+
+    // 🗓️ DISPUTA DO TERCEIRO LUGAR
+    // 18 de julho
+    {
+      homeTeamName: 'Perdedor 103',
+      awayTeamName: 'Perdedor 104',
+      date: new Date('2026-07-18T18:00:00-03:00'),
+      stadium: 'Hard Rock Stadium',
+      city: 'Miami',
+      stage: 'Disputa do Terceiro Lugar',
+    },
+
+    // 👑 GRANDE FINAL
+    // 19 de julho
+    {
+      homeTeamName: 'Vencedor 103',
+      awayTeamName: 'Vencedor 104',
       date: new Date('2026-07-19T16:00:00-03:00'),
       stadium: 'MetLife Stadium',
       city: 'Nova York/NJ',
-      stage: 'Final',
+      stage: 'Grande Final',
     },
   ];
 

@@ -71,7 +71,7 @@ export class PredictionsService {
       };
 
       // Determine group name
-      let groupName = 'Fase Final';
+      let groupName = match.stage || 'Fase Final';
       if (match.stage && match.stage.startsWith('Fase de Grupos') && match.homeTeam?.group) {
         groupName = `Grupo ${match.homeTeam.group}`;
       }
