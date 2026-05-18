@@ -60,6 +60,8 @@ services:
       MAIL_PASS: ${MAIL_PASS:?MAIL_PASS is required}
       MAIL_FROM: ${MAIL_FROM:-noreply@copa2026.com}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     ports:
       - "${BACKEND_PORT:-3001}:3001"
     depends_on:
@@ -67,6 +69,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     networks:
       - copa_network
     healthcheck:
@@ -75,6 +79,21 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # ─── Redis Cache ───────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: copa2026_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - copa_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ─── Frontend Next.js ──────────────────────────────────────────────────────
   frontend:

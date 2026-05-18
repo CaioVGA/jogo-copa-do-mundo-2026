@@ -26,6 +26,7 @@ const mockJwt = {
 
 const mockMail = {
   sendOtpEmail: jest.fn().mockResolvedValue(undefined),
+  sendActivationEmail: jest.fn().mockResolvedValue(undefined),
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ const mockUser = {
   name: 'João Silva',
   email: 'joao@example.com',
   passwordHash: '',
+  active: true,
   otpCode: null,
   otpExpiresAt: null,
   createdAt: new Date('2026-01-01'),
@@ -85,8 +87,7 @@ describe('AuthService', () => {
         }),
       );
       expect(result).toEqual({
-        user: expect.objectContaining({ email: dto.email }),
-        token: 'mock-jwt-token',
+        message: 'Conta criada! Verifique seu email para ativar a conta.',
       });
     });
 

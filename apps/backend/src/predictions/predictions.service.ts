@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../prisma/redis.service';
 import { SavePredictionsDto } from './dto/save-predictions.dto';
 
 @Injectable()
 export class PredictionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async getPredictions(userId: string) {
     // 1. Fetch all matches with teams
@@ -128,6 +132,15 @@ export class PredictionsService {
       });
     }
 
+    // Invalida cache de todos os grupos do usuário para atualizar os rankings em tempo real
+    const memberships = await this.prisma.groupMember.findMany({
+      where: { userId },
+      select: { groupId: true },
+    });
+    for (const m of memberships) {
+      await this.redis.del(`group:details:${m.groupId}`);
+    }
+
     return { success: true, message: 'Palpites salvos com sucesso!' };
   }
 
@@ -182,6 +195,9 @@ export class PredictionsService {
         data: { points },
       });
     }
+
+    // Invalida todos os caches de grupos globalmente porque os placares e pontuações mudaram
+    await this.redis.delByPattern('group:details:*');
 
     return { success: true, message: 'Placar atualizado e pontos calculados com sucesso!' };
   }

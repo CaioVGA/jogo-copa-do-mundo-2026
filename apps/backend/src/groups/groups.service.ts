@@ -6,12 +6,16 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../prisma/redis.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
 
 @Injectable()
 export class GroupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   // ─── Geração de código único ──────────────────────────────────────────────
   private generateInviteCode(): string {
@@ -136,11 +140,21 @@ export class GroupsService {
       data: { groupId: group.id, userId },
     });
 
+    await this.redis.del(`group:details:${group.id}`);
+
     return { message: 'Você entrou no grupo com sucesso!', groupId: group.id, groupName: group.name };
   }
 
   // ─── Buscar detalhes de um grupo por ID ───────────────────────────────────
   async getGroupById(groupId: string, userId: string) {
+    const cacheKey = `group:details:${groupId}`;
+    const cachedGroup = await this.redis.get<any>(cacheKey);
+    if (cachedGroup) {
+      const isMember = cachedGroup.members.some((m: any) => m.userId === userId);
+      if (!isMember) throw new ForbiddenException('Você não faz parte deste grupo');
+      return cachedGroup;
+    }
+
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
       include: {
@@ -186,11 +200,15 @@ export class GroupsService {
       },
     });
 
-    return {
+    const result = {
       ...group,
       members: membersWithPoints,
       predictions,
     };
+
+    await this.redis.set(cacheKey, result, 3600); // cache de 1 hora
+
+    return result;
   }
 
   // ─── Sair de um grupo ─────────────────────────────────────────────────────
@@ -213,6 +231,8 @@ export class GroupsService {
       where: { groupId_userId: { groupId, userId } },
     });
 
+    await this.redis.del(`group:details:${groupId}`);
+
     return { message: 'Você saiu do grupo com sucesso' };
   }
 
@@ -223,6 +243,8 @@ export class GroupsService {
     if (group.ownerId !== userId) throw new ForbiddenException('Apenas o criador pode deletar o grupo');
 
     await this.prisma.group.delete({ where: { id: groupId } });
+    await this.redis.del(`group:details:${groupId}`);
+
     return { message: 'Grupo deletado com sucesso' };
   }
 
@@ -245,6 +267,8 @@ export class GroupsService {
     await this.prisma.groupMember.delete({
       where: { groupId_userId: { groupId, userId: memberId } },
     });
+
+    await this.redis.del(`group:details:${groupId}`);
 
     return { message: 'Membro removido com sucesso' };
   }
