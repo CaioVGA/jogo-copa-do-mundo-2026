@@ -4,6 +4,16 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { RedisService } from '../src/prisma/redis.service';
+import { MailService } from '../src/mail/mail.service';
+
+// Mock do nodemailer para evitar disparos SMTP reais em testes E2E
+const mockSendMail = jest.fn().mockResolvedValue({ messageId: 'test-message-id' });
+jest.mock('nodemailer', () => ({
+  createTransport: jest.fn().mockImplementation(() => ({
+    sendMail: mockSendMail,
+  })),
+}));
 
 describe('Auth — Testes de Integração (E2E)', () => {
   let app: INestApplication<App>;
@@ -16,10 +26,24 @@ describe('Auth — Testes de Integração (E2E)', () => {
     confirmPassword: 'Teste@123',
   };
 
+  const mockRedisService = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    del: jest.fn().mockResolvedValue(undefined),
+    delByPattern: jest.fn().mockResolvedValue(undefined),
+    client: {
+      lpush: jest.fn().mockResolvedValue(1),
+      rpop: jest.fn().mockResolvedValue(null),
+    },
+  };
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(RedisService)
+      .useValue(mockRedisService)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -39,17 +63,28 @@ describe('Auth — Testes de Integração (E2E)', () => {
 
   // ─── REGISTER ─────────────────────────────────────────────────────────────
   describe('POST /api/auth/register', () => {
-    it('201 — deve registrar um novo usuário', async () => {
+    it('201 — deve registrar um novo usuário e ativá-lo', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/register')
         .send(testUser)
         .expect(201);
 
-      expect(res.body).toMatchObject({
-        user: { email: testUser.email, name: testUser.name },
-        token: expect.any(String),
+      expect(res.body).toEqual({
+        message: 'Conta criada! Verifique seu email para ativar a conta.',
       });
-      expect(res.body.user).not.toHaveProperty('passwordHash');
+
+      // Busca o token de ativação gerado no banco e ativa a conta para os próximos testes
+      const dbUser = await prisma.user.findUnique({ where: { email: testUser.email } });
+      expect(dbUser).toBeDefined();
+      expect(dbUser.active).toBe(false);
+
+      await request(app.getHttpServer())
+        .post('/api/auth/activate')
+        .send({ token: dbUser.activationToken })
+        .expect(200);
+
+      const activatedUser = await prisma.user.findUnique({ where: { email: testUser.email } });
+      expect(activatedUser.active).toBe(true);
     });
 
     it('409 — deve rejeitar email duplicado', async () => {
@@ -186,6 +221,41 @@ describe('Auth — Testes de Integração (E2E)', () => {
           confirmPassword: 'Diferente@789',
         })
         .expect(400);
+    });
+  });
+
+  // ─── CACHE & IDEMPOTENCY ──────────────────────────────────────────────────
+  describe('Caching & Idempotency', () => {
+    it('deve consultar o cache do Redis ao buscar detalhes de um grupo', async () => {
+      const loginRes = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .send({ email: testUser.email, password: testUser.password });
+      
+      const token = loginRes.body.token;
+      
+      const spyRedisGet = jest.spyOn(mockRedisService, 'get').mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .get('/api/groups/non-existent-group-id')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(spyRedisGet).toHaveBeenCalled();
+    });
+
+    it('deve bloquear envios de email duplicados dentro da janela de 15 segundos (idempotência)', async () => {
+      const mailService = app.get(MailService);
+      const token = 'token-idempotencia-e2e-teste';
+      
+      const spyRedisGet = jest.spyOn(mockRedisService, 'get').mockResolvedValueOnce(null).mockResolvedValueOnce('1');
+      const spySendMail = jest.spyOn(mailService as any, 'processEmail');
+
+      // Primeiro envio
+      await mailService.sendActivationEmail('usuario@teste.com', 'Nome Teste', token);
+      
+      // Segundo envio (deve ser ignorado devido à idempotência)
+      await mailService.sendActivationEmail('usuario@teste.com', 'Nome Teste', token);
+
+      expect(spySendMail).toHaveBeenCalledTimes(1);
     });
   });
 });

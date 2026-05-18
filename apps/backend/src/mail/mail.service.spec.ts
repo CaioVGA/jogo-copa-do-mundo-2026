@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MailService } from './mail.service';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../prisma/redis.service';
 
 // ─── Mock do nodemailer (deve vir antes do import que usa nodemailer) ─────────
 const mockSendMail = jest.fn().mockResolvedValue({ messageId: 'test-message-id' });
@@ -29,11 +30,17 @@ describe('MailService', () => {
     }),
   };
 
+  const mockRedisService = {
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MailService,
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile();
 

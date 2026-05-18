@@ -10,6 +10,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
+    if (process.env.NODE_ENV === 'test') {
+      this.logger.log('Test environment detected. Mocking Redis client internally.');
+      this.client = {
+        get: async () => null,
+        set: async () => 'OK',
+        del: async () => 0,
+        keys: async () => [],
+        lpush: async () => 1,
+        rpop: async () => null,
+        on: () => {},
+        disconnect: () => {},
+      } as any;
+      return;
+    }
+
     const host = this.config.get<string>('REDIS_HOST') || 'localhost';
     const port = this.config.get<number>('REDIS_PORT') || 6379;
 
@@ -75,6 +90,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleDestroy() {
+    if (process.env.NODE_ENV === 'test') {
+      return;
+    }
     if (this.client) {
       this.client.disconnect();
     }
