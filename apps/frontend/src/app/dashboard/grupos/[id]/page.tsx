@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown } from "lucide-react";
 import { groupsApi, teamsApi, predictionsApi } from "@/lib/api";
+import { useToast, useConfirm } from "@/components/ui/toast";
 import type { MatchPredictionData } from "@/lib/api";
 
 type TabType = "geral" | "bolao" | "oraculo" | "participantes";
@@ -14,6 +15,8 @@ const MOCK_ORACLE_QUESTIONS = [
 ];
 
 export default function GroupDetailsPage() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const params = useParams();
   const router = useRouter();
   const groupId = params.id as string;
@@ -128,7 +131,7 @@ export default function GroupDetailsPage() {
     const homeVal = parseInt(scores.home, 10);
     const awayVal = parseInt(scores.away, 10);
     if (isNaN(homeVal) || isNaN(awayVal) || homeVal < 0 || awayVal < 0) {
-      alert("Por favor, preencha placares válidos maiores ou iguais a 0.");
+      toast.warning("Por favor, preencha placares válidos maiores ou iguais a 0.");
       return;
     }
 
@@ -144,9 +147,9 @@ export default function GroupDetailsPage() {
         )
       );
       
-      alert("Palpite salvo com sucesso!");
+      toast.success("Palpite salvo com sucesso!");
     } catch (err: any) {
-      alert(err.message || "Erro ao salvar palpite.");
+      toast.error(err.message || "Erro ao salvar palpite.");
     } finally {
       setSavingMatchId(null);
     }
@@ -816,12 +819,14 @@ export default function GroupDetailsPage() {
                       return (
                         <div key={member.id} className="flex items-center justify-between py-4 group/item">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center font-bold text-white shadow-inner relative shrink-0 overflow-hidden">
-                              {member.user.avatar ? (
-                                <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
-                              ) : (
-                                member.user.name.charAt(0).toUpperCase()
-                              )}
+                            <div className="relative w-10 h-10 shrink-0">
+                              <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center font-bold text-white shadow-inner overflow-hidden">
+                                {member.user.avatar ? (
+                                  <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  member.user.name.charAt(0).toUpperCase()
+                                )}
+                              </div>
                               {isOwner && (
                                 <div className="absolute -top-2.5 -right-1 bg-gradient-to-r from-[#ffd700] to-[#f5c800] p-1 rounded-full shadow-lg border border-black/20 z-10" title="Criador do Grupo">
                                   <Crown className="w-3 h-3 text-[#0d2b1a]" />
@@ -849,13 +854,14 @@ export default function GroupDetailsPage() {
                           {isGroupCreator && !isOwner && (
                             <button
                               onClick={async () => {
-                                if (confirm(`Deseja mesmo remover o participante ${member.user.name} do grupo?`)) {
+                                const ok = await confirm(`Deseja mesmo remover o participante ${member.user.name} do grupo?`, "Remover Participante");
+                                if (ok) {
                                   try {
                                     await groupsApi.removeMember(groupId, member.userId);
-                                    alert("Membro removido com sucesso!");
+                                    toast.success("Membro removido com sucesso!");
                                     window.location.reload();
                                   } catch (err: any) {
-                                    alert(err.message || "Erro ao remover membro");
+                                    toast.error(err.message || "Erro ao remover membro");
                                   }
                                 }
                               }}
@@ -899,7 +905,7 @@ export default function GroupDetailsPage() {
                   <button 
                     onClick={() => {
                       navigator.clipboard.writeText(group.inviteCode);
-                      alert("Código copiado para a área de transferência!");
+                      toast.success("Código copiado para a área de transferência!");
                     }}
                     className="copa-btn-primary px-5 py-2.5 text-xs font-black shadow-lg shadow-[#ffd700]/15 rounded-xl cursor-pointer"
                   >
@@ -1154,7 +1160,7 @@ export default function GroupDetailsPage() {
                   <button 
                     onClick={() => {
                       navigator.clipboard.writeText(group.inviteCode);
-                      alert("Código copiado para a área de transferência!");
+                      toast.success("Código copiado para a área de transferência!");
                     }}
                     className="copa-btn-primary px-4 py-2.5 text-xs shadow-md"
                   >

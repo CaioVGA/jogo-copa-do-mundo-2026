@@ -241,6 +241,8 @@ export interface UserProfileResponse {
   email: string;
   avatar: string | null;
   role: string;
+  active: boolean;
+  createdAt: string;
 }
 
 export interface UpdateProfilePayload {
@@ -255,6 +257,15 @@ export const usersApi = {
 
   updateProfile: (data: UpdateProfilePayload) =>
     api.put<UserProfileResponse>("/users/profile", data).then((r) => r.data),
+
+  getAllUsers: () =>
+    api.get<UserProfileResponse[]>("/users").then((r) => r.data),
+
+  updateUserRole: (id: string, role: string) =>
+    api.put<UserProfileResponse>(`/users/${id}/role`, { role }).then((r) => r.data),
+
+  updateUserActiveStatus: (id: string, active: boolean) =>
+    api.put<UserProfileResponse>(`/users/${id}/active`, { active }).then((r) => r.data),
 };
 
 export default api;

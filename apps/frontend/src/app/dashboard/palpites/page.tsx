@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert } from "lucide-react";
 import { predictionsApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
 
 const ALL_GROUPS = [
   "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
@@ -13,6 +14,7 @@ const ALL_GROUPS = [
 const ITEMS_PER_PAGE = 9;
 
 export default function CopaGamesPage() {
+  const toast = useToast();
   const [grouped, setGrouped] = useState<Record<string, MatchPredictionData[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +76,7 @@ export default function CopaGamesPage() {
     const homeVal = parseInt(editHomeScore, 10);
     const awayVal = parseInt(editAwayScore, 10);
     if (isNaN(homeVal) || isNaN(awayVal) || homeVal < 0 || awayVal < 0) {
-      alert("Por favor, insira placares válidos maiores ou iguais a 0.");
+      toast.warning("Por favor, insira placares válidos maiores ou iguais a 0.");
       return;
     }
 
@@ -85,8 +87,9 @@ export default function CopaGamesPage() {
       const data = await predictionsApi.getPredictions();
       setGrouped(data);
       setEditingMatchId(null);
+      toast.success("Placar oficial salvo com sucesso!");
     } catch (err: any) {
-      alert(err.message || "Falha ao salvar o placar oficial.");
+      toast.error(err.message || "Falha ao salvar o placar oficial.");
     } finally {
       setSubmittingMatchId(null);
     }

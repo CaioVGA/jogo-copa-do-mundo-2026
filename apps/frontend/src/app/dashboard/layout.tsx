@@ -3,14 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Home, Trophy, Settings, Users, CalendarDays, Sparkles } from "lucide-react";
-
-const navItems = [
-  { href: "/dashboard", label: "Visão Geral", icon: Home, exact: true },
-  { href: "/dashboard/palpites", label: "Jogos", icon: CalendarDays },
-  { href: "/dashboard/grupos", label: "Grupos", icon: Users },
-  { href: "/dashboard/configuracoes", label: "Configurações", icon: Settings },
-];
+import { LogOut, Home, Trophy, Settings, Users, CalendarDays, Sparkles, ShieldCheck } from "lucide-react";
+import { usersApi } from "@/lib/api";
 
 function handleLogout() {
   if (typeof window !== "undefined") {
@@ -22,9 +16,33 @@ function handleLogout() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null; role?: string } | null>(null);
+
+  const isAdmin = user?.role === "ADMIN";
+
+  const dynamicNavItems = [
+    { href: "/dashboard", label: "Visão Geral", icon: Home, exact: true },
+    { href: "/dashboard/palpites", label: "Jogos", icon: CalendarDays },
+    { href: "/dashboard/grupos", label: "Grupos", icon: Users },
+    ...(isAdmin
+      ? [{ href: "/dashboard/gerenciamento", label: "Gerenciamento", icon: ShieldCheck }]
+      : []),
+    { href: "/dashboard/configuracoes", label: "Configurações", icon: Settings },
+  ];
 
   useEffect(() => {
+    async function syncProfile() {
+      try {
+        const profile = await usersApi.getProfile();
+        setUser(profile);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("copa_user", JSON.stringify(profile));
+        }
+      } catch (e) {
+        console.error("Erro ao sincronizar perfil:", e);
+      }
+    }
+
     function loadUser() {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem("copa_user");
@@ -39,6 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     loadUser();
+    syncProfile();
 
     // Ouvir atualizações de perfil em tempo real
     window.addEventListener("user-profile-updated", loadUser);
@@ -75,7 +94,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Navigation Items */}
         <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto relative scrollbar-thin">
-          {navItems.map((item) => {
+          {dynamicNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
             return (
@@ -114,7 +133,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white truncate group-hover/user:text-[#ffd700] transition-colors">{user.name}</p>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <p className="text-xs font-bold text-white truncate group-hover/user:text-[#ffd700] transition-colors">{user.name}</p>
+                  {user.role === "ADMIN" && (
+                    <span className="text-[8px] font-black tracking-wide uppercase px-1.5 py-0.5 rounded bg-[#ffd700]/10 border border-[#ffd700]/25 text-[#ffd700] shrink-0">
+                      Admin
+                    </span>
+                  )}
+                </div>
                 <p className="text-[10px] text-white/40 truncate">{user.email}</p>
               </div>
             </div>
@@ -143,7 +169,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
         </div>
         <nav className="flex items-center gap-1.5">
-          {navItems.map((item) => {
+          {dynamicNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
             return (

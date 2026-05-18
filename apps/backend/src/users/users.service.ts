@@ -56,4 +56,29 @@ export class UsersService {
     const { passwordHash, ...safeUser } = updatedUser;
     return safeUser;
   }
+
+  async findAll() {
+    const users = await this.prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return users.map(({ passwordHash, ...user }) => user);
+  }
+
+  async updateUserRole(id: string, role: string) {
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { role },
+    });
+    const { passwordHash, ...user } = updated;
+    return user;
+  }
+
+  async updateUserActiveStatus(id: string, active: boolean) {
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { active },
+    });
+    const { passwordHash, ...user } = updated;
+    return user;
+  }
 }

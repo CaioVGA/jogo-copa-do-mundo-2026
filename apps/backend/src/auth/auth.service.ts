@@ -161,7 +161,7 @@ export class AuthService {
     return this.jwtService.sign({ sub: userId, email });
   }
 
-  private sanitizeUser(user: { id: string; name: string; email: string; role: string; createdAt: Date }) {
-    return { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt };
+  private sanitizeUser(user: { id: string; name: string; email: string; role: string; avatar: string | null; createdAt: Date }) {
+    return { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, createdAt: user.createdAt };
   }
 }
