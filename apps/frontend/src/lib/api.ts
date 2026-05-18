@@ -68,6 +68,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  role: string;
   createdAt: string;
 }
 
@@ -96,6 +97,11 @@ export const authApi = {
   resetPassword: (data: ResetPasswordPayload) =>
     api
       .post<{ message: string }>("/auth/reset-password", data)
+      .then((r) => r.data),
+
+  activate: (token: string) =>
+    api
+      .post<{ message: string }>("/auth/activate", { token })
       .then((r) => r.data),
 };
 
@@ -157,6 +163,98 @@ export const groupsApi = {
 
   deleteGroup: (groupId: string) =>
     api.delete<{ message: string }>(`/groups/${groupId}`).then((r) => r.data),
+
+  getOraclePredictions: (groupId: string) =>
+    api
+      .get<{ groups: Record<string, any[]>; hasPredictions: boolean }>(`/groups/${groupId}/oracle`)
+      .then((r) => r.data),
+
+  saveOraclePredictions: (
+    groupId: string,
+    predictions: { groupName: string; teamOrder: string[] }[]
+  ) =>
+    api
+      .post<{ message: string }>(`/groups/${groupId}/oracle`, { groupPredictions: predictions })
+      .then((r) => r.data),
+
+  removeMember: (groupId: string, memberId: string) =>
+    api.delete<{ message: string }>(`/groups/${groupId}/members/${memberId}`).then((r) => r.data),
+};
+
+// ─── Teams endpoints ───────────────────────────────────────────────────────
+ 
+export interface TeamData {
+  code: string;
+  name: string;
+  flag: string | null;
+}
+
+export const teamsApi = {
+  getTeams: () =>
+    api.get<TeamData[]>("/teams").then((r) => r.data),
+};
+
+// ─── Predictions endpoints ──────────────────────────────────────────────────
+
+export interface MatchPredictionData {
+  id: string;
+  date: string;
+  stadium: string | null;
+  city: string | null;
+  stage: string;
+  status: string;
+  realHomeScore: number | null;
+  realAwayScore: number | null;
+  predictedHomeScore: number | null;
+  predictedAwayScore: number | null;
+  pointsEarned: number;
+  homeTeam: {
+    name: string;
+    code: string;
+    flag: string | null;
+    group: string | null;
+  };
+  awayTeam: {
+    name: string;
+    code: string;
+    flag: string | null;
+    group: string | null;
+  };
+}
+
+export const predictionsApi = {
+  getPredictions: () =>
+    api.get<Record<string, MatchPredictionData[]>>("/predictions").then((r) => r.data),
+
+  savePredictions: (predictions: { matchId: string; homeScore: number; awayScore: number }[]) =>
+    api.post<{ success: boolean; message: string }>("/predictions", { predictions }).then((r) => r.data),
+
+  updateMatchScore: (matchId: string, homeScore: number, awayScore: number) =>
+    api.post<{ success: boolean; message: string }>(`/predictions/matches/${matchId}/score`, { homeScore, awayScore }).then((r) => r.data),
+};
+
+// ─── Users endpoints ───────────────────────────────────────────────────────
+
+export interface UserProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  role: string;
+}
+
+export interface UpdateProfilePayload {
+  name?: string;
+  password?: string;
+  avatar?: string | null;
+}
+
+export const usersApi = {
+  getProfile: () =>
+    api.get<UserProfileResponse>("/users/profile").then((r) => r.data),
+
+  updateProfile: (data: UpdateProfilePayload) =>
+    api.put<UserProfileResponse>("/users/profile", data).then((r) => r.data),
 };
 
 export default api;

@@ -49,7 +49,7 @@ export class GroupsService {
       },
       include: {
         owner: { select: { id: true, name: true } },
-        members: { include: { user: { select: { id: true, name: true } } } },
+        members: { include: { user: { select: { id: true, name: true, avatar: true } } } },
         _count: { select: { members: true } },
       },
     });
@@ -146,7 +146,7 @@ export class GroupsService {
       include: {
         owner: { select: { id: true, name: true } },
         members: {
-          include: { user: { select: { id: true, name: true } } },
+          include: { user: { select: { id: true, name: true, avatar: true } } },
           orderBy: { joinedAt: 'asc' },
         },
       },
@@ -157,7 +157,40 @@ export class GroupsService {
     const isMember = group.members.some((m) => m.userId === userId);
     if (!isMember) throw new ForbiddenException('Você não faz parte deste grupo');
 
-    return group;
+    // Calcula os pontos reais acumulados para cada membro baseado em suas predições
+    const membersWithPoints = await Promise.all(
+      group.members.map(async (member) => {
+        const pointsAggregate = await this.prisma.matchPrediction.aggregate({
+          where: { userId: member.userId },
+          _sum: { points: true },
+        });
+
+        return {
+          ...member,
+          points: pointsAggregate._sum.points || 0,
+        };
+      }),
+    );
+
+    // Busca todas as previsões de jogos feitas pelos membros do grupo
+    const memberIds = group.members.map((m) => m.userId);
+    const predictions = await this.prisma.matchPrediction.findMany({
+      where: { userId: { in: memberIds } },
+      select: {
+        userId: true,
+        matchId: true,
+        homeScore: true,
+        awayScore: true,
+        points: true,
+        user: { select: { name: true } },
+      },
+    });
+
+    return {
+      ...group,
+      members: membersWithPoints,
+      predictions,
+    };
   }
 
   // ─── Sair de um grupo ─────────────────────────────────────────────────────
@@ -191,5 +224,28 @@ export class GroupsService {
 
     await this.prisma.group.delete({ where: { id: groupId } });
     return { message: 'Grupo deletado com sucesso' };
+  }
+
+  // ─── Remover membro (somente dono) ──────────────────────────────────────────
+  async removeMember(groupId: string, memberId: string, ownerId: string) {
+    const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+    if (!group) throw new NotFoundException('Grupo não encontrado');
+    if (group.ownerId !== ownerId) {
+      throw new ForbiddenException('Apenas o criador do grupo pode remover membros');
+    }
+    if (memberId === ownerId) {
+      throw new BadRequestException('Você não pode se remover do grupo. Delete o grupo para encerrá-lo.');
+    }
+
+    const membership = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId: memberId } },
+    });
+    if (!membership) throw new NotFoundException('O usuário não faz parte deste grupo');
+
+    await this.prisma.groupMember.delete({
+      where: { groupId_userId: { groupId, userId: memberId } },
+    });
+
+    return { message: 'Membro removido com sucesso' };
   }
 }

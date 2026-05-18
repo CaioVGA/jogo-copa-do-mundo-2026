@@ -1,18 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { loginSchema, LoginFormData } from "@/lib/validations";
 import { authApi } from "@/lib/api";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const registered = searchParams.get("registered") === "true";
+  const activated = searchParams.get("activated") === "true";
 
   const {
     register,
@@ -49,6 +53,22 @@ export default function LoginPage() {
             data-testid="login-error"
           >
             {apiError}
+          </div>
+        )}
+
+        {/* Mensagem de conta criada */}
+        {registered && !apiError && (
+          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm text-center">
+            Conta criada com sucesso! 🏆 <br />
+            Por favor, <strong>verifique seu e-mail</strong> para ativar sua conta antes de entrar.
+          </div>
+        )}
+
+        {/* Mensagem de conta ativada */}
+        {activated && !apiError && (
+          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm text-center">
+            Sua conta foi ativada com sucesso! 🎉 <br />
+            Você já pode fazer o seu login abaixo.
           </div>
         )}
 
@@ -165,5 +185,19 @@ export default function LoginPage() {
         </p>
       </form>
     </AuthCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <AuthCard title="Carregando" subtitle="Aguarde um momento" badge="Copa 2026">
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#ffd700]" />
+        </div>
+      </AuthCard>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -1,11 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy, Calendar, Users, Activity, Star } from "lucide-react";
+import { Trophy, Calendar, Users, Activity, Star, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { predictionsApi } from "@/lib/api";
+import type { MatchPredictionData } from "@/lib/api";
+
+const GROUPS_LIST = [
+  "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
+  "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L"
+];
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("Jogador");
   const [loading, setLoading] = useState(true);
+  const [gamesData, setGamesData] = useState<Record<string, MatchPredictionData[]>>({});
+  const [allGames, setAllGames] = useState<MatchPredictionData[]>([]);
+  const [upcomingGames, setUpcomingGames] = useState<MatchPredictionData[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState("Grupo A");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -16,109 +28,463 @@ export default function DashboardPage() {
           if (user?.name) setUserName(user.name.split(" ")[0]);
         } catch (e) {}
       }
-      setLoading(false);
     }
+
+    async function loadDashboardData() {
+      try {
+        const data = await predictionsApi.getPredictions();
+        setGamesData(data);
+
+        const allMatches: MatchPredictionData[] = [];
+        Object.values(data).forEach((groupMatches) => {
+          allMatches.push(...groupMatches);
+        });
+
+        // Ordenar confrontos em ordem estritamente crescente de data/hora
+        allMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setAllGames(allMatches);
+
+        // Jogos que não foram finalizados
+        const upcoming = allMatches.filter((m) => m.status !== "FINISHED");
+        setUpcomingGames(upcoming.length > 0 ? upcoming.slice(0, 5) : allMatches.slice(0, 5));
+      } catch (err) {
+        console.error("Erro ao carregar confrontos para o dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
   }, []);
 
+  // Calcular classificação do grupo selecionado
+  const standings = (() => {
+    const matches = gamesData[selectedGroup] || [];
+    const table: Record<string, {
+      code: string;
+      name: string;
+      flag: string | null;
+      played: number;
+      won: number;
+      drawn: number;
+      lost: number;
+      points: number;
+      gf: number;
+      ga: number;
+      gd: number;
+    }> = {};
+
+    matches.forEach((match) => {
+      const homeCode = match.homeTeam.code;
+      const awayCode = match.awayTeam.code;
+
+      if (!table[homeCode]) {
+        table[homeCode] = {
+          code: homeCode,
+          name: match.homeTeam.name,
+          flag: match.homeTeam.flag,
+          played: 0, won: 0, drawn: 0, lost: 0, points: 0, gf: 0, ga: 0, gd: 0
+        };
+      }
+      if (!table[awayCode]) {
+        table[awayCode] = {
+          code: awayCode,
+          name: match.awayTeam.name,
+          flag: match.awayTeam.flag,
+          played: 0, won: 0, drawn: 0, lost: 0, points: 0, gf: 0, ga: 0, gd: 0
+        };
+      }
+
+      const hScore = match.realHomeScore;
+      const aScore = match.realAwayScore;
+
+      if (hScore !== null && aScore !== null) {
+        table[homeCode].played += 1;
+        table[awayCode].played += 1;
+        table[homeCode].gf += hScore;
+        table[homeCode].ga += aScore;
+        table[awayCode].gf += aScore;
+        table[awayCode].ga += hScore;
+
+        if (hScore > aScore) {
+          table[homeCode].won += 1;
+          table[homeCode].points += 3;
+          table[awayCode].lost += 1;
+        } else if (hScore < aScore) {
+          table[awayCode].won += 1;
+          table[awayCode].points += 3;
+          table[homeCode].lost += 1;
+        } else {
+          table[homeCode].drawn += 1;
+          table[homeCode].points += 1;
+          table[awayCode].drawn += 1;
+          table[awayCode].points += 1;
+        }
+      }
+    });
+
+    // Calcular diferença de gols
+    Object.keys(table).forEach((code) => {
+      table[code].gd = table[code].gf - table[code].ga;
+    });
+
+    return Object.values(table).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.gd !== a.gd) return b.gd - a.gd;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.name.localeCompare(b.name);
+    });
+  })();
+
+  // Estatísticas do Usuário
+  const totalPointsEarned = allGames.reduce((acc, g) => acc + (g.pointsEarned || 0), 0);
+  const totalPredictionsMade = allGames.filter((g) => g.predictedHomeScore !== null).length;
+  const todayStr = new Date().toDateString();
+  const gamesTodayCount = allGames.filter((g) => new Date(g.date).toDateString() === todayStr).length;
+
   const stats = [
-    { title: "Meus Palpites", value: "0", icon: Trophy, color: "text-[#ffd700]", bg: "bg-[#ffd700]/10" },
-    { title: "Pontuação", value: "0", icon: Star, color: "text-emerald-400", bg: "bg-emerald-400/10" },
-    { title: "Jogos Hoje", value: "0", icon: Calendar, color: "text-blue-400", bg: "bg-blue-400/10" },
-    { title: "Posição Global", value: "-", icon: Activity, color: "text-purple-400", bg: "bg-purple-400/10" },
+    { title: "Jogos da Copa", value: String(allGames.length || 104), icon: CalendarDays, color: "text-[#ffd700]", bg: "bg-[#ffd700]/10" },
+    { title: "Meus Palpites", value: String(totalPredictionsMade), icon: Star, color: "text-blue-400", bg: "bg-blue-400/10" },
+    { title: "Meus Pontos", value: String(totalPointsEarned), icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+    { title: "Jogos Hoje", value: String(gamesTodayCount), icon: Calendar, color: "text-purple-400", bg: "bg-purple-400/10" },
   ];
 
   if (loading) {
-    return <div className="animate-pulse flex space-x-4">Carregando...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <Loader2 className="w-10 h-10 text-[#ffd700] animate-spin" />
+        <p className="text-white/60 text-sm font-semibold">Carregando painel geral...</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-            Olá, <span className="text-[#ffd700]">{userName}</span>! 👋
+      <div className="relative p-6 md:p-8 rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-r from-[#0d2b1a]/40 via-[#0a0f1e]/40 to-transparent flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+        <div className="absolute -left-12 -top-12 w-48 h-48 bg-[#2d8a50]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-12 bottom-0 w-32 h-32 bg-[#ffd700]/5 rounded-full blur-2xl pointer-events-none" />
+        
+        <div className="relative z-10">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+            Olá, <span className="text-[#ffd700] bg-gradient-to-r from-[#ffd700] to-[#f5c800] bg-clip-text text-transparent">{userName}</span>! 👋
           </h1>
-          <p className="text-white/60 mt-1">
-            Bem-vindo ao seu painel de controle da Copa 2026.
+          <p className="text-white/60 mt-2 text-sm md:text-base max-w-xl leading-relaxed">
+            Bem-vindo ao seu painel de controle da Copa 2026. Acompanhe seus palpites, classificação geral e o calendário do torneio.
           </p>
         </div>
-        <button className="copa-btn-primary px-6 py-3 text-sm inline-flex items-center gap-2 max-w-fit shadow-lg shadow-[#ffd700]/20">
-          <Trophy className="w-4 h-4" />
-          Fazer novo palpite
-        </button>
+        
+        <Link 
+          href="/dashboard/palpites"
+          className="copa-btn-primary px-7 py-3.5 text-sm inline-flex items-center gap-2 max-w-fit shadow-xl shadow-[#ffd700]/15 hover:scale-102 transition-all duration-300 relative z-10"
+        >
+          <CalendarDays className="w-4.5 h-4.5" />
+          Fazer Palpites
+        </Link>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => {
           const Icon = stat.icon;
+          const cardThemes = [
+            "hover:bg-[#ffd700]/5 hover:border-[#ffd700]/30 shadow-[0_4px_24px_-8px_rgba(255,215,0,0.08)]",
+            "hover:bg-blue-500/5 hover:border-blue-500/30 shadow-[0_4px_24px_-8px_rgba(59,130,246,0.08)]",
+            "hover:bg-emerald-500/5 hover:border-emerald-500/30 shadow-[0_4px_24px_-8px_rgba(16,185,129,0.08)]",
+            "hover:bg-purple-500/5 hover:border-purple-500/30 shadow-[0_4px_24px_-8px_rgba(139,92,246,0.08)]",
+          ];
+          
           return (
             <div 
               key={idx}
-              className="auth-card p-6 border border-white/10 hover:border-white/20 transition-all flex items-start justify-between"
-              style={{ animationDelay: `${idx * 0.1}s` }}
+              className={`auth-card p-5 border border-white/5 hover:border-white/20 transition-all duration-300 flex items-center justify-between bg-[#0a0f1e]/40 hover:-translate-y-1.5 ${cardThemes[idx]}`}
+              style={{ animationDelay: `${idx * 0.08}s` }}
             >
-              <div>
-                <p className="text-sm font-medium text-white/50 mb-1">{stat.title}</p>
-                <h3 className="text-3xl font-bold text-white">{stat.value}</h3>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{stat.title}</p>
+                <h3 className="text-3xl font-black text-white tracking-tight">{stat.value}</h3>
               </div>
-              <div className={`p-3 rounded-xl ${stat.bg}`}>
-                <Icon className={`w-6 h-6 ${stat.color}`} />
+              <div className={`p-3 rounded-2xl ${stat.bg} shrink-0 shadow-inner border border-white/5`}>
+                <Icon className={`w-5 h-5 ${stat.color}`} />
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Main Sections */}
+      {/* Main Grid: Próximos Jogos & Tabela de Grupos ao Lado */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Próximos Jogos */}
-        <div className="lg:col-span-2 auth-card p-6 border border-white/10">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-[#ffd700]" />
-              Próximos Jogos
-            </h2>
-            <button className="text-sm copa-link">Ver todos</button>
-          </div>
-          
-          <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-white/10 rounded-2xl bg-white/5">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-              <Activity className="w-8 h-8 text-white/30" />
+        
+        {/* Próximos Jogos Panel */}
+        <div className="lg:col-span-2 auth-card p-6 border border-white/5 bg-[#0a0f1e]/40 space-y-6">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div>
+              <h2 className="text-xl font-black text-white flex items-center gap-2.5">
+                <Calendar className="w-5 h-5 text-[#ffd700]" />
+                Próximos Jogos
+              </h2>
+              <p className="text-xs text-white/45 mt-1">Os próximos 5 confrontos agendados no torneio</p>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">Nenhum jogo em breve</h3>
-            <p className="text-white/50 max-w-sm">
-              Os próximos jogos do mundial ainda não estão disponíveis para palpites.
-            </p>
+            <Link href="/dashboard/palpites" className="text-xs font-bold text-[#ffd700] hover:underline flex items-center gap-1 group">
+              Ver todos <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+            </Link>
           </div>
+
+          {upcomingGames.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.02]">
+              <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                <Activity className="w-6 h-6 text-white/30" />
+              </div>
+              <h3 className="text-base font-semibold text-white mb-2">Nenhum jogo em breve</h3>
+              <p className="text-xs text-white/50 max-w-sm">
+                Todos os jogos do torneio foram concluídos ou não estão disponíveis.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {upcomingGames.map((game) => {
+                const isFinished = game.status === "FINISHED";
+                const hasPredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null;
+                const gameDate = new Date(game.date);
+
+                return (
+                  <div 
+                    key={game.id} 
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4.5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-[#ffd700]/20 transition-all duration-300"
+                  >
+                    <div className="flex flex-col gap-2 min-w-0">
+                      <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 uppercase tracking-wider">
+                        {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      
+                      <div className="flex items-center gap-3.5 mt-0.5">
+                        {/* Home Team */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/30 flex items-center justify-center text-[8px] font-black shadow-md">
+                            {game.homeTeam.flag ? (
+                              <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
+                            ) : (
+                              game.homeTeam.code
+                            )}
+                          </div>
+                          <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none">{game.homeTeam.name}</span>
+                        </div>
+
+                        <span className="text-[10px] font-black text-white/20 shrink-0">VS</span>
+
+                        {/* Away Team */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/30 flex items-center justify-center text-[8px] font-black shadow-md">
+                            {game.awayTeam.flag ? (
+                              <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
+                            ) : (
+                              game.awayTeam.code
+                            )}
+                          </div>
+                          <span className="font-bold text-xs sm:text-sm text-white truncate max-w-[100px] sm:max-w-none">{game.awayTeam.name}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                      {isFinished ? (
+                        <div className="text-right shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">
+                          <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Resultado</p>
+                          <p className="text-sm font-black text-white mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
+                        </div>
+                      ) : (
+                        <div className="text-right shrink-0 bg-black/40 border border-white/5 px-3 py-1.5 rounded-xl shadow-inner min-w-[70px]">
+                          {hasPredicted ? (
+                            <>
+                              <p className="text-[9px] font-bold text-[#ffd700] uppercase tracking-widest">Palpite</p>
+                              <p className="text-sm font-black text-white mt-0.5">{game.predictedHomeScore} - {game.predictedAwayScore}</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Palpite</p>
+                              <Link href="/dashboard/palpites" className="text-[10px] font-bold text-[#ffd700] hover:underline block mt-0.5">
+                                Palpitar
+                              </Link>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Ranking Resumo */}
-        <div className="auth-card p-6 border border-white/10">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-[#ffd700]" />
-              Top Ranking
+        {/* Standings Group Panel */}
+        <div className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 space-y-5 self-start">
+          <div className="border-b border-white/5 pb-4">
+            <h2 className="text-lg font-black text-white flex items-center gap-2.5">
+              <Trophy className="w-5 h-5 text-[#ffd700]" />
+              Tabela do Grupo
             </h2>
-            <button className="text-sm copa-link">Completo</button>
+            <p className="text-xs text-white/45 mt-1">Classificação ao vivo das seleções</p>
           </div>
-          
-          <div className="space-y-4">
-            {[1, 2, 3].map((pos) => (
-              <div key={pos} className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${pos === 1 ? 'bg-[#ffd700] text-[#0d2b1a]' : 'bg-white/10 text-white'}`}>
-                  {pos}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">Jogador Oculto</p>
-                  <p className="text-xs text-white/50">0 pts</p>
-                </div>
-              </div>
-            ))}
+  
+          {/* Group Selector with Next / Prev buttons */}
+          <div className="flex items-center gap-2 bg-black/20 p-1.5 rounded-2xl border border-white/5">
+            <button
+              onClick={() => {
+                const currentIndex = GROUPS_LIST.indexOf(selectedGroup);
+                if (currentIndex > 0) {
+                  setSelectedGroup(GROUPS_LIST[currentIndex - 1]);
+                }
+              }}
+              disabled={selectedGroup === "Grupo A"}
+              className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-white hover:border-[#ffd700]/30 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/5 transition-all shrink-0 flex items-center justify-center cursor-pointer"
+              title="Grupo Anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+  
+            <div className="relative flex-1">
+              <select
+                value={selectedGroup}
+                onChange={(e) => setSelectedGroup(e.target.value)}
+                className="w-full appearance-none bg-transparent hover:border-transparent rounded-xl px-4 py-2 text-xs font-black text-white outline-none cursor-pointer text-center pr-8"
+              >
+                {GROUPS_LIST.map((g) => (
+                  <option key={g} value={g} className="bg-[#0b1c11] text-white">
+                    {g}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-4 h-4 text-white/40 absolute right-3 top-2 pointer-events-none" />
+            </div>
+  
+            <button
+              onClick={() => {
+                const currentIndex = GROUPS_LIST.indexOf(selectedGroup);
+                if (currentIndex < GROUPS_LIST.length - 1) {
+                  setSelectedGroup(GROUPS_LIST[currentIndex + 1]);
+                }
+              }}
+              disabled={selectedGroup === "Grupo L"}
+              className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-white hover:border-[#ffd700]/30 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/5 transition-all shrink-0 flex items-center justify-center cursor-pointer"
+              title="Próximo Grupo"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
+  
+          {/* Standings Table */}
+          <div className="overflow-hidden border border-white/5 rounded-2xl bg-black/10">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-black/35 border-b border-white/5 text-[9px] font-bold uppercase text-white/40 tracking-wider">
+                  <th className="py-2.5 px-3 text-center w-10">Pos</th>
+                  <th className="py-2.5 px-2">Seleção</th>
+                  <th className="py-2.5 px-2 text-center w-8">J</th>
+                  <th className="py-2.5 px-2 text-center w-10">SG</th>
+                  <th className="py-2.5 px-3 text-center w-12">Pts</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {standings.map((team, index) => {
+                  const isTop2 = index < 2;
+                  const isThird = index === 2;
+ 
+                  return (
+                    <tr 
+                      key={team.code} 
+                      className={`hover:bg-white/5 transition-all duration-200 border-l-2 ${
+                        isTop2 
+                          ? "bg-emerald-500/[0.02] border-l-emerald-500/40" 
+                          : isThird 
+                          ? "bg-blue-500/[0.02] border-l-blue-500/40" 
+                          : "border-l-transparent"
+                      }`}
+                    >
+                      {/* Position Badge */}
+                      <td className="py-3 px-3 text-center shrink-0">
+                        <span className={`inline-flex w-4.5 h-4.5 items-center justify-center rounded-full font-black text-[9px] ${
+                          isTop2 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]" :
+                          isThird ? "bg-blue-500/20 text-blue-400 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]" :
+                          "bg-white/5 text-white/40"
+                        }`}>
+                          {index + 1}
+                        </span>
+                      </td>
+ 
+                      {/* Team Info */}
+                      <td className="py-3 px-2 font-bold">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/40 flex items-center justify-center font-bold text-[6px] shadow-sm">
+                            {team.flag ? (
+                              <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                            ) : (
+                              team.code
+                            )}
+                          </div>
+                          <span className="text-white truncate max-w-[85px] sm:max-w-none text-xs">{team.name}</span>
+                        </div>
+                      </td>
+ 
+                      {/* Played */}
+                      <td className="py-3 px-2 text-center font-semibold text-white/70">{team.played}</td>
+ 
+                      {/* Goal Difference */}
+                      <td className={`py-3 px-2 text-center font-black text-xs ${
+                        team.gd > 0 ? "text-emerald-400" : team.gd < 0 ? "text-red-400" : "text-white/40"
+                      }`}>
+                        {team.gd > 0 ? `+${team.gd}` : team.gd}
+                      </td>
+ 
+                      {/* Points */}
+                      <td className="py-3 px-3 text-center shrink-0">
+                        <span className="font-black text-[#ffd700] text-xs">{team.points}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+  
+          {/* Information legend */}
+          <div className="flex items-center justify-between text-[9px] text-white/30 px-1 border-t border-white/5 pt-2">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(74,222,128,0.5)]" /> Classificados
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.5)]" /> Repescagem
+            </span>
+          </div>
+  
         </div>
+ 
+
+
       </div>
     </div>
   );
 }
+
+const Loader2 = ({ className }: { className?: string }) => (
+  <svg 
+    className={className} 
+    xmlns="http://www.w3.org/2000/svg" 
+    fill="none" 
+    viewBox="0 0 24 24"
+  >
+    <circle 
+      className="opacity-25" 
+      cx="12" 
+      cy="12" 
+      r="10" 
+      stroke="currentColor" 
+      strokeWidth="4"
+    />
+    <path 
+      className="opacity-75" 
+      fill="currentColor" 
+      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    />
+  </svg>
+);

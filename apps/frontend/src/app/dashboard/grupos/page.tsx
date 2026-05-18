@@ -59,44 +59,48 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
   return (
     <div 
       onClick={() => router.push(`/dashboard/grupos/${group.id}`)}
-      className="auth-card p-5 border border-white/10 hover:border-white/20 transition-all group cursor-pointer"
+      className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 hover:bg-[#0d2b1a]/15 hover:border-[#ffd700]/25 transition-all hover:scale-102 hover:shadow-xl hover:shadow-[#ffd700]/5 duration-300 group cursor-pointer"
     >
       {/* Top row */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-            isOwner ? "bg-[#ffd700]/15 border border-[#ffd700]/25" : "bg-blue-400/15 border border-blue-400/25"
+          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md transition-all duration-300 group-hover:scale-105 ${
+            isOwner 
+              ? "bg-gradient-to-br from-[#ffd700]/20 to-[#f5c800]/5 border border-[#ffd700]/25 shadow-[#ffd700]/5" 
+              : "bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/25 shadow-blue-500/5"
           }`}>
             {isOwner ? (
-              <Crown className="w-5 h-5 text-[#ffd700]" />
+              <Crown className="w-5 h-5 text-[#ffd700] animate-pulse" />
             ) : (
               <Users className="w-5 h-5 text-blue-400" />
             )}
           </div>
           <div className="min-w-0">
-            <h3 className="text-white font-semibold truncate">{group.name}</h3>
-            <p className="text-xs text-white/50">
-              {isOwner ? "Você é o criador" : `Criado por ${group.owner?.name ?? "..."}`}
+            <h3 className="text-white text-sm font-black truncate tracking-tight">{group.name}</h3>
+            <p className="text-[10px] text-white/40 truncate mt-0.5 font-semibold">
+              {isOwner ? "Você é o criador" : `Por ${group.owner?.name ?? "..."}`}
             </p>
           </div>
         </div>
         {isOwner && (
-          <span className="copa-badge shrink-0 text-[10px]">Dono</span>
+          <span className="copa-badge shrink-0 text-[8px] px-2 py-0.5 font-bold shadow-sm">Dono</span>
         )}
       </div>
 
-      {/* Invite code */}
-      <div className="flex items-center justify-between p-3 rounded-lg bg-[#ffd700]/8 border border-[#ffd700]/20 mb-4">
+      {/* Invite code (Dashed Neon Gold Container) */}
+      <div className="flex items-center justify-between p-3 rounded-2xl bg-[#ffd700]/5 border border-dashed border-[#ffd700]/25 mb-4 group-hover:border-[#ffd700]/50 transition-colors shadow-inner">
         <div>
-          <p className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">Código de Convite</p>
-          <span className="font-mono font-bold text-[#ffd700] tracking-widest text-sm">
+          <p className="text-[8px] text-white/30 uppercase tracking-widest font-black mb-0.5">Código de Convite</p>
+          <span className="font-mono font-black text-[#ffd700] tracking-widest text-xs">
             {group.inviteCode}
           </span>
         </div>
         <button
           onClick={handleCopyCode}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-            copiedCode ? "bg-emerald-500 text-white" : "bg-white/10 text-white/60 hover:text-white hover:bg-white/20"
+          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md ${
+            copiedCode 
+              ? "bg-emerald-500 text-white shadow-emerald-500/20" 
+              : "bg-white/10 text-white/70 hover:text-[#0d2b1a] hover:bg-[#ffd700] hover:scale-105 active:scale-95"
           }`}
         >
           {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -105,19 +109,23 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
 
       {/* Member progress */}
       <div className="mb-4">
-        <div className="flex justify-between items-center text-xs text-white/50 mb-1.5">
+        <div className="flex justify-between items-center text-[10px] text-white/40 mb-1.5 font-bold">
           <span className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-3.5 h-3.5 text-white/30" />
             Participantes
           </span>
-          <span className={`font-semibold ${occupancy >= 100 ? "text-red-400" : occupancy > 75 ? "text-amber-400" : "text-white/70"}`}>
+          <span className={`font-black ${occupancy >= 100 ? "text-red-400" : occupancy > 75 ? "text-amber-400" : "text-white/60"}`}>
             {memberCount}/{group.maxMembers}
           </span>
         </div>
-        <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden shadow-inner border border-white/5">
           <div
-            className={`h-full rounded-full transition-all ${
-              occupancy >= 100 ? "bg-red-500" : occupancy > 75 ? "bg-amber-400" : "bg-emerald-500"
+            className={`h-full rounded-full transition-all duration-500 bg-gradient-to-r ${
+              occupancy >= 100 
+                ? "from-red-600 to-red-400 shadow-[0_0_8px_rgba(239,68,68,0.4)]" 
+                : occupancy > 75 
+                ? "from-amber-500 to-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.4)]" 
+                : "from-emerald-500 to-green-400 shadow-[0_0_8px_rgba(16,185,129,0.4)]"
             }`}
             style={{ width: `${occupancy}%` }}
           />
@@ -129,12 +137,12 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
         onClick={isOwner ? handleDelete : handleLeave}
         disabled={actionLoading}
         onBlur={() => setConfirmDelete(false)}
-        className={`w-full py-2.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-2 ${
+        className={`w-full py-2.5 text-xs font-black rounded-xl border transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
           confirmDelete
-            ? "border-red-500 bg-red-500/20 text-red-300"
+            ? "border-red-500 bg-gradient-to-r from-red-600/30 to-red-500/20 text-red-200 shadow-md shadow-red-500/10"
             : isOwner
-            ? "border-white/10 bg-white/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
-            : "border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
+            ? "border-white/5 bg-white/[0.02] text-red-400 hover:bg-red-500/10 hover:border-red-500/20 active:scale-98"
+            : "border-white/5 bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/10 active:scale-98"
         }`}
       >
         {actionLoading ? (
@@ -142,7 +150,7 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
         ) : isOwner ? (
           <>
             <Trash2 className="w-3.5 h-3.5" />
-            {confirmDelete ? "Clique novamente para confirmar" : "Deletar Grupo"}
+            {confirmDelete ? "Confirmar exclusão" : "Excluir Grupo"}
           </>
         ) : (
           <>
@@ -193,17 +201,17 @@ export default function GruposPage() {
               {totalGroups === 0 ? "Crie ou entre em um grupo para competir com amigos" : `Você participa de ${totalGroups} grupo${totalGroups !== 1 ? "s" : ""}`}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
               onClick={() => setShowJoin(true)}
-              className="copa-btn-ghost px-5 py-3 text-sm flex items-center gap-2"
+              className="copa-btn-ghost px-5 py-3 text-sm flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <UserPlus className="w-4 h-4" />
               Participar de Grupo
             </button>
             <button
               onClick={() => setShowCreate(true)}
-              className="copa-btn-primary px-5 py-3 text-sm flex items-center gap-2 shadow-lg shadow-[#ffd700]/15"
+              className="copa-btn-primary px-5 py-3 text-sm flex items-center justify-center gap-2 w-full sm:w-auto shadow-lg shadow-[#ffd700]/15"
             >
               <Plus className="w-4 h-4" />
               Criar Grupo
@@ -213,19 +221,19 @@ export default function GruposPage() {
 
         {/* Loading skeleton */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="auth-card p-5 border border-white/10 animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 animate-pulse rounded-2xl min-h-[200px] flex flex-col justify-between">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/10" />
+                  <div className="w-10 h-10 rounded-2xl bg-white/10" />
                   <div className="flex-1 space-y-2">
                     <div className="h-4 bg-white/10 rounded w-2/3" />
                     <div className="h-3 bg-white/5 rounded w-1/2" />
                   </div>
                 </div>
-                <div className="h-12 bg-white/5 rounded-lg mb-4" />
+                <div className="h-12 bg-white/5 rounded-2xl mb-4" />
                 <div className="h-1.5 bg-white/10 rounded mb-4" />
-                <div className="h-9 bg-white/5 rounded-lg" />
+                <div className="h-10 bg-white/5 rounded-xl" />
               </div>
             ))}
           </div>
@@ -268,7 +276,7 @@ export default function GruposPage() {
                     {ownedGroups.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {ownedGroups.map((g) => (
                     <GroupCard key={g.id} group={g} isOwner onAction={fetchGroups} />
                   ))}
@@ -286,7 +294,7 @@ export default function GruposPage() {
                     {joinedGroups.length}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {joinedGroups.map((g) => (
                     <GroupCard key={g.id} group={g} isOwner={false} onAction={fetchGroups} />
                   ))}

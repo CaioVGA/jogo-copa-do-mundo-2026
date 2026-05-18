@@ -11,3 +11,6 @@ npm-debug.log*
 Thumbs.db
 prisma/dev.db
 *.sqlite
+
+# Docker data volumes
+.postgres_data/

@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { MailModule } from './mail/mail.module';
 import { GroupsModule } from './groups/groups.module';
+import { PredictionsModule } from './predictions/predictions.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { GroupsModule } from './groups/groups.module';
     UsersModule,
     AuthModule,
     GroupsModule,
+    PredictionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

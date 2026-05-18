@@ -443,3 +443,63 @@
 .delay-300 { animation-delay: 0.3s; }
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
+
+/* ─── Custom Scrollbar Utility (Copa Green) ────────────────────────────────── */
+.copa-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.copa-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 9999px;
+}
+
+.copa-scrollbar::-webkit-scrollbar-thumb {
+  background: #2d8a50; /* copa-green-500 */
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.copa-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3da865; /* copa-green-400 */
+}
+
+/* Suporte para Firefox */
+.copa-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #2d8a50 rgba(0, 0, 0, 0.25);
+}
+
+/* Ocultar barra de incremento/decremento (spin buttons) nos inputs numéricos */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ─── Global Selection Cursor Rules ─────────────────────────────────────────── */
+button,
+select,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="file"]::-webkit-file-upload-button,
+input[type="file"]::file-selector-button,
+a,
+[role="button"],
+.cursor-pointer,
+[onClick] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"]:disabled,
+.cursor-not-allowed {
+  cursor: not-allowed !important;
+}

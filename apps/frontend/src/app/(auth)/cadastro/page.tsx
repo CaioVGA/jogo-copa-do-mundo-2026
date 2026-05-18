@@ -32,10 +32,8 @@ export default function CadastroPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setApiError(null);
     try {
-      const res = await authApi.register(data);
-      localStorage.setItem("copa_token", res.token);
-      localStorage.setItem("copa_user", JSON.stringify(res.user));
-      router.push("/dashboard");
+      await authApi.register(data);
+      router.push("/login?registered=true");
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Erro ao criar conta");
     }

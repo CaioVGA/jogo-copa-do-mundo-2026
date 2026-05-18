@@ -77,7 +77,7 @@ describe("Tela de Login", () => {
 
   it("deve mostrar loader durante o submit", () => {
     cy.intercept("POST", "**/auth/login", (req) => {
-      req.on("response", (res) => res.setDelay(500));
+      (req as any).on("before:response", (res: any) => res.setDelay(500));
       req.reply({ statusCode: 200, body: { user: { id: "1", name: "T", email: "t@t.com", createdAt: "" }, token: "t" } });
     }).as("loginSlow");
 

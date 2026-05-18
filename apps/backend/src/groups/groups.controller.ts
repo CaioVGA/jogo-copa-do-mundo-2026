@@ -60,4 +60,14 @@ export class GroupsController {
   deleteGroup(@Param('id') groupId: string, @Request() req: any) {
     return this.groupsService.deleteGroup(groupId, req.user.id);
   }
+
+  // DELETE /api/groups/:id/members/:memberId
+  @Delete(':id/members/:memberId')
+  removeMember(
+    @Param('id') groupId: string,
+    @Param('memberId') memberId: string,
+    @Request() req: any
+  ) {
+    return this.groupsService.removeMember(groupId, memberId, req.user.id);
+  }
 }

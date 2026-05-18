@@ -2,17 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown } from "lucide-react";
-import { groupsApi } from "@/lib/api";
+import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown } from "lucide-react";
+import { groupsApi, teamsApi, predictionsApi } from "@/lib/api";
+import type { MatchPredictionData } from "@/lib/api";
 
-type TabType = "bolao" | "oraculo";
-
-// Mock data for Games and Rankings
-const MOCK_GAMES = [
-  { id: 1, teamA: "BRA", teamB: "ARG", scoreA: null, scoreB: null, date: "2026-06-11T16:00:00Z", status: "PENDING" },
-  { id: 2, teamA: "FRA", teamB: "ENG", scoreA: 2, scoreB: 1, date: "2026-06-12T14:00:00Z", status: "FINISHED" },
-  { id: 3, teamA: "GER", teamB: "ESP", scoreA: 1, scoreB: 1, date: "2026-06-13T19:00:00Z", status: "FINISHED" },
-];
+type TabType = "geral" | "bolao" | "oraculo" | "participantes";
 
 const MOCK_ORACLE_QUESTIONS = [
   { id: 1, question: "Quem será o campeão?", answer: null, options: ["Brasil", "França", "Argentina", "Inglaterra"], points: 50 },
@@ -27,7 +21,43 @@ export default function GroupDetailsPage() {
   const [group, setGroup] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("bolao");
+  const [activeTab, setActiveTab] = useState<TabType>("geral");
+  const [teams, setTeams] = useState<Record<string, string>>({});
+  const [oracleGroups, setOracleGroups] = useState<Record<string, any[]>>({});
+  const [savingOracle, setSavingOracle] = useState(false);
+  const [oracleMessage, setOracleMessage] = useState<string | null>(null);
+  const [draggedItem, setDraggedItem] = useState<{ groupName: string; index: number } | null>(null);
+
+  // Real games state
+  const [games, setGames] = useState<MatchPredictionData[]>([]);
+  const [predScores, setPredScores] = useState<Record<string, { home: string; away: string }>>({});
+  const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
+
+  // Paginação dos palpites na aba Geral
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedGames = games.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(games.length / ITEMS_PER_PAGE) || 1;
+
+  // Paginação dos palpites na aba Bolão
+  const [bolaoPage, setBolaoPage] = useState(1);
+  const bolaoStartIndex = (bolaoPage - 1) * ITEMS_PER_PAGE;
+  const paginatedBolaoGames = games.slice(bolaoStartIndex, bolaoStartIndex + ITEMS_PER_PAGE);
+  const bolaoTotalPages = Math.ceil(games.length / ITEMS_PER_PAGE) || 1;
+
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("copa_user");
+    if (userStr) {
+      try {
+        setCurrentUser(JSON.parse(userStr));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     async function loadGroup() {
@@ -40,8 +70,87 @@ export default function GroupDetailsPage() {
         setLoading(false);
       }
     }
-    if (groupId) loadGroup();
+    async function loadTeams() {
+      try {
+        const data = await teamsApi.getTeams();
+        const mapping: Record<string, string> = {};
+        data.forEach((t) => {
+          if (t.flag) mapping[t.code] = t.flag;
+        });
+        setTeams(mapping);
+      } catch (err) {
+        console.error("Erro ao carregar times:", err);
+      }
+    }
+    async function loadOracle() {
+      try {
+        const data = await groupsApi.getOraclePredictions(groupId);
+        setOracleGroups(data.groups);
+      } catch (err) {
+        console.error("Erro ao carregar oráculo:", err);
+      }
+    }
+    async function loadGames() {
+      try {
+        const data = await predictionsApi.getPredictions();
+        const allMatches: MatchPredictionData[] = [];
+        Object.values(data).forEach((groupMatches) => {
+          allMatches.push(...groupMatches);
+        });
+        // Ordena de forma estritamente crescente em relação a data e horário
+        allMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setGames(allMatches);
+
+        const initialScores: Record<string, { home: string; away: string }> = {};
+        allMatches.forEach((m) => {
+          initialScores[m.id] = {
+            home: m.predictedHomeScore !== null ? String(m.predictedHomeScore) : "",
+            away: m.predictedAwayScore !== null ? String(m.predictedAwayScore) : "",
+          };
+        });
+        setPredScores(initialScores);
+      } catch (err) {
+        console.error("Erro ao carregar jogos reais:", err);
+      }
+    }
+
+    if (groupId) {
+      loadGroup();
+      loadTeams();
+      loadOracle();
+      loadGames();
+    }
   }, [groupId]);
+
+  async function handleSavePrediction(matchId: string) {
+    const scores = predScores[matchId];
+    if (!scores) return;
+    const homeVal = parseInt(scores.home, 10);
+    const awayVal = parseInt(scores.away, 10);
+    if (isNaN(homeVal) || isNaN(awayVal) || homeVal < 0 || awayVal < 0) {
+      alert("Por favor, preencha placares válidos maiores ou iguais a 0.");
+      return;
+    }
+
+    setSavingMatchId(matchId);
+    try {
+      await predictionsApi.savePredictions([{ matchId, homeScore: homeVal, awayScore: awayVal }]);
+      
+      setGames(prevGames => 
+        prevGames.map(g => 
+          g.id === matchId 
+            ? { ...g, predictedHomeScore: homeVal, predictedAwayScore: awayVal } 
+            : g
+        )
+      );
+      
+      alert("Palpite salvo com sucesso!");
+    } catch (err: any) {
+      alert(err.message || "Erro ao salvar palpite.");
+    } finally {
+      setSavingMatchId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -67,11 +176,8 @@ export default function GroupDetailsPage() {
     );
   }
 
-  // Mock score logic for ranking
-  const rankedMembers = [...group.members].map((m, index) => ({
-    ...m,
-    points: Math.floor(Math.random() * 200) + (100 - index * 10), // fake points
-  })).sort((a, b) => b.points - a.points);
+  // Ordenação dos participantes do grupo pelos pontos reais acumulados
+  const rankedMembers = [...group.members].sort((a, b) => (b.points || 0) - (a.points || 0));
 
   return (
     <div className="space-y-8 animate-fade-in-up pb-20">
@@ -85,26 +191,26 @@ export default function GroupDetailsPage() {
           Voltar
         </button>
         
-        <div className="auth-card p-6 border border-white/10 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <Trophy className="w-32 h-32 text-[#ffd700]" />
+        <div className="auth-card p-4 sm:p-5 border border-white/10 relative overflow-hidden bg-gradient-to-r from-[#0d2b1a]/30 to-transparent">
+          <div className="absolute top-0 right-0 p-4 sm:p-6 opacity-10">
+            <Trophy className="w-20 h-20 text-[#ffd700]" />
           </div>
-          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="copa-badge text-[10px]">Copa 2026</span>
-                <span className="text-xs text-white/40 uppercase tracking-widest">{group.inviteCode}</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="copa-badge text-[9px] px-2 py-0.5">Copa 2026</span>
+                <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono font-semibold">{group.inviteCode}</span>
               </div>
-              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-2">
+              <h1 className="text-2xl md:text-3.5xl font-black text-white tracking-tight mb-1">
                 {group.name}
               </h1>
-              <div className="flex items-center gap-4 text-sm text-white/60">
+              <div className="flex items-center gap-4 text-xs text-white/60">
                 <span className="flex items-center gap-1.5">
-                  <Crown className="w-4 h-4 text-[#ffd700]" />
+                  <Crown className="w-3.5 h-3.5 text-[#ffd700]" />
                   Criado por {group.owner.name}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4" />
+                  <Users className="w-3.5 h-3.5" />
                   {group.members.length} Participantes
                 </span>
               </div>
@@ -114,172 +220,969 @@ export default function GroupDetailsPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex p-1.5 bg-black/20 rounded-xl backdrop-blur-md border border-white/5 max-w-sm mx-auto md:mx-0 relative">
+      <div className="grid grid-cols-4 p-1 bg-black/20 rounded-xl backdrop-blur-md border border-white/5 max-w-xl mx-auto md:mx-0 relative">
+        <button
+          onClick={() => setActiveTab("geral")}
+          className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all relative z-10 ${
+            activeTab === "geral" ? "text-[#0d2b1a]" : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Users className="w-4 h-4 shrink-0" />
+          <span className="truncate">Geral</span>
+        </button>
         <button
           onClick={() => setActiveTab("bolao")}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all relative z-10 ${
+          className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all relative z-10 ${
             activeTab === "bolao" ? "text-[#0d2b1a]" : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
-          <Target className="w-4 h-4" />
-          Bolão (Jogos)
+          <Target className="w-4 h-4 shrink-0" />
+          <span className="truncate">Bolão</span>
         </button>
         <button
           onClick={() => setActiveTab("oraculo")}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all relative z-10 ${
+          className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all relative z-10 ${
             activeTab === "oraculo" ? "text-[#0d2b1a]" : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
-          <Sparkles className="w-4 h-4" />
-          Oráculo
+          <Sparkles className="w-4 h-4 shrink-0" />
+          <span className="truncate">Oráculo</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("participantes")}
+          className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all relative z-10 ${
+            activeTab === "participantes" ? "text-[#0d2b1a]" : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Users className="w-4 h-4 shrink-0" />
+          <span className="truncate">Participantes</span>
         </button>
         
         {/* Animated Background Pill */}
         <div 
-          className="absolute inset-y-1.5 w-[calc(50%-0.375rem)] bg-gradient-to-r from-[#ffd700] to-[#f5c800] rounded-lg shadow-lg transition-transform duration-300 ease-out"
-          style={{ transform: activeTab === "bolao" ? "translateX(0)" : "translateX(100%)" }}
+          className="absolute inset-y-1 bg-gradient-to-r from-[#ffd700] to-[#f5c800] rounded-lg shadow-lg transition-all duration-300 ease-out z-0"
+          style={{ 
+            width: "calc(25% - 0.5rem)",
+            left: activeTab === "geral" ? "0.25rem" 
+                 : activeTab === "bolao" ? "calc(25% + 0.25rem)" 
+                 : activeTab === "oraculo" ? "calc(50% + 0.25rem)"
+                 : "calc(75% + 0.25rem)" 
+          }}
         />
       </div>
 
       {/* Main Content Area */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         
-        {/* Left Panel: Games or Oracle */}
+        {/* Left Panel: Geral, Games or Oracle */}
         <div className="xl:col-span-2 space-y-6">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              {activeTab === "bolao" ? (
+              {activeTab === "geral" ? (
+                <><Trophy className="w-5 h-5 text-[#ffd700]" /> Geral - Classificação e Palpites</>
+              ) : activeTab === "bolao" ? (
                 <><CalendarDays className="w-5 h-5 text-[#ffd700]" /> Próximos Jogos</>
-              ) : (
+              ) : activeTab === "oraculo" ? (
                 <><Sparkles className="w-5 h-5 text-purple-400" /> Previsões do Oráculo</>
+              ) : (
+                <><Users className="w-5 h-5 text-[#ffd700]" /> Membros do Grupo</>
               )}
             </h2>
           </div>
 
           <div className="space-y-4">
-            {activeTab === "bolao" ? (
-              MOCK_GAMES.map((game) => (
-                <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/30 transition-all group">
-                  <div className="bg-black/20 p-3 flex justify-between items-center text-xs text-white/50 border-b border-white/5">
-                    <span>Fase de Grupos • {new Date(game.date).toLocaleDateString("pt-BR")}</span>
-                    {game.status === "FINISHED" ? (
-                      <span className="text-emerald-400 font-medium">Encerrado</span>
-                    ) : (
-                      <span className="text-amber-400 font-medium animate-pulse">Aberto para palpites</span>
-                    )}
-                  </div>
-                  <div className="p-6 flex items-center justify-between gap-4">
-                    {/* Team A */}
-                    <div className="flex flex-col items-center flex-1">
-                      <div className="w-12 h-12 rounded-full bg-white/10 mb-2 flex items-center justify-center font-bold text-lg border border-white/20">
-                        {game.teamA}
-                      </div>
-                      <span className="font-semibold text-white/80">{game.teamA}</span>
+            {activeTab === "geral" ? (
+              <div className="space-y-6">
+                {/* Placares & Palpites Coletivos */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-[#ffd700]" /> Palpites dos Integrantes
+                      </h3>
+                      <p className="text-xs text-white/50 mt-0.5">Veja e compare os palpites de todos os participantes</p>
                     </div>
+                  </div>
 
-                    {/* Score / Inputs */}
-                    <div className="flex items-center gap-4">
-                      {game.status === "FINISHED" ? (
-                        <>
-                          <span className="text-3xl font-black text-white">{game.scoreA}</span>
-                          <span className="text-white/30">x</span>
-                          <span className="text-3xl font-black text-white">{game.scoreB}</span>
-                        </>
-                      ) : (
-                        <>
-                          <input type="number" placeholder="0" className="w-16 h-16 text-center text-2xl font-bold rounded-xl bg-black/30 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white" />
-                          <span className="text-white/30">x</span>
-                          <input type="number" placeholder="0" className="w-16 h-16 text-center text-2xl font-bold rounded-xl bg-black/30 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white" />
-                        </>
+                  {games.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 px-4 text-center border border-white/10 rounded-2xl bg-white/5">
+                      <Activity className="w-8 h-8 text-white/30 mb-2 animate-pulse" />
+                      <p className="text-sm font-semibold text-white/60">Carregando palpites dos integrantes...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {paginatedGames.map((game) => {
+                          const isFinished = game.status === "FINISHED";
+                          const gameDate = new Date(game.date);
+                          const isStarted = new Date() >= gameDate;
+                          const isClosed = isFinished || isStarted;
+
+                          // Filtrar palpites deste jogo
+                          const gamePredictions = group.predictions?.filter((p: any) => p.matchId === game.id) || [];
+
+                          return (
+                            <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all bg-black/20 hover:scale-[1.01] duration-300">
+                              {/* Top bar with game status */}
+                              <div className="bg-black/40 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
+                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                {isFinished ? (
+                                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-emerald-500/20">Finalizado</span>
+                                ) : isStarted ? (
+                                  <span className="text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-amber-500/20">Encerrado</span>
+                                ) : (
+                                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-emerald-500/20 animate-pulse">Aberto</span>
+                                )}
+                              </div>
+
+                              {/* Match teams and scores */}
+                              <div className="p-3.5 flex items-center justify-between gap-3 border-b border-white/5 bg-white/5">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0">
+                                    {game.homeTeam.flag ? <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" /> : game.homeTeam.code}
+                                  </div>
+                                  <span className="font-bold text-xs text-white/90 truncate">{game.homeTeam.name}</span>
+                                </div>
+
+                                <div className="flex items-center gap-2 px-2.5 py-1 bg-black/40 rounded-lg border border-white/5 font-extrabold text-xs shrink-0">
+                                  {isFinished ? (
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-white">{game.realHomeScore}</span>
+                                      <span className="text-white/30 text-xs">x</span>
+                                      <span className="text-white">{game.realAwayScore}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-white/40 text-xs uppercase tracking-wider font-semibold">Aguardando</span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+                                  <span className="font-bold text-xs text-white/90 truncate text-right">{game.awayTeam.name}</span>
+                                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0">
+                                    {game.awayTeam.flag ? <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" /> : game.awayTeam.code}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Members predictions */}
+                              <div className="p-3 bg-black/10 space-y-1.5">
+                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-2 mb-1">Palpites do Grupo</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                  {rankedMembers.map((member) => {
+                                    const pred = gamePredictions.find((p: any) => p.userId === member.userId);
+                                    // Apenas exibe o palpite de outros membros se o jogo já iniciou/fechou!
+                                    const canSee = isClosed;
+
+                                    return (
+                                      <div key={member.id} className="flex items-center justify-between p-2 rounded-lg bg-black/20 border border-white/5 text-[11px]">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-[9px] font-bold">
+                                            {member.user.name.charAt(0).toUpperCase()}
+                                          </div>
+                                          <span className="font-medium text-white/70 truncate">{member.user.name}</span>
+                                        </div>
+
+                                        <div className="shrink-0 font-bold">
+                                          {pred ? (
+                                            canSee ? (
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="text-[#ffd700]">{pred.homeScore} x {pred.awayScore}</span>
+                                                {isFinished && (
+                                                  <span className={`text-[8px] px-1 py-0.5 rounded font-black ${
+                                                    pred.points === 3 ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20" :
+                                                    pred.points === 1 ? "text-blue-400 bg-blue-500/10 border border-blue-500/20" :
+                                                    "text-red-400 bg-red-500/10 border border-red-500/20"
+                                                  }`}>
+                                                    +{pred.points}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <span className="text-white/30 flex items-center gap-1 text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                                                🔒 Oculto
+                                              </span>
+                                            )
+                                          ) : (
+                                            <span className="text-white/35 italic text-[9px]">Sem palpite</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Pagination Controls */}
+                      {games.length > ITEMS_PER_PAGE && (
+                        <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-2">
+                          <button
+                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                          >
+                            Anterior
+                          </button>
+                          <span className="text-xs text-white/50 font-medium">
+                            Página <span className="text-white font-bold">{currentPage}</span> de <span className="text-white font-bold">{totalPages}</span>
+                          </span>
+                          <button
+                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                          >
+                            Próximo
+                          </button>
+                        </div>
                       )}
-                    </div>
-
-                    {/* Team B */}
-                    <div className="flex flex-col items-center flex-1">
-                      <div className="w-12 h-12 rounded-full bg-white/10 mb-2 flex items-center justify-center font-bold text-lg border border-white/20">
-                        {game.teamB}
-                      </div>
-                      <span className="font-semibold text-white/80">{game.teamB}</span>
-                    </div>
-                  </div>
-                  {game.status !== "FINISHED" && (
-                    <div className="p-3 bg-black/20 border-t border-white/5 flex justify-end">
-                      <button className="copa-btn-primary px-6 py-2 text-sm shadow-md">Salvar Palpite</button>
-                    </div>
+                    </>
                   )}
                 </div>
-              ))
+              </div>
+            ) : activeTab === "bolao" ? (
+              games.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center border border-white/10 rounded-2xl bg-white/5">
+                  <Activity className="w-8 h-8 text-white/30 mb-2 animate-pulse" />
+                  <p className="text-sm font-semibold text-white/60">Carregando jogos da Copa...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {paginatedBolaoGames.map((game) => {
+                      const isFinished = game.status === "FINISHED";
+                      const gameDate = new Date(game.date);
+                      const isStarted = new Date() >= gameDate;
+                      const isClosed = isFinished || isStarted;
+
+                      // Calcula o prazo dos palpites dinamicamente
+                      const now = new Date();
+                      const diffMs = gameDate.getTime() - now.getTime();
+                      let deadlineText = "";
+                      let deadlineColor = "";
+
+                      if (isFinished || isStarted || diffMs <= 0) {
+                        deadlineText = "Encerrado";
+                        deadlineColor = "text-red-400 bg-red-500/10 border-red-500/20";
+                      } else {
+                        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                        if (diffDays > 1) {
+                          deadlineText = `Faltam ${diffDays} dias`;
+                          deadlineColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+                        } else {
+                          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                          const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                          if (diffHours > 0) {
+                            deadlineText = `Encerra em ${diffHours}h e ${diffMins}m`;
+                            deadlineColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
+                          } else {
+                            deadlineText = `Encerra em ${diffMins}m`;
+                            deadlineColor = "text-rose-400 bg-rose-500/10 border-rose-500/20 animate-pulse";
+                          }
+                        }
+                      }
+
+                      return (
+                        <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all hover:scale-[1.01] duration-300 group">
+                          <div className="bg-black/20 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
+                            <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${deadlineColor}`}>
+                              {deadlineText}
+                            </span>
+                          </div>
+                          <div className="p-3.5 flex items-center justify-between gap-3 sm:gap-4">
+                            {/* Team A */}
+                            <div className="flex flex-col items-center flex-1 min-w-0">
+                              <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
+                                {game.homeTeam.flag ? (
+                                  <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
+                                ) : (
+                                  game.homeTeam.code
+                                )}
+                              </div>
+                              <span className="font-bold text-xs text-white/80 truncate text-center w-full">{game.homeTeam.name}</span>
+                            </div>
+
+                            {/* Score / Inputs */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              {isClosed ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <div className="flex items-center gap-2">
+                                    {isFinished ? (
+                                      <>
+                                        <span className="text-xl sm:text-2xl font-black text-white">{game.realHomeScore}</span>
+                                        <span className="text-white/30 text-xs font-bold">x</span>
+                                        <span className="text-xl sm:text-2xl font-black text-white">{game.realAwayScore}</span>
+                                      </>
+                                    ) : game.predictedHomeScore !== null ? (
+                                      <>
+                                        <span className="text-xl sm:text-2xl font-black text-[#ffd700]">{game.predictedHomeScore}</span>
+                                        <span className="text-white/30 text-xs font-bold">x</span>
+                                        <span className="text-xl sm:text-2xl font-black text-[#ffd700]">{game.predictedAwayScore}</span>
+                                      </>
+                                    ) : (
+                                      <span className="text-[10px] text-white/35 italic">Sem palpite</span>
+                                    )}
+                                  </div>
+                                  {isFinished && game.predictedHomeScore !== null && (
+                                    <span className="text-[8px] text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 px-1 py-0.5 rounded font-semibold mt-0.5">
+                                      Seu: {game.predictedHomeScore}x{game.predictedAwayScore}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={predScores[game.id]?.home ?? ""}
+                                    onChange={(e) => setPredScores({
+                                      ...predScores,
+                                      [game.id]: {
+                                        ...(predScores[game.id] || { home: "", away: "" }),
+                                        home: e.target.value
+                                      }
+                                    })}
+                                    className="w-10 h-9 sm:w-11 sm:h-10 text-center text-sm sm:text-base font-extrabold rounded-lg bg-black/60 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                  <span className="text-white/30 text-xs font-bold">x</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={predScores[game.id]?.away ?? ""}
+                                    onChange={(e) => setPredScores({
+                                      ...predScores,
+                                      [game.id]: {
+                                        ...(predScores[game.id] || { home: "", away: "" }),
+                                        away: e.target.value
+                                      }
+                                    })}
+                                    className="w-10 h-9 sm:w-11 sm:h-10 text-center text-sm sm:text-base font-extrabold rounded-lg bg-black/60 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Team B */}
+                            <div className="flex flex-col items-center flex-1 min-w-0">
+                              <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
+                                {game.awayTeam.flag ? (
+                                  <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
+                                ) : (
+                                  game.awayTeam.code
+                                )}
+                              </div>
+                              <span className="font-bold text-xs text-white/80 truncate text-center w-full">{game.awayTeam.name}</span>
+                            </div>
+                          </div>
+                          {!isClosed && (
+                            <div className="p-2.5 px-3.5 bg-black/20 border-t border-white/5 flex justify-between items-center">
+                              <span className="text-[9px] text-white/40 truncate max-w-[50%]">
+                                {game.predictedHomeScore !== null ? (
+                                  <span className="text-emerald-400 font-semibold">Salvo: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
+                                ) : (
+                                  "Não palpitado"
+                                )}
+                              </span>
+                              <button
+                                disabled={savingMatchId === game.id}
+                                onClick={() => handleSavePrediction(game.id)}
+                                className="copa-btn-primary px-4 py-1.5 text-[10px] shadow-md flex items-center gap-1"
+                              >
+                                {savingMatchId === game.id ? (
+                                  <>
+                                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                    Salvando...
+                                  </>
+                                ) : (
+                                  "Salvar"
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination Controls for Bolão */}
+                  {games.length > ITEMS_PER_PAGE && (
+                    <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-4">
+                      <button
+                        onClick={() => setBolaoPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={bolaoPage === 1}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                      >
+                        Anterior
+                      </button>
+                      <span className="text-xs text-white/50 font-medium">
+                        Página <span className="text-white font-bold">{bolaoPage}</span> de <span className="text-white font-bold">{bolaoTotalPages}</span>
+                      </span>
+                      <button
+                        onClick={() => setBolaoPage((prev) => Math.min(prev + 1, bolaoTotalPages))}
+                        disabled={bolaoPage === bolaoTotalPages}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                      >
+                        Próximo
+                      </button>
+                    </div>
+                  )}
+                </>
+              )
+            ) : activeTab === "oraculo" ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.keys(oracleGroups).sort().map((groupName) => (
+                    <div key={groupName} className="auth-card p-4 border border-white/5 relative overflow-hidden bg-[#0d2b1a]/40">
+                      <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-1.5">
+                        <h3 className="text-base font-bold text-[#ffd700] flex items-center gap-2">
+                          Grupo {groupName}
+                        </h3>
+                        <span className="text-[9px] uppercase text-white/40 tracking-wider hidden sm:inline">Arrastar ou usar setas</span>
+                      </div>
+ 
+                      <div className="space-y-1.5">
+                        {oracleGroups[groupName]?.map((team, index) => (
+                          <div
+                            key={team.code}
+                            draggable
+                            onDragStart={(e) => {
+                              setDraggedItem({ groupName, index });
+                              e.dataTransfer.effectAllowed = "move";
+                            }}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDragEnd={() => setDraggedItem(null)}
+                            onDrop={(e) => {
+                              if (!draggedItem) return;
+                              if (draggedItem.groupName !== groupName) return;
+                              const newTeams = [...oracleGroups[groupName]];
+                              const [moved] = newTeams.splice(draggedItem.index, 1);
+                              newTeams.splice(index, 0, moved);
+                              setOracleGroups({
+                                ...oracleGroups,
+                                [groupName]: newTeams
+                              });
+                              setDraggedItem(null);
+                            }}
+                            className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-grab active:cursor-grabbing ${
+                              draggedItem && draggedItem.groupName === groupName && draggedItem.index === index
+                                ? "bg-white/5 border-[#ffd700] opacity-50 scale-98"
+                                : "bg-black/20 border-white/5 hover:border-[#ffd700]/30 hover:bg-white/5"
+                            }`}
+                          >
+                             {/* Position rank */}
+                            <span className={`w-5 text-center font-bold text-xs shrink-0 ${
+                              index === 0 ? "text-[#ffd700]" :
+                              index === 1 ? "text-gray-300" :
+                              index === 2 ? "text-amber-600" : "text-white/40"
+                            }`}>
+                              {index + 1}º
+                            </span>
+ 
+                            {/* Flag container */}
+                            <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-white/5 flex items-center justify-center font-bold text-[10px]">
+                              {team.flag ? (
+                                <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                              ) : (
+                                team.code
+                              )}
+                            </div>
+ 
+                            {/* Team Name */}
+                            <span className="flex-1 text-xs font-semibold text-white/90 truncate">
+                              {team.name}
+                            </span>
+ 
+                            {/* Reorder Arrows (Failsafe for mobile & accessibility!) */}
+                            <div className="flex flex-col gap-0.5 shrink-0 opacity-40 hover:opacity-100 transition-opacity">
+                              {index > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newTeams = [...oracleGroups[groupName]];
+                                    const temp = newTeams[index];
+                                    newTeams[index] = newTeams[index - 1];
+                                    newTeams[index - 1] = temp;
+                                    setOracleGroups({
+                                      ...oracleGroups,
+                                      [groupName]: newTeams
+                                    });
+                                  }}
+                                  className="p-0.5 hover:text-[#ffd700] transition-colors"
+                                  title="Mover para cima"
+                                >
+                                  <ChevronUp className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              {index < oracleGroups[groupName].length - 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newTeams = [...oracleGroups[groupName]];
+                                    const temp = newTeams[index];
+                                    newTeams[index] = newTeams[index + 1];
+                                    newTeams[index + 1] = temp;
+                                    setOracleGroups({
+                                      ...oracleGroups,
+                                      [groupName]: newTeams
+                                    });
+                                  }}
+                                  className="p-0.5 hover:text-[#ffd700] transition-colors"
+                                  title="Mover para baixo"
+                                >
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+ 
+                {/* Save button and instructions */}
+                <div className="flex flex-col items-center justify-center p-4 border border-white/10 rounded-xl bg-black/20 mt-5">
+                  <p className="text-xs text-white/60 text-center mb-3">
+                    Organize os grupos arrastando as seleções ou usando as setas laterais para prever os classificados em ordem.
+                  </p>
+                  <button
+                    disabled={savingOracle}
+                    onClick={async () => {
+                      setSavingOracle(true);
+                      setOracleMessage(null);
+                      try {
+                        const payload = Object.keys(oracleGroups).map((gName) => ({
+                          groupName: gName,
+                          teamOrder: oracleGroups[gName].map((t) => t.code),
+                        }));
+                        await groupsApi.saveOraclePredictions(groupId, payload);
+                        setOracleMessage("Palpites salvos com sucesso!");
+                        setTimeout(() => setOracleMessage(null), 5000);
+                      } catch (err: any) {
+                        setOracleMessage(err.message || "Erro ao salvar palpites");
+                      } finally {
+                        setSavingOracle(false);
+                      }
+                    }}
+                    className="copa-btn-primary px-6 py-2 text-sm shadow-lg shadow-[#ffd700]/15 w-full sm:w-auto flex items-center justify-center gap-2"
+                  >
+                    {savingOracle ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Salvando palpites...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Salvar Palpites do Oráculo
+                      </>
+                    )}
+                  </button>
+                  {oracleMessage && (
+                    <p className={`mt-2 text-xs font-semibold ${
+                      oracleMessage.includes("sucesso") ? "text-emerald-400" : "text-red-400"
+                    }`}>
+                      {oracleMessage}
+                    </p>
+                  )}
+                </div>
+              </div>
             ) : (
-              MOCK_ORACLE_QUESTIONS.map((q) => (
-                <div key={q.id} className="auth-card p-6 border border-white/5 hover:border-purple-500/30 transition-all">
-                  <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-lg font-bold text-white">{q.question}</h3>
-                    <span className="copa-badge bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs">
-                      Valendo {q.points} pts
+              <div className="space-y-6 animate-fade-in-up">
+                <div className="auth-card p-6 border border-white/5 relative overflow-hidden bg-black/20">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Users className="w-5 h-5 text-[#ffd700]" /> Integrantes do Grupo
+                      </h3>
+                      <p className="text-xs text-white/50 mt-0.5">Gerencie os membros que estão participando deste bolão</p>
+                    </div>
+                    <span className="text-xs font-semibold text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/20 px-3 py-1 rounded-full">
+                      {group?.members?.length || 0} / {group?.maxMembers || 48} Participantes
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {q.options.map((opt) => (
-                      <button 
-                        key={opt}
-                        className={`p-3 rounded-xl border text-sm font-medium transition-all ${
-                          q.answer === opt 
-                            ? "bg-purple-500 text-white border-purple-400 shadow-lg shadow-purple-500/20" 
-                            : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:border-white/20"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+
+                  <div className="divide-y divide-white/5">
+                    {group?.members?.map((member: any) => {
+                      const isOwner = member.userId === group.ownerId;
+                      const isMe = currentUser && member.userId === currentUser.id;
+                      const isGroupCreator = currentUser && group.ownerId === currentUser.id;
+
+                      return (
+                        <div key={member.id} className="flex items-center justify-between py-4 group/item">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center font-bold text-white shadow-inner relative shrink-0 overflow-hidden">
+                              {member.user.avatar ? (
+                                <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
+                              ) : (
+                                member.user.name.charAt(0).toUpperCase()
+                              )}
+                              {isOwner && (
+                                <div className="absolute -top-2.5 -right-1 bg-gradient-to-r from-[#ffd700] to-[#f5c800] p-1 rounded-full shadow-lg border border-black/20 z-10" title="Criador do Grupo">
+                                  <Crown className="w-3 h-3 text-[#0d2b1a]" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-sm text-white/90">
+                                  {member.user.name}
+                                </span>
+                                {isMe && (
+                                  <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                                    Você
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-white/40 mt-0.5">
+                                Entrou em {new Date(member.joinedAt).toLocaleDateString("pt-BR")} • {member.points} pts
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Kick/Remove member action */}
+                          {isGroupCreator && !isOwner && (
+                            <button
+                              onClick={async () => {
+                                if (confirm(`Deseja mesmo remover o participante ${member.user.name} do grupo?`)) {
+                                  try {
+                                    await groupsApi.removeMember(groupId, member.userId);
+                                    alert("Membro removido com sucesso!");
+                                    window.location.reload();
+                                  } catch (err: any) {
+                                    alert(err.message || "Erro ao remover membro");
+                                  }
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-md shrink-0 md:opacity-0 group-hover/item:opacity-100 focus:opacity-100"
+                            >
+                              Remover
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))
+              </div>
             )}
           </div>
         </div>
 
-        {/* Right Panel: Ranking */}
+        {/* Right Panel: Ranking / Oracle Standings */}
+        {/* Right Panel: Ranking / Oracle Standings / Group Stats */}
         <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Medal className="w-5 h-5 text-[#ffd700]" /> Ranking
-          </h2>
-          
-          <div className="auth-card p-2 border border-white/10">
-            {rankedMembers.map((member, index) => (
-              <div 
-                key={member.id} 
-                className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
-                  index === 0 ? "bg-gradient-to-r from-[#ffd700]/20 to-transparent" : "hover:bg-white/5"
-                }`}
-              >
-                <div className={`w-8 text-center font-bold ${
-                  index === 0 ? "text-[#ffd700] text-xl" : 
-                  index === 1 ? "text-gray-300 text-lg" : 
-                  index === 2 ? "text-amber-600 text-lg" : "text-white/40"
-                }`}>
-                  {index + 1}º
+          {activeTab === "geral" ? (
+            <div className="space-y-6 animate-fade-in-up">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#ffd700]" /> Informações do Grupo
+              </h2>
+
+              {/* Invite Code Card (Dashed Gold Neon style) */}
+              <div className="auth-card p-5 border border-dashed border-[#ffd700]/25 bg-[#ffd700]/5 relative overflow-hidden rounded-3xl shadow-lg">
+                <div className="absolute top-0 right-0 p-3 opacity-5">
+                  <Users className="w-16 h-16 text-[#ffd700]" />
                 </div>
-                
-                <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-white">
-                    {member.user.name.charAt(0).toUpperCase()}
+                <h3 className="text-base font-black text-white mb-2 flex items-center gap-2">
+                  📢 Convidar Amigos
+                </h3>
+                <p className="text-xs text-white/50 mb-4 font-semibold">Compartilhe o código de convite para trazer novos participantes para o seu grupo!</p>
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 bg-black/50 border border-[#ffd700]/20 px-3 py-2.5 rounded-xl text-sm font-mono text-center font-black text-[#ffd700] tracking-widest select-all">
+                    {group.inviteCode}
                   </span>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate flex items-center gap-2">
-                    {member.user.name}
-                    {index === 0 && <Crown className="w-3.5 h-3.5 text-[#ffd700]" />}
-                  </p>
-                </div>
-                
-                <div className="text-right shrink-0">
-                  <p className="text-lg font-black text-[#ffd700]">{member.points}</p>
-                  <p className="text-[10px] text-white/40 uppercase">pontos</p>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(group.inviteCode);
+                      alert("Código copiado para a área de transferência!");
+                    }}
+                    className="copa-btn-primary px-5 py-2.5 text-xs font-black shadow-lg shadow-[#ffd700]/15 rounded-xl cursor-pointer"
+                  >
+                    Copiar
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Group stats card */}
+              <div className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 rounded-3xl shadow-md">
+                <h3 className="text-xs font-black text-white/40 mb-3 uppercase tracking-wider">Estatísticas</h3>
+                <div className="space-y-3 text-xs text-white/70">
+                  <div className="flex justify-between py-2 border-b border-white/5 items-center font-semibold">
+                    <span className="text-white/40">Participantes:</span>
+                    <span className="font-black text-[#ffd700]">{group.members.length} / {group.maxMembers}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-white/5 items-center font-semibold">
+                    <span className="text-white/40">Criado por:</span>
+                    <span className="font-black text-white">{group.owner.name}</span>
+                  </div>
+                  <div className="flex justify-between py-2 items-center font-semibold">
+                    <span className="text-white/40">Criado em:</span>
+                    <span className="font-black text-white">{new Date(group.createdAt).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Classificação do Grupo / Leaderboard */}
+              <div className="auth-card p-5 border border-white/5 relative overflow-hidden bg-gradient-to-br from-[#0d2b1a]/40 via-black/20 to-black/30 animate-fade-in-up rounded-3xl shadow-xl shadow-black/10">
+                <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <Trophy className="w-24 h-24 text-[#ffd700]" />
+                </div>
+                
+                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                  <div>
+                    <h3 className="text-sm font-black text-[#ffd700] flex items-center gap-2">
+                      <Medal className="w-4 h-4" /> Classificação do Grupo
+                    </h3>
+                    <p className="text-[10px] text-white/40 font-semibold mt-0.5">Membros classificados de acordo com os acertos</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 copa-scrollbar">
+                  {rankedMembers.map((member, index) => {
+                    const isOwner = member.userId === group.ownerId;
+                    return (
+                      <div 
+                        key={member.id} 
+                        className={`flex items-center justify-between gap-2.5 p-2 px-3 rounded-xl transition-all ${
+                          index === 0 
+                            ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 border border-[#ffd700]/30 shadow-sm shadow-[#ffd700]/5" 
+                            : "hover:bg-white/5 bg-white/[0.02] border border-white/5"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {/* Position Badge */}
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 shadow-sm ${
+                            index === 0 ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_0_8px_rgba(255,215,0,0.3)]" : 
+                            index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-[#0d2b1a] shadow-[0_0_8px_rgba(200,200,200,0.3)]" : 
+                            index === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-[0_0_8px_rgba(180,83,9,0.3)]" : 
+                            "bg-white/5 text-white/50 border border-white/10"
+                          }`}>
+                            {index + 1}º
+                          </div>
+
+                          {/* Initials Avatar */}
+                          <div className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+                            {member.user.avatar ? (
+                              <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-[9px] font-black text-white">
+                                {member.user.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-black text-white truncate flex items-center gap-1">
+                              {member.user.name}
+                              {index === 0 && <Crown className="w-3.5 h-3.5 text-[#ffd700] animate-pulse" />}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0 flex items-center gap-1">
+                          <span className="text-xs font-black text-[#ffd700]">{member.points || 0}</span>
+                          <span className="text-[8px] text-white/40 uppercase font-black">pts</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : activeTab === "bolao" ? (
+            <div className="space-y-6 animate-fade-in-up">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-[#ffd700]" /> Regulamento
+              </h2>
+              {/* Regra da Copa 2026 Card */}
+              <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-10">
+                  <Trophy className="w-16 h-16 text-[#ffd700]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#ffd700] flex items-center gap-2 mb-3">
+                  🏆 Regra da Copa 2026
+                </h3>
+                <div className="space-y-2 text-xs text-white/70">
+                  <p>A Copa do Mundo de 2026 conta com <strong>12 grupos de 4 seleções</strong>.</p>
+                  <div className="p-2.5 bg-black/30 rounded-lg border border-white/5 space-y-1">
+                    <p className="flex justify-between">
+                      <span>1º e 2º colocados:</span>
+                      <span className="font-bold text-emerald-400">24 vagas</span>
+                    </p>
+                    <p className="flex justify-between">
+                      <span>8 melhores 3ºs:</span>
+                      <span className="font-bold text-emerald-400">8 vagas</span>
+                    </p>
+                    <div className="border-t border-white/10 my-1 pt-1 flex justify-between text-[#ffd700] font-bold">
+                      <span>Total Mata-Mata:</span>
+                      <span>32 times</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-white/40 italic">
+                    Os 32 classificados avançam para os 16-avos de final (primeira fase do mata-mata).
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === "oraculo" ? (
+            <div className="space-y-6 animate-fade-in-up">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-[#ffd700]" /> Regulamento & Projeção
+                </h2>
+              </div>
+              
+              {/* Regra Card */}
+              <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-10">
+                  <Trophy className="w-16 h-16 text-[#ffd700]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#ffd700] flex items-center gap-2 mb-3">
+                  🏆 Regra da Copa 2026
+                </h3>
+                <div className="space-y-2 text-xs text-white/70">
+                  <p>A Copa do Mundo de 2026 conta com <strong>12 grupos de 4 seleções</strong>.</p>
+                  <div className="p-2.5 bg-black/30 rounded-lg border border-white/5 space-y-1">
+                    <p className="flex justify-between">
+                      <span>1º e 2º colocados:</span>
+                      <span className="font-bold text-emerald-400">24 vagas</span>
+                    </p>
+                    <p className="flex justify-between">
+                      <span>8 melhores 3ºs:</span>
+                      <span className="font-bold text-emerald-400">8 vagas</span>
+                    </p>
+                    <div className="border-t border-white/10 my-1 pt-1 flex justify-between text-[#ffd700] font-bold">
+                      <span>Total Mata-Mata:</span>
+                      <span>32 times</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-white/40 italic">
+                    Os 32 classificados avançam para os 16-avos de final (primeira fase do mata-mata).
+                  </p>
+                </div>
+              </div>
+
+              {/* Classificados dynamic list */}
+              <div className="auth-card p-5 border border-white/10">
+                <h3 className="text-base font-bold text-white flex items-center gap-2 mb-4">
+                  <Sparkles className="w-4 h-4 text-[#ffd700]" /> Previsão de Classificados
+                </h3>
+
+                <div className="space-y-4">
+                  {/* Classificados Diretos */}
+                  <div>
+                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Classificados Diretos (1º e 2º)
+                    </h4>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 copa-scrollbar">
+                      {Object.keys(oracleGroups).sort().map((groupName) => {
+                        const groupTeams = oracleGroups[groupName] || [];
+                        const first = groupTeams[0];
+                        const second = groupTeams[1];
+                        return [first, second].filter(Boolean).map((team) => (
+                          <div key={team.code} className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs">
+                            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+                              {team.flag ? (
+                                <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                              ) : (
+                                team.code
+                              )}
+                            </div>
+                            <span className="font-semibold text-white/90 truncate flex-1">{team.name}</span>
+                            <span className="text-[9px] font-bold text-[#ffd700] bg-white/5 px-1 rounded uppercase shrink-0">{groupName}</span>
+                          </div>
+                        ));
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Melhores Terceiros */}
+                  <div className="border-t border-white/10 pt-3">
+                    <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-400" />
+                      Terceiros (Repescagem 2026)
+                    </h4>
+                    <div className="grid grid-cols-2 gap-1.5 max-h-[120px] overflow-y-auto pr-1 copa-scrollbar">
+                      {Object.keys(oracleGroups).sort().map((groupName) => {
+                        const groupTeams = oracleGroups[groupName] || [];
+                        const third = groupTeams[2];
+                        if (!third) return null;
+                        return (
+                          <div key={third.code} className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/5 border border-blue-500/10 text-xs">
+                            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+                              {third.flag ? (
+                                <img src={third.flag} alt={third.code} className="w-full h-full object-cover" />
+                              ) : (
+                                third.code
+                              )}
+                            </div>
+                            <span className="font-semibold text-white/90 truncate flex-1">{third.name}</span>
+                            <span className="text-[9px] font-bold text-white/40 bg-white/5 px-1 rounded uppercase shrink-0">{groupName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6 animate-fade-in-up">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#ffd700]" /> Convidar Integrantes
+              </h2>
+
+              {/* Invite Code Card */}
+              <div className="auth-card p-5 border border-white/10 relative overflow-hidden bg-gradient-to-r from-[#0d2b1a]/40 to-transparent">
+                <div className="absolute top-0 right-0 p-3 opacity-5">
+                  <Users className="w-16 h-16 text-[#ffd700]" />
+                </div>
+                <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
+                  📢 Convidar Amigos
+                </h3>
+                <p className="text-xs text-white/60 mb-4">Compartilhe o código de convite para trazer novos participantes para o seu grupo!</p>
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 bg-black/40 border border-white/10 px-3 py-2.5 rounded-xl text-sm font-mono text-center font-bold text-[#ffd700] tracking-wider select-all">
+                    {group.inviteCode}
+                  </span>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(group.inviteCode);
+                      alert("Código copiado para a área de transferência!");
+                    }}
+                    className="copa-btn-primary px-4 py-2.5 text-xs shadow-md"
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+
+              {/* Group stats card */}
+              <div className="auth-card p-5 border border-white/10 bg-black/20">
+                <h3 className="text-sm font-bold text-white mb-3 uppercase tracking-wider text-white/40">Resumo do Grupo</h3>
+                <div className="space-y-3 text-xs text-white/70">
+                  <div className="flex justify-between py-1.5 border-b border-white/5">
+                    <span>Máximo de Vagas:</span>
+                    <span className="font-bold text-[#ffd700]">{group.maxMembers}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-white/5">
+                    <span>Criador:</span>
+                    <span className="font-bold text-white">{group.owner.name}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span>Criado em:</span>
+                    <span className="font-bold text-white">{new Date(group.createdAt).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
