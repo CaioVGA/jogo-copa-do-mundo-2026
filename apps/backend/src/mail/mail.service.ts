@@ -27,44 +27,49 @@ export class MailService {
         <html>
         <head>
           <meta charset="UTF-8">
-          <style>
-            body { font-family: Arial, sans-serif; background: #0a0f1e; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 40px auto; background: linear-gradient(135deg, #0a1628 0%, #1a3a2a 100%); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,215,0,0.2); }
-            .header { background: linear-gradient(135deg, #1a472a 0%, #0d5c3a 100%); padding: 40px; text-align: center; }
-            .header h1 { color: #FFD700; font-size: 28px; margin: 0; }
-            .header p { color: rgba(255,255,255,0.8); margin: 8px 0 0; }
-            .body { padding: 40px; }
-            .greeting { color: #ffffff; font-size: 18px; margin-bottom: 16px; }
-            .message { color: rgba(255,255,255,0.7); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
-            .otp-box { background: rgba(255,215,0,0.1); border: 2px solid #FFD700; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0; }
-            .otp-code { font-size: 40px; font-weight: bold; color: #FFD700; letter-spacing: 12px; font-family: monospace; }
-            .expiry { color: rgba(255,255,255,0.5); font-size: 13px; margin-top: 12px; }
-            .footer { padding: 24px 40px; border-top: 1px solid rgba(255,215,0,0.1); color: rgba(255,255,255,0.4); font-size: 12px; text-align: center; }
-            .warning { background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); border-radius: 8px; padding: 12px 16px; color: rgba(255,200,200,0.8); font-size: 13px; margin-top: 16px; }
-          </style>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Seu código de verificação</title>
         </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🏆 Copa do Mundo 2026</h1>
-              <p>Recuperação de Senha</p>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #040814; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 560px; margin: 0 auto; background-color: #0b1220; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255, 215, 0, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);">
+            
+            <!-- Header Brand -->
+            <div style="background-color: #000000; padding: 36px 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 300; font-size: 16px; letter-spacing: 5px; color: #ffffff; text-transform: uppercase; padding-right: 6px;">COPA DO</td>
+                  <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 900; font-size: 18px; letter-spacing: -0.5px; color: #ffd700; text-transform: uppercase; padding-right: 8px;">MUNDO</td>
+                  <td>
+                    <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.45); padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 900; font-family: sans-serif; vertical-align: middle;">2026</span>
+                  </td>
+                </tr>
+              </table>
+              <div style="color: rgba(255,255,255,0.4); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; font-family: sans-serif;">Recuperação de Senha</div>
             </div>
-            <div class="body">
-              <div class="greeting">Olá, ${name}!</div>
-              <div class="message">
-                Recebemos uma solicitação para redefinir a senha da sua conta no jogo da Copa do Mundo 2026. 
-                Use o código abaixo para continuar:
+
+            <!-- Body Content -->
+            <div style="padding: 40px 30px;">
+              <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 16px;">Olá, ${name}!</div>
+              <div style="color: rgba(255, 255, 255, 0.65); font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+                Recebemos uma solicitação para redefinir a senha da sua conta no jogo da Copa do Mundo 2026. Use o código de verificação exclusivo abaixo para prosseguir:
               </div>
-              <div class="otp-box">
-                <div class="otp-code">${otp}</div>
-                <div class="expiry">⏱️ Este código expira em <strong>15 minutos</strong></div>
+              
+              <!-- OTP Box -->
+              <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 28px; text-align: center; margin: 30px 0;">
+                <div style="font-size: 38px; font-weight: 900; color: #ffd700; letter-spacing: 14px; font-family: Courier, monospace; margin-left: 14px; line-height: 1;">${otp}</div>
+                <div style="color: rgba(255, 255, 255, 0.4); font-size: 11px; margin-top: 16px;">⏱️ Este código expira em <strong style="color: #ffffff;">15 minutos</strong></div>
               </div>
-              <div class="warning">
-                ⚠️ Se você não solicitou a redefinição de senha, ignore este email. Sua senha permanecerá a mesma.
+
+              <!-- Warning Alert -->
+              <div style="background-color: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 12px; padding: 14px 18px; color: rgba(239, 68, 68, 0.8); font-size: 12px; line-height: 1.5; margin-top: 24px;">
+                ⚠️ Se você não solicitou a redefinição de senha, ignore este e-mail por segurança. Sua senha atual permanecerá inalterada.
               </div>
             </div>
-            <div class="footer">
-              © 2026 Copa do Mundo 2026 Game. Este é um email automático, não responda.
+
+            <!-- Footer Area -->
+            <div style="padding: 24px 30px; border-top: 1px solid rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.3); font-size: 11px; text-align: center; line-height: 1.5;">
+              Este é um e-mail automático enviado pelo sistema de bolão oficial.<br/>
+              © 2026 Copa do Mundo 2026 Game. Todos os direitos reservados.
             </div>
           </div>
         </body>
@@ -85,34 +90,43 @@ export class MailService {
         <html>
         <head>
           <meta charset="UTF-8">
-          <style>
-            body { font-family: Arial, sans-serif; background: #0a0f1e; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 40px auto; background: linear-gradient(135deg, #0a1628 0%, #1a3a2a 100%); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,215,0,0.2); }
-            .header { background: linear-gradient(135deg, #1a472a 0%, #0d5c3a 100%); padding: 40px; text-align: center; }
-            .header h1 { color: #FFD700; font-size: 28px; margin: 0; }
-            .header p { color: rgba(255,255,255,0.8); margin: 8px 0 0; }
-            .body { padding: 40px; text-align: center; }
-            .greeting { color: #ffffff; font-size: 18px; margin-bottom: 16px; }
-            .message { color: rgba(255,255,255,0.7); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
-            .btn { display: inline-block; background: #FFD700; color: #0d2b1a; padding: 16px 32px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 16px; }
-            .footer { padding: 24px 40px; border-top: 1px solid rgba(255,215,0,0.1); color: rgba(255,255,255,0.4); font-size: 12px; text-align: center; }
-          </style>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Ative sua conta</title>
         </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🏆 Copa do Mundo 2026</h1>
-              <p>Ativação de Conta</p>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #040814; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 560px; margin: 0 auto; background-color: #0b1220; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255, 215, 0, 0.12); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);">
+            
+            <!-- Header Brand -->
+            <div style="background-color: #000000; padding: 36px 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <table align="center" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 300; font-size: 16px; letter-spacing: 5px; color: #ffffff; text-transform: uppercase; padding-right: 6px;">COPA DO</td>
+                  <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 900; font-size: 18px; letter-spacing: -0.5px; color: #ffd700; text-transform: uppercase; padding-right: 8px;">MUNDO</td>
+                  <td>
+                    <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.45); padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 900; font-family: sans-serif; vertical-align: middle;">2026</span>
+                  </td>
+                </tr>
+              </table>
+              <div style="color: rgba(255,255,255,0.4); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; font-family: sans-serif;">Ativação de Conta</div>
             </div>
-            <div class="body">
-              <div class="greeting">Olá, ${name}!</div>
-              <div class="message">
-                Falta pouco para você participar do jogo da Copa! Clique no botão abaixo para ativar sua conta:
+
+            <!-- Body Content -->
+            <div style="padding: 40px 30px; text-align: center;">
+              <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 16px; text-align: left;">Olá, ${name}!</div>
+              <div style="color: rgba(255, 255, 255, 0.65); font-size: 14px; line-height: 1.6; margin-bottom: 32px; text-align: left;">
+                Seja muito bem-vindo ao bolão oficial da Copa do Mundo 2026! Falta apenas um passo para você liberar sua conta e começar a fazer seus palpites nos grupos e mata-mata.
               </div>
-              <a href="${activationUrl}" class="btn">Ativar Minha Conta</a>
+              
+              <!-- CTA Button -->
+              <div style="margin: 36px 0;">
+                <a href="${activationUrl}" style="display: inline-block; background-color: #ffd700; background: linear-gradient(135deg, #ffd700 0%, #f5c800 100%); color: #05110a; padding: 16px 36px; text-decoration: none; font-weight: 900; border-radius: 12px; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2);">Ativar Minha Conta</a>
+              </div>
             </div>
-            <div class="footer">
-              © 2026 Copa do Mundo 2026 Game. Este é um email automático, não responda.
+
+            <!-- Footer Area -->
+            <div style="padding: 24px 30px; border-top: 1px solid rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.3); font-size: 11px; text-align: center; line-height: 1.5;">
+              Este é um e-mail automático enviado pelo sistema de bolão oficial.<br/>
+              © 2026 Copa do Mundo 2026 Game. Todos os direitos reservados.
             </div>
           </div>
         </body>

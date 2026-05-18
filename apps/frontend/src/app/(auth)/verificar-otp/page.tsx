@@ -4,16 +4,20 @@ import { useRef, useState, KeyboardEvent, ClipboardEvent, useEffect } from "reac
 import { useRouter } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { authApi } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
 
 const OTP_LENGTH = 6;
 
 export default function VerificarOtpPage() {
   const router = useRouter();
+  const toast = useToast();
   const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 min em segundos
+  const [resendCount, setResendCount] = useState<number>(0);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -25,12 +29,19 @@ export default function VerificarOtpPage() {
     setEmail(storedEmail);
   }, [router]);
 
-  // Countdown timer
+  // Countdown timer para expiração geral do OTP
   useEffect(() => {
     if (timeLeft <= 0) return;
     const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
+
+  // Countdown timer para o cooldown do botão Reenviar
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -103,15 +114,24 @@ export default function VerificarOtpPage() {
   };
 
   const handleResend = async () => {
-    if (!email) return;
+    if (!email || resendCooldown > 0 || resendCount >= 3) return;
     try {
       await authApi.forgotPassword({ email });
       setTimeLeft(15 * 60);
       setDigits(Array(OTP_LENGTH).fill(""));
       inputRefs.current[0]?.focus();
       setApiError(null);
+      
+      const nextCount = resendCount + 1;
+      setResendCount(nextCount);
+      if (nextCount < 3) {
+        setResendCooldown(60); // 1 minuto de cooldown
+      }
+      
+      toast.success("Código de verificação reenviado com sucesso!");
     } catch {
       setApiError("Erro ao reenviar o código");
+      toast.error("Falha ao reenviar o código. Tente novamente.");
     }
   };
 
@@ -206,11 +226,15 @@ export default function VerificarOtpPage() {
           <button
             type="button"
             onClick={handleResend}
-            className="text-sm copa-link"
+            className="text-sm copa-link disabled:opacity-40 disabled:pointer-events-none"
             data-testid="resend-otp"
-            disabled={timeLeft > 14 * 60}
+            disabled={resendCooldown > 0 || resendCount >= 3}
           >
-            Reenviar
+            {resendCount >= 3 
+              ? "Reenviar (Limite atingido)" 
+              : resendCooldown > 0 
+                ? `Reenviar (${resendCooldown}s)` 
+                : "Reenviar"}
           </button>
         </div>
       </form>
