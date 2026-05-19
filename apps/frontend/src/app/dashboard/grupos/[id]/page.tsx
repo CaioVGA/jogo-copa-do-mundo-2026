@@ -1417,16 +1417,20 @@ export default function GroupDetailsPage() {
                   >
                     Fase de Grupos
                   </button>
-                  <button
-                    onClick={() => setOracleSubTab("matamata")}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      oracleSubTab === "matamata"
-                        ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-md font-black"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    Mata-Mata
-                  </button>
+                  <div className="relative group">
+                    <button
+                      disabled
+                      type="button"
+                      className="px-4 py-1.5 rounded-lg text-xs font-bold text-white/35 cursor-not-allowed select-none transition-all"
+                    >
+                      Mata-Mata
+                    </button>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 scale-95 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 bg-gradient-to-b from-[#0d2b1a] to-[#05110a] border border-[#ffd700]/30 text-white text-[11px] font-medium p-2.5 rounded-xl shadow-2xl text-center z-50 backdrop-blur-md">
+                      O mata-mata estará habilitado quando a fase de grupos for encerrada.
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#05110a]" />
+                    </div>
+                  </div>
                 </div>
 
                 {oracleSubTab === "grupos" ? (
