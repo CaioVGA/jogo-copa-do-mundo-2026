@@ -576,21 +576,61 @@ export default function CopaGamesPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-white/5 pt-6 mt-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/5 pt-6 mt-6">
                 <button
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold border border-white/5 bg-white/[0.02] text-white/70 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-white/[0.02] disabled:hover:text-white/70 transition-all cursor-pointer disabled:cursor-not-allowed"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold border border-white/5 bg-white/[0.02] text-white/70 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-white/[0.02] disabled:hover:text-white/70 transition-all cursor-pointer disabled:cursor-not-allowed shrink-0"
                 >
                   Anterior
                 </button>
-                <span className="text-xs text-white/40 font-semibold">
-                  Página <span className="text-[#ffd700] font-black">{currentPage}</span> de <span className="text-white font-black">{totalPages}</span> <span className="text-white/20">({totalItems} jogos)</span>
-                </span>
+                
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                    {(() => {
+                      const range: (number | string)[] = [];
+                      const delta = 1;
+                      for (let i = 1; i <= totalPages; i++) {
+                        if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+                          range.push(i);
+                        } else if (range[range.length - 1] !== "...") {
+                          range.push("...");
+                        }
+                      }
+                      return range.map((page, idx) => {
+                        if (page === "...") {
+                          return (
+                            <span key={`dots-${idx}`} className="px-2 text-white/40 text-xs font-bold">
+                              ...
+                            </span>
+                          );
+                        }
+                        const isSelected = page === currentPage;
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page as number)}
+                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
+                              isSelected
+                                ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
+                                : "bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/15"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                  <span className="text-[10px] text-white/30 font-semibold uppercase tracking-wider">
+                    {totalItems} jogos no total
+                  </span>
+                </div>
+
                 <button
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold border border-white/5 bg-white/[0.02] text-white/70 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-white/[0.02] disabled:hover:text-white/70 transition-all cursor-pointer disabled:cursor-not-allowed"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold border border-white/5 bg-white/[0.02] text-white/70 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-white/[0.02] disabled:hover:text-white/70 transition-all cursor-pointer disabled:cursor-not-allowed shrink-0"
                 >
                   Próximo
                 </button>

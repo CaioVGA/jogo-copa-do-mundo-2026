@@ -320,26 +320,17 @@ export class GroupsService {
 
             // 1st place prediction
             if (predList[0] === actualList[0].code) {
-              oraclePoints += 5;
-            } else if (qualifiedTeams.has(predList[0])) {
-              oraclePoints += 3;
+              oraclePoints += 4;
             }
 
             // 2nd place prediction
             if (predList[1] === actualList[1].code) {
-              oraclePoints += 5;
-            } else if (qualifiedTeams.has(predList[1])) {
-              oraclePoints += 3;
+              oraclePoints += 4;
             }
 
             // 3rd place prediction
             if (predList[2] === actualList[2].code) {
-              oraclePoints += 5;
-              if (bestThirdTeams.has(predList[2])) {
-                oraclePoints += 2;
-              }
-            } else if (qualifiedTeams.has(predList[2])) {
-              oraclePoints += 3;
+              oraclePoints += 4;
             }
           });
         }

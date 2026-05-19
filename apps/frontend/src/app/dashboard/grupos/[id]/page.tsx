@@ -179,6 +179,45 @@ export default function GroupDetailsPage() {
     );
   }
 
+  // Encontra a data do primeiro jogo da fase de grupos para travar o Oráculo
+  const firstGroupMatchDate = (() => {
+    const groupMatches = games.filter((g) => g.stage?.startsWith("Fase de Grupos"));
+    if (groupMatches.length === 0) return null;
+    const sorted = [...groupMatches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return new Date(sorted[0].date);
+  })();
+
+  const isOracleClosed = firstGroupMatchDate ? new Date() >= firstGroupMatchDate : false;
+
+  const formattedFirstMatchDate = firstGroupMatchDate 
+    ? firstGroupMatchDate.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : "";
+
+  // Flag informando quantos dias restam ou se já encerrou para palpitar no Oráculo
+  const oracleDeadlineText = (() => {
+    if (isOracleClosed) {
+      return { text: "Encerrado", color: "text-red-400 bg-red-500/10 border-red-500/20" };
+    }
+    if (!firstGroupMatchDate) {
+      return { text: "Aberto", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
+    }
+    const now = new Date();
+    const diffMs = firstGroupMatchDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 1) {
+      return { text: `Faltam ${diffDays} dias`, color: "text-[#ffd700] bg-[#ffd700]/10 border-[#ffd700]/20 animate-pulse font-bold" };
+    } else {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      if (diffHours > 0) {
+        return { text: `Encerra em ${diffHours}h e ${diffMins}m`, color: "text-amber-400 bg-amber-500/10 border-amber-500/20 animate-pulse font-bold" };
+      } else {
+        return { text: `Encerra em ${diffMins}m!`, color: "text-rose-400 bg-rose-500/10 border-rose-500/20 animate-pulse font-black" };
+      }
+    }
+  })();
+
   // Ordenação dos participantes do grupo pelos pontos reais acumulados
   const rankedMembers = [...group.members].sort((a, b) => (b.points || 0) - (a.points || 0));
 
@@ -275,7 +314,7 @@ export default function GroupDetailsPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
         
         {/* Left Panel: Geral, Games or Oracle */}
         <div className="xl:col-span-2 space-y-6">
@@ -321,6 +360,33 @@ export default function GroupDetailsPage() {
                           const isStarted = new Date() >= gameDate;
                           const isClosed = isFinished || isStarted;
 
+                          // Calcula o prazo dos palpites dinamicamente
+                          const now = new Date();
+                          const diffMs = gameDate.getTime() - now.getTime();
+                          let deadlineText = "";
+                          let deadlineColor = "";
+
+                          if (isFinished || isStarted || diffMs <= 0) {
+                            deadlineText = "Encerrado";
+                            deadlineColor = "text-red-400 bg-red-500/10 border-red-500/20";
+                          } else {
+                            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                            if (diffDays > 1) {
+                              deadlineText = `Faltam ${diffDays} dias`;
+                              deadlineColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+                            } else {
+                              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                              const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                              if (diffHours > 0) {
+                                deadlineText = `Encerra em ${diffHours}h e ${diffMins}m`;
+                                deadlineColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
+                              } else {
+                                deadlineText = `Encerra em ${diffMins}m`;
+                                deadlineColor = "text-rose-400 bg-rose-500/10 border-rose-500/20 animate-pulse";
+                              }
+                            }
+                          }
+
                           // Filtrar palpites deste jogo
                           const gamePredictions = group.predictions?.filter((p: any) => p.matchId === game.id) || [];
 
@@ -334,7 +400,9 @@ export default function GroupDetailsPage() {
                                 ) : isStarted ? (
                                   <span className="text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-amber-500/20">Encerrado</span>
                                 ) : (
-                                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-emerald-500/20 animate-pulse">Aberto</span>
+                                  <span className={`font-bold px-2 py-0.5 rounded text-[9px] uppercase border ${deadlineColor}`}>
+                                    {deadlineText}
+                                  </span>
                                 )}
                               </div>
 
@@ -423,21 +491,56 @@ export default function GroupDetailsPage() {
 
                       {/* Pagination Controls */}
                       {games.length > ITEMS_PER_PAGE && (
-                        <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-2">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4 mt-2">
                           <button
                             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
-                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                           >
                             Anterior
                           </button>
-                          <span className="text-xs text-white/50 font-medium">
-                            Página <span className="text-white font-bold">{currentPage}</span> de <span className="text-white font-bold">{totalPages}</span>
-                          </span>
+                          
+                          <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                            {(() => {
+                              const range: (number | string)[] = [];
+                              const delta = 1;
+                              for (let i = 1; i <= totalPages; i++) {
+                                if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+                                  range.push(i);
+                                } else if (range[range.length - 1] !== "...") {
+                                  range.push("...");
+                                }
+                              }
+                              return range.map((page, idx) => {
+                                if (page === "...") {
+                                  return (
+                                    <span key={`dots-${idx}`} className="px-2 text-white/40 text-xs font-bold">
+                                      ...
+                                    </span>
+                                  );
+                                }
+                                const isSelected = page === currentPage;
+                                return (
+                                  <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page as number)}
+                                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
+                                      isSelected
+                                        ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
+                                        : "bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/15"
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                );
+                              });
+                            })()}
+                          </div>
+
                           <button
                             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages}
-                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                           >
                             Próximo
                           </button>
@@ -616,21 +719,56 @@ export default function GroupDetailsPage() {
 
                   {/* Pagination Controls for Bolão */}
                   {games.length > ITEMS_PER_PAGE && (
-                    <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4 mt-4">
                       <button
                         onClick={() => setBolaoPage((prev) => Math.max(prev - 1, 1))}
                         disabled={bolaoPage === 1}
-                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                       >
                         Anterior
                       </button>
-                      <span className="text-xs text-white/50 font-medium">
-                        Página <span className="text-white font-bold">{bolaoPage}</span> de <span className="text-white font-bold">{bolaoTotalPages}</span>
-                      </span>
+                      
+                      <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                        {(() => {
+                          const range: (number | string)[] = [];
+                          const delta = 1;
+                          for (let i = 1; i <= bolaoTotalPages; i++) {
+                            if (i === 1 || i === bolaoTotalPages || (i >= bolaoPage - delta && i <= bolaoPage + delta)) {
+                              range.push(i);
+                            } else if (range[range.length - 1] !== "...") {
+                              range.push("...");
+                            }
+                          }
+                          return range.map((page, idx) => {
+                            if (page === "...") {
+                              return (
+                                <span key={`dots-${idx}`} className="px-2 text-white/40 text-xs font-bold">
+                                  ...
+                                </span>
+                              );
+                            }
+                            const isSelected = page === bolaoPage;
+                            return (
+                              <button
+                                key={page}
+                                onClick={() => setBolaoPage(page as number)}
+                                className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
+                                  isSelected
+                                    ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
+                                    : "bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/15"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            );
+                          });
+                        })()}
+                      </div>
+
                       <button
                         onClick={() => setBolaoPage((prev) => Math.min(prev + 1, bolaoTotalPages))}
                         disabled={bolaoPage === bolaoTotalPages}
-                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all"
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                       >
                         Próximo
                       </button>
@@ -639,7 +777,22 @@ export default function GroupDetailsPage() {
                 </>
               )
             ) : activeTab === "oraculo" ? (
-              <div className="space-y-4">
+              <div className="space-y-4 animate-fade-in-up">
+                {/* Cabeçalho do Oráculo com Badge de Tempo */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/30 p-4 border border-white/10 rounded-2xl">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-[#ffd700]" /> Oráculo de Grupos
+                    </h2>
+                    <p className="text-[10px] sm:text-xs text-white/50 mt-0.5">Ordene as seleções e preveja os classificados de todos os 12 grupos.</p>
+                  </div>
+                  {/* Flag de Prazo */}
+                  <div className={`inline-flex items-center self-start sm:self-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border ${oracleDeadlineText.color}`}>
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    <span>{oracleDeadlineText.text}</span>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.keys(oracleGroups).sort().map((groupName) => (
                     <div key={groupName} className="auth-card p-4 border border-white/5 relative overflow-hidden bg-[#0d2b1a]/40">
@@ -647,22 +800,25 @@ export default function GroupDetailsPage() {
                         <h3 className="text-base font-bold text-[#ffd700] flex items-center gap-2">
                           Grupo {groupName}
                         </h3>
-                        <span className="text-[9px] uppercase text-white/40 tracking-wider hidden sm:inline">Arrastar ou usar setas</span>
+                        <span className="text-[9px] uppercase text-white/40 tracking-wider hidden sm:inline">
+                          {isOracleClosed ? "Visualização" : "Arrastar ou usar setas"}
+                        </span>
                       </div>
  
                       <div className="space-y-1.5">
                         {oracleGroups[groupName]?.map((team, index) => (
                           <div
                             key={team.code}
-                            draggable
+                            draggable={!isOracleClosed}
                             onDragStart={(e) => {
+                              if (isOracleClosed) return;
                               setDraggedItem({ groupName, index });
                               e.dataTransfer.effectAllowed = "move";
                             }}
                             onDragOver={(e) => e.preventDefault()}
                             onDragEnd={() => setDraggedItem(null)}
                             onDrop={(e) => {
-                              if (!draggedItem) return;
+                              if (isOracleClosed || !draggedItem) return;
                               if (draggedItem.groupName !== groupName) return;
                               const newTeams = [...oracleGroups[groupName]];
                               const [moved] = newTeams.splice(draggedItem.index, 1);
@@ -673,10 +829,11 @@ export default function GroupDetailsPage() {
                               });
                               setDraggedItem(null);
                             }}
-                            className={`flex items-center gap-2 p-2 rounded-lg border transition-all cursor-grab active:cursor-grabbing ${
+                            className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
+                              isOracleClosed ? "bg-black/10 border-white/5 cursor-default" :
                               draggedItem && draggedItem.groupName === groupName && draggedItem.index === index
-                                ? "bg-white/5 border-[#ffd700] opacity-50 scale-98"
-                                : "bg-black/20 border-white/5 hover:border-[#ffd700]/30 hover:bg-white/5"
+                                ? "bg-white/5 border-[#ffd700] opacity-50 scale-98 cursor-grab"
+                                : "bg-black/20 border-white/5 hover:border-[#ffd700]/30 hover:bg-white/5 cursor-grab active:cursor-grabbing"
                             }`}
                           >
                              {/* Position rank */}
@@ -703,46 +860,48 @@ export default function GroupDetailsPage() {
                             </span>
  
                             {/* Reorder Arrows (Failsafe for mobile & accessibility!) */}
-                            <div className="flex flex-col gap-0.5 shrink-0 opacity-40 hover:opacity-100 transition-opacity">
-                              {index > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newTeams = [...oracleGroups[groupName]];
-                                    const temp = newTeams[index];
-                                    newTeams[index] = newTeams[index - 1];
-                                    newTeams[index - 1] = temp;
-                                    setOracleGroups({
-                                      ...oracleGroups,
-                                      [groupName]: newTeams
-                                    });
-                                  }}
-                                  className="p-0.5 hover:text-[#ffd700] transition-colors"
-                                  title="Mover para cima"
-                                >
-                                  <ChevronUp className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              {index < oracleGroups[groupName].length - 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newTeams = [...oracleGroups[groupName]];
-                                    const temp = newTeams[index];
-                                    newTeams[index] = newTeams[index + 1];
-                                    newTeams[index + 1] = temp;
-                                    setOracleGroups({
-                                      ...oracleGroups,
-                                      [groupName]: newTeams
-                                    });
-                                  }}
-                                  className="p-0.5 hover:text-[#ffd700] transition-colors"
-                                  title="Mover para baixo"
-                                >
-                                  <ChevronDown className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
+                            {!isOracleClosed && (
+                              <div className="flex flex-col gap-0.5 shrink-0 opacity-40 hover:opacity-100 transition-opacity">
+                                {index > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newTeams = [...oracleGroups[groupName]];
+                                      const temp = newTeams[index];
+                                      newTeams[index] = newTeams[index - 1];
+                                      newTeams[index - 1] = temp;
+                                      setOracleGroups({
+                                        ...oracleGroups,
+                                        [groupName]: newTeams
+                                      });
+                                    }}
+                                    className="p-0.5 hover:text-[#ffd700] transition-colors"
+                                    title="Mover para cima"
+                                  >
+                                    <ChevronUp className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {index < oracleGroups[groupName].length - 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newTeams = [...oracleGroups[groupName]];
+                                      const temp = newTeams[index];
+                                      newTeams[index] = newTeams[index + 1];
+                                      newTeams[index + 1] = temp;
+                                      setOracleGroups({
+                                        ...oracleGroups,
+                                        [groupName]: newTeams
+                                      });
+                                    }}
+                                    className="p-0.5 hover:text-[#ffd700] transition-colors"
+                                    title="Mover para baixo"
+                                  >
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -751,51 +910,62 @@ export default function GroupDetailsPage() {
                 </div>
  
                 {/* Save button and instructions */}
-                <div className="flex flex-col items-center justify-center p-4 border border-white/10 rounded-xl bg-black/20 mt-5">
-                  <p className="text-xs text-white/60 text-center mb-3">
-                    Organize os grupos arrastando as seleções ou usando as setas laterais para prever os classificados em ordem.
-                  </p>
-                  <button
-                    disabled={savingOracle}
-                    onClick={async () => {
-                      setSavingOracle(true);
-                      setOracleMessage(null);
-                      try {
-                        const payload = Object.keys(oracleGroups).map((gName) => ({
-                          groupName: gName,
-                          teamOrder: oracleGroups[gName].map((t) => t.code),
-                        }));
-                        await groupsApi.saveOraclePredictions(groupId, payload);
-                        setOracleMessage("Palpites salvos com sucesso!");
-                        setTimeout(() => setOracleMessage(null), 5000);
-                      } catch (err: any) {
-                        setOracleMessage(err.message || "Erro ao salvar palpites");
-                      } finally {
-                        setSavingOracle(false);
-                      }
-                    }}
-                    className="copa-btn-primary px-6 py-2 text-sm shadow-lg shadow-[#ffd700]/15 w-full sm:w-auto flex items-center justify-center gap-2"
-                  >
-                    {savingOracle ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Salvando palpites...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        Salvar Palpites do Oráculo
-                      </>
-                    )}
-                  </button>
-                  {oracleMessage && (
-                    <p className={`mt-2 text-xs font-semibold ${
-                      oracleMessage.includes("sucesso") ? "text-emerald-400" : "text-red-400"
-                    }`}>
-                      {oracleMessage}
+                {isOracleClosed ? (
+                  <div className="flex flex-col items-center justify-center p-4.5 border border-red-500/20 rounded-2xl bg-red-500/5 mt-5 text-center shadow-[0_0_15px_rgba(239,68,68,0.05)] animate-fade-in-up">
+                    <p className="text-xs font-black text-red-400 uppercase tracking-widest flex items-center gap-1.5 mb-1.5 justify-center">
+                      🔒 Oráculo Encerrado
                     </p>
-                  )}
-                </div>
+                    <p className="text-[11px] text-white/60 max-w-md leading-relaxed">
+                      O prazo para enviar e alterar palpites no Oráculo encerrou em <strong className="text-white font-bold">{formattedFirstMatchDate || "o início da fase de grupos"}</strong> com o pontapé inicial do torneio. Agora você pode apenas visualizar as projeções das seleções.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-4 border border-white/10 rounded-xl bg-black/20 mt-5">
+                    <p className="text-xs text-white/60 text-center mb-3">
+                      Organize os grupos arrastando as seleções ou usando as setas laterais para prever os classificados em ordem. Os palpites podem ser salvos e alterados até <strong className="text-[#ffd700] font-bold">{formattedFirstMatchDate || "o início da fase de grupos"}</strong>.
+                    </p>
+                    <button
+                      disabled={savingOracle}
+                      onClick={async () => {
+                        setSavingOracle(true);
+                        setOracleMessage(null);
+                        try {
+                          const payload = Object.keys(oracleGroups).map((gName) => ({
+                            groupName: gName,
+                            teamOrder: oracleGroups[gName].map((t) => t.code),
+                          }));
+                          await groupsApi.saveOraclePredictions(groupId, payload);
+                          setOracleMessage("Palpites salvos com sucesso!");
+                          setTimeout(() => setOracleMessage(null), 5000);
+                        } catch (err: any) {
+                          setOracleMessage(err.message || "Erro ao salvar palpites");
+                        } finally {
+                          setSavingOracle(false);
+                        }
+                      }}
+                      className="copa-btn-primary px-6 py-2 text-sm shadow-lg shadow-[#ffd700]/15 w-full sm:w-auto flex items-center justify-center gap-2"
+                    >
+                      {savingOracle ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Salvando palpites...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Salvar Palpites do Oráculo
+                        </>
+                      )}
+                    </button>
+                    {oracleMessage && (
+                      <p className={`mt-2 text-xs font-semibold ${
+                        oracleMessage.includes("sucesso") ? "text-emerald-400" : "text-red-400"
+                      }`}>
+                        {oracleMessage}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-6 animate-fade-in-up">
@@ -884,7 +1054,7 @@ export default function GroupDetailsPage() {
 
         {/* Right Panel: Ranking / Oracle Standings */}
         {/* Right Panel: Ranking / Oracle Standings / Group Stats */}
-        <div className="space-y-6">
+        <div className="space-y-6 self-start w-full">
           {activeTab === "geral" ? (
             <div className="space-y-6 animate-fade-in-up">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -1116,7 +1286,34 @@ export default function GroupDetailsPage() {
                   <Trophy className="w-5 h-5 text-[#ffd700]" /> Regulamento & Projeção
                 </h2>
               </div>
-              
+
+              {/* Pontuação do Oráculo Card */}
+              <div className="auth-card p-5 border border-[#ffd700]/25 bg-[#0a0f1e]/40 relative overflow-hidden rounded-3xl shadow-xl">
+                <div className="absolute top-0 right-0 p-3 opacity-[0.03]">
+                  <Trophy className="w-20 h-20 text-[#ffd700]" />
+                </div>
+                <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
+                  ⭐ Pontuação do Oráculo
+                </h3>
+                <div className="space-y-3 text-xs">
+                  {/* Posições exatas */}
+                  <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
+                    <p className="font-bold text-white flex items-center gap-1.5">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-[10px]">
+                        +4
+                      </span>
+                      Posições Exatas (1º, 2º e 3º)
+                    </p>
+                    <p className="text-[11px] text-white/50 leading-normal pl-6">
+                      Você ganha **4 pontos** para cada time que acertar a posição exata (1º, 2º ou 3º colocado) no grupo. Qualquer erro de colocação resultará em **0 pontos**.
+                    </p>
+                  </div>
+                </div>
+                <div className="border-t border-white/5 mt-4 pt-3 text-[10px] text-white/40 italic leading-normal">
+                  ⚠️ O Oráculo fecha no início da primeira partida e as pontuações só serão calculadas e exibidas na tabela após a finalização completa da Fase de Grupos.
+                </div>
+              </div>
+
               {/* Regra Card */}
               <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-3 opacity-10">

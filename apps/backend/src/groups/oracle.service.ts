@@ -105,6 +105,20 @@ export class OracleService {
       throw new ForbiddenException('Você não faz parte deste grupo de bolão');
     }
 
+    // 1.5. Validar prazo de envio do Oráculo (até o início do primeiro jogo da fase de grupos)
+    const firstGroupMatch = await this.prisma.match.findFirst({
+      where: { stage: { startsWith: 'Fase de Grupos' } },
+      orderBy: { date: 'asc' },
+    });
+
+    if (firstGroupMatch) {
+      const now = new Date();
+      const firstMatchDate = new Date(firstGroupMatch.date);
+      if (now >= firstMatchDate) {
+        throw new ForbiddenException('O Oráculo está fechado. Palpites só podiam ser enviados até o início do primeiro jogo da fase de grupos.');
+      }
+    }
+
     // 2. Gravar os palpites para cada grupo
     for (const pred of dto.groupPredictions) {
       if (!pred.groupName || !pred.teamOrder || pred.teamOrder.length === 0) {
