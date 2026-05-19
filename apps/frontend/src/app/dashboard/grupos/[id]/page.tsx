@@ -392,8 +392,10 @@ export default function GroupDetailsPage() {
                                                 <span className="text-[#ffd700]">{pred.homeScore} x {pred.awayScore}</span>
                                                 {isFinished && (
                                                   <span className={`text-[8px] px-1 py-0.5 rounded font-black ${
-                                                    pred.points === 3 ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20" :
-                                                    pred.points === 1 ? "text-blue-400 bg-blue-500/10 border border-blue-500/20" :
+                                                    pred.points === 5 ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20" :
+                                                    pred.points === 4 ? "text-teal-400 bg-teal-500/10 border border-teal-500/20" :
+                                                    pred.points === 3 ? "text-blue-400 bg-blue-500/10 border border-blue-500/20" :
+                                                    pred.points === 1 ? "text-amber-400 bg-amber-500/10 border border-amber-500/20" :
                                                     "text-red-400 bg-red-500/10 border border-red-500/20"
                                                   }`}>
                                                     +{pred.points}
@@ -845,7 +847,7 @@ export default function GroupDetailsPage() {
                                 )}
                               </div>
                               <p className="text-[10px] text-white/40 mt-0.5">
-                                Entrou em {new Date(member.joinedAt).toLocaleDateString("pt-BR")} • {member.points} pts
+                                Entrou em {new Date(member.joinedAt).toLocaleDateString("pt-BR")} • <span className="text-[#ffd700] font-bold">{member.points || 0} pts</span> (Bolão: {member.matchPoints || 0} | Oráculo: {member.oraclePoints || 0})
                               </p>
                             </div>
                           </div>
@@ -987,6 +989,11 @@ export default function GroupDetailsPage() {
                               {member.user.name}
                               {index === 0 && <Crown className="w-3.5 h-3.5 text-[#ffd700] animate-pulse" />}
                             </p>
+                            <p className="text-[9px] text-white/40 mt-0.5">
+                              Bolão: <span className="text-white/60 font-bold">{member.matchPoints || 0} pts</span>
+                              {" • "}
+                              Oráculo: <span className="text-purple-400 font-bold">{member.oraclePoints || 0} pts</span>
+                            </p>
                           </div>
                         </div>
 
@@ -1003,10 +1010,77 @@ export default function GroupDetailsPage() {
           ) : activeTab === "bolao" ? (
             <div className="space-y-6 animate-fade-in-up">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-[#ffd700]" /> Regulamento
+                <Trophy className="w-5 h-5 text-[#ffd700]" /> Regulamento do Bolão
               </h2>
+
+              {/* Sistema de Pontuação Card */}
+              <div className="auth-card p-5 border border-[#ffd700]/20 bg-[#0a0f1e]/40 relative overflow-hidden rounded-3xl shadow-xl">
+                <div className="absolute top-0 right-0 p-3 opacity-[0.03]">
+                  <Trophy className="w-20 h-20 text-[#ffd700]" />
+                </div>
+                <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
+                  ⭐ Sistema de Pontuação
+                </h3>
+                <div className="space-y-3.5 text-xs">
+                  {/* 5 Points */}
+                  <div className="flex gap-3 items-start p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                    <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-sm">
+                      5
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white">Placar Exato</p>
+                      <p className="text-[11px] text-white/50 leading-normal">Caso crave o placar exato da partida.</p>
+                    </div>
+                  </div>
+
+                  {/* 4 Points */}
+                  <div className="flex gap-3 items-start p-2.5 rounded-xl bg-teal-500/5 border border-teal-500/10">
+                    <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 font-black border border-teal-500/25 text-sm">
+                      4
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white">Vencedor + Gols de um Time</p>
+                      <p className="text-[11px] text-white/50 leading-normal">Caso acerte o vencedor, sem cravar o placar, mas acerte a quantidade de gols de um dos times. <span className="text-teal-400/80 italic font-medium">(Ex: jogo 2x0 e palpite 2x1)</span></p>
+                    </div>
+                  </div>
+
+                  {/* 3 Points */}
+                  <div className="flex gap-3 items-start p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                    <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 font-black border border-blue-500/25 text-sm">
+                      3
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white">Vencedor ou Empate Simples</p>
+                      <p className="text-[11px] text-white/50 leading-normal">Caso acerte o vencedor ou o empate errando a quantidade de gols de ambos os times. <span className="text-blue-400/80 italic font-medium">(Ex: jogo 0x0 e palpite 1x1, ou jogo 1x0 e palpite 2x1)</span></p>
+                    </div>
+                  </div>
+
+                  {/* 1 Point */}
+                  <div className="flex gap-3 items-start p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                    <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 font-black border border-amber-500/25 text-sm">
+                      1
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white">Gols de um Time (Erro de Vencedor)</p>
+                      <p className="text-[11px] text-white/50 leading-normal">Caso erre o vencedor ou o empate, mas acerte o número de gols de um dos times. <span className="text-amber-400/80 italic font-medium">(Ex: jogo 0x1 e palpite 1x1, ou jogo 0x0 e palpite 0x1)</span></p>
+                    </div>
+                  </div>
+
+                  {/* 0 Points */}
+                  <div className="flex gap-3 items-start p-2.5 rounded-xl bg-red-500/5 border border-red-500/10">
+                    <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 text-red-400 font-black border border-red-500/25 text-sm">
+                      0
+                    </span>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-white">Erro Absoluto</p>
+                      <p className="text-[11px] text-white/50 leading-normal">Caso erre absolutamente tudo na partida.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Regra da Copa 2026 Card */}
-              <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden">
+              <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden rounded-3xl">
                 <div className="absolute top-0 right-0 p-3 opacity-10">
                   <Trophy className="w-16 h-16 text-[#ffd700]" />
                 </div>

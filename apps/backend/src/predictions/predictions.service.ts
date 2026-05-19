@@ -144,6 +144,66 @@ export class PredictionsService {
     return { success: true, message: 'Palpites salvos com sucesso!' };
   }
 
+  private calculatePredictionPoints(
+    realHome: number,
+    realAway: number,
+    predHome: number,
+    predAway: number,
+  ): number {
+    const exactMatch = (predHome === realHome) && (predAway === realAway);
+    if (exactMatch) {
+      return 5;
+    }
+
+    const realWinner = realHome > realAway ? 1 : realHome < realAway ? -1 : 0;
+    const predWinner = predHome > predAway ? 1 : predHome < predAway ? -1 : 0;
+
+    if (realWinner === predWinner) {
+      const matchedHomeGoals = predHome === realHome;
+      const matchedAwayGoals = predAway === realAway;
+      if (matchedHomeGoals || matchedAwayGoals) {
+        return 4;
+      } else {
+        return 3;
+      }
+    } else {
+      const matchedHomeGoals = predHome === realHome;
+      const matchedAwayGoals = predAway === realAway;
+      if (matchedHomeGoals || matchedAwayGoals) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+  }
+
+  async recalculateGroupStagePredictions() {
+    const groupMatches = await this.prisma.match.findMany({
+      where: { stage: { startsWith: 'Fase de Grupos' } },
+      include: { predictions: true },
+    });
+
+    for (const match of groupMatches) {
+      if (match.status !== 'FINISHED' || match.homeScore === null || match.awayScore === null) {
+        continue;
+      }
+
+      for (const pred of match.predictions) {
+        const points = this.calculatePredictionPoints(
+          match.homeScore,
+          match.awayScore,
+          pred.homeScore,
+          pred.awayScore,
+        );
+
+        await this.prisma.matchPrediction.update({
+          where: { id: pred.id },
+          data: { points },
+        });
+      }
+    }
+  }
+
   async updateMatchScore(userId: string, matchId: string, homeScore: number, awayScore: number) {
     // 1. Verify if user is an ADMIN
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -169,27 +229,14 @@ export class PredictionsService {
       },
     });
 
-    // 3. Fetch all predictions for this match and update points
+    // 3. Score predictions accordingly
+    // 3. Score predictions accordingly (calculate and save points immediately for all stages)
     const predictions = await this.prisma.matchPrediction.findMany({
       where: { matchId },
     });
 
     for (const pred of predictions) {
-      let points = 0;
-      const predHome = pred.homeScore;
-      const predAway = pred.awayScore;
-
-      const exactMatch = (predHome === homeScore) && (predAway === awayScore);
-      if (exactMatch) {
-        points = 3;
-      } else {
-        const realWinner = homeScore > awayScore ? 1 : homeScore < awayScore ? -1 : 0;
-        const predWinner = predHome > predAway ? 1 : predHome < predAway ? -1 : 0;
-        if (realWinner === predWinner) {
-          points = 1;
-        }
-      }
-
+      const points = this.calculatePredictionPoints(homeScore, awayScore, pred.homeScore, pred.awayScore);
       await this.prisma.matchPrediction.update({
         where: { id: pred.id },
         data: { points },

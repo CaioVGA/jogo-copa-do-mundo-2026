@@ -1,10 +1,14 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../prisma/redis.service';
 import { SaveOracleDto } from './dto/save-oracle.dto';
 
 @Injectable()
 export class OracleService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   // ─── Buscar palpites e times agrupados ────────────────────────────────────
   async getOracleData(groupId: string, userId: string) {
@@ -126,6 +130,9 @@ export class OracleService {
         },
       });
     }
+
+    // 3. Invalida o cache do grupo para que a classificação recalcule o Oráculo imediatamente
+    await this.redis.del(`group:details:${groupId}`);
 
     return { message: 'Palpites do Oráculo salvos com sucesso!' };
   }

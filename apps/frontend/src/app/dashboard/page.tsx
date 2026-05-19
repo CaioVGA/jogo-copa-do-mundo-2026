@@ -333,11 +333,11 @@ export default function DashboardPage() {
                           </div>
                           {game.predictedHomeScore !== null && game.predictedAwayScore !== null && (
                             <span className={`text-[8px] font-black px-2 py-0.5 rounded-md border ${
-                              game.pointsEarned === 3
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : game.pointsEarned === 1
-                                ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                              game.pointsEarned === 5 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)]" :
+                              game.pointsEarned === 4 ? "bg-teal-500/10 text-teal-400 border-teal-500/20 shadow-[0_0_8px_rgba(20,184,166,0.1)]" :
+                              game.pointsEarned === 3 ? "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_8px_rgba(59,130,246,0.1)]" :
+                              game.pointsEarned === 1 ? "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]" :
+                              "bg-red-500/10 text-red-400 border-red-500/20"
                             }`}>
                               +{game.pointsEarned} Ponto{game.pointsEarned !== 1 ? "s" : ""}
                             </span>
