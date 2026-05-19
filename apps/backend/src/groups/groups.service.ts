@@ -40,6 +40,25 @@ export class GroupsService {
 
   // ─── Criar grupo ──────────────────────────────────────────────────────────
   async create(dto: CreateGroupDto, userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+
+    if (user.role !== 'ADMIN') {
+      const ownedGroupsCount = await this.prisma.group.count({
+        where: { ownerId: userId },
+      });
+
+      if (ownedGroupsCount >= 3) {
+        throw new ForbiddenException(
+          'Limite excedido. Usuários normais podem criar no máximo 3 grupos.',
+        );
+      }
+    }
+
     const inviteCode = await this.generateUniqueCode();
 
     const group = await this.prisma.group.create({
