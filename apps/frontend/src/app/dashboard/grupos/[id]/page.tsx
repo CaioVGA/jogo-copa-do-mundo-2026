@@ -637,9 +637,20 @@ export default function GroupDetailsPage() {
                                     )}
                                   </div>
                                   {isFinished && game.predictedHomeScore !== null && (
-                                    <span className="text-[8px] text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 px-1 py-0.5 rounded font-semibold mt-0.5">
-                                      Seu: {game.predictedHomeScore}x{game.predictedAwayScore}
-                                    </span>
+                                    <div className="flex flex-col items-center gap-1 mt-1">
+                                      <span className="text-[8px] text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 px-1.5 py-0.5 rounded font-semibold">
+                                        Seu: {game.predictedHomeScore}x{game.predictedAwayScore}
+                                      </span>
+                                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
+                                        game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                                        game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
+                                        game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                                        game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                                        "text-red-400 bg-red-500/10 border-red-500/20"
+                                      }`}>
+                                        +{game.pointsEarned} {game.pointsEarned === 1 ? "ponto" : "pontos"}
+                                      </span>
+                                    </div>
                                   )}
                                 </div>
                               ) : (
