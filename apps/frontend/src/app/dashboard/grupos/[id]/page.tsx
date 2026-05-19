@@ -1,13 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown } from "lucide-react";
+import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { groupsApi, teamsApi, predictionsApi } from "@/lib/api";
 import { useToast, useConfirm } from "@/components/ui/toast";
 import type { MatchPredictionData } from "@/lib/api";
 
 type TabType = "geral" | "bolao" | "oraculo" | "participantes";
+
+const ALL_GROUPS = [
+  "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
+  "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L",
+  "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"
+];
+
+const GRUPOS_SUB = [
+  "ALL_GRUPOS", "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
+  "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L"
+];
+
+const MATA_MATA_SUB = [
+  "ALL_MATA_MATA", "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"
+];
 
 const MOCK_ORACLE_QUESTIONS = [
   { id: 1, question: "Quem será o campeão?", answer: null, options: ["Brasil", "França", "Argentina", "Inglaterra"], points: 50 },
@@ -355,11 +370,112 @@ export default function GroupDetailsPage() {
   const paginatedGames = games.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   const totalPages = Math.ceil(games.length / ITEMS_PER_PAGE) || 1;
 
+  // Filtros da aba Bolão (Fase de Grupos vs Mata-Mata)
+  const [bolaoCategory, setBolaoCategory] = useState<"GRUPOS" | "MATA_MATA">("GRUPOS");
+  const [bolaoSelectedGroup, setBolaoSelectedGroup] = useState<string>("ALL_GRUPOS");
+  const bolaoScrollContainerRef = useRef<HTMLDivElement>(null);
+
   // Paginação dos palpites na aba Bolão
   const [bolaoPage, setBolaoPage] = useState(1);
+
+  // Auto-scroll the active filter tab in Bolão into view
+  useEffect(() => {
+    if (bolaoScrollContainerRef.current) {
+      const activeElement = bolaoScrollContainerRef.current.querySelector('[data-active="true"]');
+      if (activeElement) {
+        activeElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  }, [bolaoSelectedGroup, bolaoCategory, activeTab]);
+
+  // Reset pagination when selected group filter changes
+  useEffect(() => {
+    setBolaoPage(1);
+  }, [bolaoSelectedGroup, bolaoCategory]);
+
+  // Derivação dos jogos do bolão com agrupamento e filtragem
+  const getGroupName = (game: MatchPredictionData) => {
+    if (game.stage && game.stage.startsWith('Fase de Grupos') && game.homeTeam?.group) {
+      return `Grupo ${game.homeTeam.group}`;
+    }
+    return game.stage || 'Fase Final';
+  };
+
+  const groupedGames = games.reduce<Record<string, MatchPredictionData[]>>((acc, game) => {
+    const groupName = getGroupName(game);
+    if (!acc[groupName]) {
+      acc[groupName] = [];
+    }
+    acc[groupName].push(game);
+    return acc;
+  }, {});
+
+  const sortedGroupKeys = Object.keys(groupedGames).sort((a, b) => {
+    const idxA = ALL_GROUPS.indexOf(a);
+    const idxB = ALL_GROUPS.indexOf(b);
+    const valA = idxA === -1 ? 999 : idxA;
+    const valB = idxB === -1 ? 999 : idxB;
+    return valA - valB;
+  });
+
+  const filteredBolaoGroups = (() => {
+    if (bolaoCategory === "GRUPOS") {
+      if (bolaoSelectedGroup === "ALL_GRUPOS" || !bolaoSelectedGroup.startsWith("Grupo")) {
+        return sortedGroupKeys.filter((k) => k.startsWith("Grupo"));
+      }
+      return [bolaoSelectedGroup];
+    } else {
+      if (bolaoSelectedGroup === "ALL_MATA_MATA" || bolaoSelectedGroup.startsWith("Grupo")) {
+        return sortedGroupKeys.filter((k) => !k.startsWith("Grupo"));
+      }
+      return [bolaoSelectedGroup];
+    }
+  })();
+
+  const allFilteredBolaoMatches: MatchPredictionData[] = [];
+  filteredBolaoGroups.forEach((gName) => {
+    const matches = groupedGames[gName] || [];
+    allFilteredBolaoMatches.push(...matches);
+  });
+
+  // Sort filtered matches strictly by date
+  allFilteredBolaoMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
   const bolaoStartIndex = (bolaoPage - 1) * ITEMS_PER_PAGE;
-  const paginatedBolaoGames = games.slice(bolaoStartIndex, bolaoStartIndex + ITEMS_PER_PAGE);
-  const bolaoTotalPages = Math.ceil(games.length / ITEMS_PER_PAGE) || 1;
+  const paginatedBolaoGames = allFilteredBolaoMatches.slice(bolaoStartIndex, bolaoStartIndex + ITEMS_PER_PAGE);
+  const bolaoTotalPages = Math.ceil(allFilteredBolaoMatches.length / ITEMS_PER_PAGE) || 1;
+
+  const handleBolaoPrevSub = () => {
+    if (bolaoCategory === "GRUPOS") {
+      const idx = GRUPOS_SUB.indexOf(bolaoSelectedGroup);
+      if (idx > 0) {
+        setBolaoSelectedGroup(GRUPOS_SUB[idx - 1]);
+      }
+    } else {
+      const idx = MATA_MATA_SUB.indexOf(bolaoSelectedGroup);
+      if (idx > 0) {
+        setBolaoSelectedGroup(MATA_MATA_SUB[idx - 1]);
+      }
+    }
+  };
+
+  const handleBolaoNextSub = () => {
+    if (bolaoCategory === "GRUPOS") {
+      const idx = GRUPOS_SUB.indexOf(bolaoSelectedGroup);
+      if (idx !== -1 && idx < GRUPOS_SUB.length - 1) {
+        setBolaoSelectedGroup(GRUPOS_SUB[idx + 1]);
+      }
+    } else {
+      const idx = MATA_MATA_SUB.indexOf(bolaoSelectedGroup);
+      if (idx !== -1 && idx < MATA_MATA_SUB.length - 1) {
+        setBolaoSelectedGroup(MATA_MATA_SUB[idx + 1]);
+      }
+    }
+  };
 
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -899,239 +1015,382 @@ export default function GroupDetailsPage() {
                   <p className="text-sm font-semibold text-white/60">Carregando jogos da Copa...</p>
                 </div>
               ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {paginatedBolaoGames.map((game) => {
-                      const isFinished = game.status === "FINISHED";
-                      const gameDate = new Date(game.date);
-                      const isStarted = new Date() >= gameDate;
-                      const isClosed = isFinished || isStarted;
+                <div className="space-y-6">
+                  {/* Category Toggle (Fase de Grupos vs Mata-Mata) */}
+                  <div className="flex justify-center">
+                    <div className="bg-black/45 p-1 rounded-2xl border border-white/5 flex gap-1 shadow-inner shadow-black">
+                      <button
+                        onClick={() => {
+                          setBolaoCategory("GRUPOS");
+                          setBolaoSelectedGroup("ALL_GRUPOS");
+                        }}
+                        className={`px-4 py-2 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                          bolaoCategory === "GRUPOS"
+                            ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_4px_16px_rgba(255,215,0,0.15)] scale-102"
+                            : "bg-transparent text-white/55 hover:text-white hover:bg-white/[0.03]"
+                        }`}
+                      >
+                        <Trophy className="w-3.5 h-3.5 shrink-0" />
+                        Fase de Grupos
+                      </button>
+                      <button
+                        onClick={() => {
+                          setBolaoCategory("MATA_MATA");
+                          setBolaoSelectedGroup("ALL_MATA_MATA");
+                        }}
+                        className={`px-4 py-2 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                          bolaoCategory === "MATA_MATA"
+                            ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_4px_16px_rgba(255,215,0,0.15)] scale-102"
+                            : "bg-transparent text-white/55 hover:text-white hover:bg-white/[0.03]"
+                        }`}
+                      >
+                        <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                        Mata-Mata
+                      </button>
+                    </div>
+                  </div>
 
-                      // Calcula o prazo dos palpites dinamicamente
-                      const now = new Date();
-                      const diffMs = gameDate.getTime() - now.getTime();
-                      let deadlineText = "";
-                      let deadlineColor = "";
+                  {/* Sub-Filters based on Active Category with Prev/Next Chevrons */}
+                  <div className="flex items-center gap-2 max-w-full justify-center">
+                    <button
+                      onClick={handleBolaoPrevSub}
+                      disabled={bolaoCategory === "GRUPOS" ? bolaoSelectedGroup === "ALL_GRUPOS" : bolaoSelectedGroup === "ALL_MATA_MATA"}
+                      className="p-2 rounded-xl border border-white/5 bg-black/30 hover:bg-black/50 text-white hover:text-[#ffd700] disabled:opacity-30 disabled:pointer-events-none transition-all duration-300 shrink-0 cursor-pointer shadow-md"
+                      title="Fase anterior"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
 
-                      if (isFinished || isStarted || diffMs <= 0) {
-                        deadlineText = "Encerrado";
-                        deadlineColor = "text-red-400 bg-red-500/10 border-red-500/20";
-                      } else {
-                        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                        if (diffDays > 1) {
-                          deadlineText = `Faltam ${diffDays} dias`;
-                          deadlineColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
-                        } else {
-                          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                          const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                          if (diffHours > 0) {
-                            deadlineText = `Encerra em ${diffHours}h e ${diffMins}m`;
-                            deadlineColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
+                    <div className="flex-1 overflow-hidden min-w-0">
+                      {bolaoCategory === "GRUPOS" ? (
+                        <div 
+                          ref={bolaoScrollContainerRef}
+                          className="bg-black/20 p-1.5 rounded-2xl border border-white/5 flex gap-1.5 overflow-x-auto copa-scrollbar max-w-full justify-start"
+                        >
+                          <button
+                            onClick={() => {
+                              setBolaoSelectedGroup("ALL_GRUPOS");
+                            }}
+                            data-active={bolaoSelectedGroup === "ALL_GRUPOS"}
+                            className={`px-3 py-2 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
+                              bolaoSelectedGroup === "ALL_GRUPOS"
+                                ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                                : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                            }`}
+                          >
+                            Todos os Grupos
+                          </button>
+                          {["Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F", "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L"].map((gKey) => (
+                            <button
+                              key={gKey}
+                              onClick={() => {
+                                setBolaoSelectedGroup(gKey);
+                              }}
+                              data-active={bolaoSelectedGroup === gKey}
+                              className={`px-4 py-2 rounded-lg text-[10px] font-black tracking-wider transition-all duration-300 shrink-0 cursor-pointer text-center whitespace-nowrap ${
+                                bolaoSelectedGroup === gKey
+                                  ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                                  : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                              }`}
+                            >
+                              {gKey.replace("Grupo ", "GRUPO ")}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div 
+                          ref={bolaoScrollContainerRef}
+                          className="bg-black/20 p-1.5 rounded-2xl border border-white/5 flex gap-1.5 overflow-x-auto copa-scrollbar max-w-full justify-start"
+                        >
+                          <button
+                            onClick={() => {
+                              setBolaoSelectedGroup("ALL_MATA_MATA");
+                            }}
+                            data-active={bolaoSelectedGroup === "ALL_MATA_MATA"}
+                            className={`px-3 py-2 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
+                              bolaoSelectedGroup === "ALL_MATA_MATA"
+                                ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                                : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                            }`}
+                          >
+                            Todo o Mata-Mata
+                          </button>
+                          {["Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"].map((gKey) => (
+                            <button
+                              key={gKey}
+                              onClick={() => {
+                                setBolaoSelectedGroup(gKey);
+                              }}
+                              data-active={bolaoSelectedGroup === gKey}
+                              className={`px-3 py-2 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
+                                bolaoSelectedGroup === gKey
+                                  ? "bg-white/10 text-[#ffd700] border border-[#ffd700]/30 shadow-[0_2px_10px_rgba(255,215,0,0.05)] scale-102"
+                                  : "bg-white/[0.02] hover:bg-white/[0.06] text-white/50 hover:text-white border border-white/5"
+                              }`}
+                            >
+                              {gKey}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={handleBolaoNextSub}
+                      disabled={bolaoCategory === "GRUPOS" ? bolaoSelectedGroup === "Grupo L" : bolaoSelectedGroup === "Final"}
+                      className="p-2 rounded-xl border border-white/5 bg-black/30 hover:bg-black/50 text-white hover:text-[#ffd700] disabled:opacity-30 disabled:pointer-events-none transition-all duration-300 shrink-0 cursor-pointer shadow-md"
+                      title="Próxima fase"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {allFilteredBolaoMatches.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 px-4 text-center border-2 border-dashed border-white/5 rounded-3xl bg-white/[0.01] relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-[0.02]">
+                        <CalendarDays className="w-32 h-32 text-white" />
+                      </div>
+                      <CalendarDays className="w-12 h-12 text-white/20 mb-4" />
+                      <h3 className="text-lg font-bold text-white mb-2">Nenhum confronto agendado</h3>
+                      <p className="text-xs text-white/50 max-w-sm leading-relaxed">
+                        Não existem partidas cadastradas nesta fase da Copa.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {paginatedBolaoGames.map((game) => {
+                          const isFinished = game.status === "FINISHED";
+                          const gameDate = new Date(game.date);
+                          const isStarted = new Date() >= gameDate;
+                          const isClosed = isFinished || isStarted;
+
+                          // Calcula o prazo dos palpites dinamicamente
+                          const now = new Date();
+                          const diffMs = gameDate.getTime() - now.getTime();
+                          let deadlineText = "";
+                          let deadlineColor = "";
+
+                          if (isFinished || isStarted || diffMs <= 0) {
+                            deadlineText = "Encerrado";
+                            deadlineColor = "text-red-400 bg-red-500/10 border-red-500/20";
                           } else {
-                            deadlineText = `Encerra em ${diffMins}m`;
-                            deadlineColor = "text-rose-400 bg-rose-500/10 border-rose-500/20 animate-pulse";
+                            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+                            if (diffDays > 1) {
+                              deadlineText = `Faltam ${diffDays} dias`;
+                              deadlineColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+                            } else {
+                              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                              const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                              if (diffHours > 0) {
+                                deadlineText = `Encerra em ${diffHours}h e ${diffMins}m`;
+                                deadlineColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
+                              } else {
+                                deadlineText = `Encerra em ${diffMins}m`;
+                                deadlineColor = "text-rose-400 bg-rose-500/10 border-rose-500/20 animate-pulse";
+                              }
+                            }
                           }
-                        }
-                      }
 
-                      return (
-                        <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all hover:scale-[1.01] duration-300 group">
-                          <div className="bg-black/20 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
-                            <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${deadlineColor}`}>
-                              {deadlineText}
-                            </span>
-                          </div>
-                          <div className="p-3.5 flex items-center justify-between gap-3 sm:gap-4">
-                            {/* Team A */}
-                            <div className="flex flex-col items-center flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
-                                {game.homeTeam.flag ? (
-                                  <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
-                                ) : (
-                                  game.homeTeam.code
-                                )}
+                          return (
+                            <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all hover:scale-[1.01] duration-300 group">
+                              <div className="bg-black/20 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
+                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${deadlineColor}`}>
+                                  {deadlineText}
+                                </span>
                               </div>
-                              <span className="font-bold text-xs text-white/80 truncate text-center w-full cursor-help" title={game.homeTeam.name}>{game.homeTeam.name}</span>
-                            </div>
-
-                            {/* Score / Inputs */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              {isClosed ? (
-                                <div className="flex flex-col items-center gap-1">
-                                  <div className="flex items-center gap-2">
-                                    {isFinished ? (
-                                      <>
-                                        <span className="text-xl sm:text-2xl font-black text-white">{game.realHomeScore}</span>
-                                        <span className="text-white/30 text-xs font-bold">x</span>
-                                        <span className="text-xl sm:text-2xl font-black text-white">{game.realAwayScore}</span>
-                                      </>
-                                    ) : game.predictedHomeScore !== null ? (
-                                      <>
-                                        <span className="text-xl sm:text-2xl font-black text-[#ffd700]">{game.predictedHomeScore}</span>
-                                        <span className="text-white/30 text-xs font-bold">x</span>
-                                        <span className="text-xl sm:text-2xl font-black text-[#ffd700]">{game.predictedAwayScore}</span>
-                                      </>
+                              <div className="p-3.5 flex items-center justify-between gap-3 sm:gap-4">
+                                {/* Team A */}
+                                <div className="flex flex-col items-center flex-1 min-w-0">
+                                  <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
+                                    {game.homeTeam.flag ? (
+                                      <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
                                     ) : (
-                                      <span className="text-[10px] text-white/35 italic">Sem palpite</span>
+                                      game.homeTeam.code
                                     )}
                                   </div>
-                                  {isFinished && game.predictedHomeScore !== null && (
-                                    <div className="flex flex-col items-center gap-1 mt-1">
-                                      <span className="text-[8px] text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 px-1.5 py-0.5 rounded font-semibold">
-                                        Seu: {game.predictedHomeScore}x{game.predictedAwayScore}
-                                      </span>
-                                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
-                                        game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-                                        game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
-                                        game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
-                                        game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
-                                        "text-red-400 bg-red-500/10 border-red-500/20"
-                                      }`}>
-                                        +{game.pointsEarned} {game.pointsEarned === 1 ? "ponto" : "pontos"}
-                                      </span>
+                                  <span className="font-bold text-xs text-white/80 truncate text-center w-full cursor-help" title={game.homeTeam.name}>{game.homeTeam.name}</span>
+                                </div>
+
+                                {/* Score / Inputs */}
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {isClosed ? (
+                                    <div className="flex flex-col items-center gap-1">
+                                      <div className="flex items-center gap-2">
+                                        {isFinished ? (
+                                          <>
+                                            <span className="text-xl sm:text-2xl font-black text-white">{game.realHomeScore}</span>
+                                            <span className="text-white/30 text-xs font-bold">x</span>
+                                            <span className="text-xl sm:text-2xl font-black text-white">{game.realAwayScore}</span>
+                                          </>
+                                        ) : game.predictedHomeScore !== null ? (
+                                          <>
+                                            <span className="text-xl sm:text-2xl font-black text-[#ffd700]">{game.predictedHomeScore}</span>
+                                            <span className="text-white/30 text-xs font-bold">x</span>
+                                            <span className="text-xl sm:text-2xl font-black text-[#ffd700]">{game.predictedAwayScore}</span>
+                                          </>
+                                        ) : (
+                                          <span className="text-[10px] text-white/35 italic">Sem palpite</span>
+                                        )}
+                                      </div>
+                                      {isFinished && game.predictedHomeScore !== null && (
+                                        <div className="flex flex-col items-center gap-1 mt-1">
+                                          <span className="text-[8px] text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 px-1.5 py-0.5 rounded font-semibold">
+                                            Seu: {game.predictedHomeScore}x{game.predictedAwayScore}
+                                          </span>
+                                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
+                                            game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                                            game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
+                                            game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                                            game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                                            "text-red-400 bg-red-500/10 border-red-500/20"
+                                          }`}>
+                                            +{game.pointsEarned} {game.pointsEarned === 1 ? "ponto" : "pontos"}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        placeholder="0"
+                                        value={predScores[game.id]?.home ?? ""}
+                                        onChange={(e) => setPredScores({
+                                          ...predScores,
+                                          [game.id]: {
+                                            ...(predScores[game.id] || { home: "", away: "" }),
+                                            home: e.target.value
+                                          }
+                                        })}
+                                        className="w-10 h-9 sm:w-11 sm:h-10 text-center text-sm sm:text-base font-extrabold rounded-lg bg-black/60 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      />
+                                      <span className="text-white/30 text-xs font-bold">x</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        placeholder="0"
+                                        value={predScores[game.id]?.away ?? ""}
+                                        onChange={(e) => setPredScores({
+                                          ...predScores,
+                                          [game.id]: {
+                                            ...(predScores[game.id] || { home: "", away: "" }),
+                                            away: e.target.value
+                                          }
+                                        })}
+                                        className="w-10 h-9 sm:w-11 sm:h-10 text-center text-sm sm:text-base font-extrabold rounded-lg bg-black/60 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      />
                                     </div>
                                   )}
                                 </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5">
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    placeholder="0"
-                                    value={predScores[game.id]?.home ?? ""}
-                                    onChange={(e) => setPredScores({
-                                      ...predScores,
-                                      [game.id]: {
-                                        ...(predScores[game.id] || { home: "", away: "" }),
-                                        home: e.target.value
-                                      }
-                                    })}
-                                    className="w-10 h-9 sm:w-11 sm:h-10 text-center text-sm sm:text-base font-extrabold rounded-lg bg-black/60 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
-                                  <span className="text-white/30 text-xs font-bold">x</span>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    placeholder="0"
-                                    value={predScores[game.id]?.away ?? ""}
-                                    onChange={(e) => setPredScores({
-                                      ...predScores,
-                                      [game.id]: {
-                                        ...(predScores[game.id] || { home: "", away: "" }),
-                                        away: e.target.value
-                                      }
-                                    })}
-                                    className="w-10 h-9 sm:w-11 sm:h-10 text-center text-sm sm:text-base font-extrabold rounded-lg bg-black/60 border border-white/10 focus:border-[#ffd700] focus:ring-1 focus:ring-[#ffd700] text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
+
+                                {/* Team B */}
+                                <div className="flex flex-col items-center flex-1 min-w-0">
+                                  <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
+                                    {game.awayTeam.flag ? (
+                                      <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
+                                    ) : (
+                                      game.awayTeam.code
+                                    )}
+                                  </div>
+                                  <span className="font-bold text-xs text-white/80 truncate text-center w-full cursor-help" title={game.awayTeam.name}>{game.awayTeam.name}</span>
+                                </div>
+                              </div>
+                              {!isClosed && (
+                                <div className="p-2.5 px-3.5 bg-black/20 border-t border-white/5 flex justify-between items-center">
+                                  <span className="text-[9px] text-white/40 truncate max-w-[50%]">
+                                    {game.predictedHomeScore !== null ? (
+                                      <span className="text-emerald-400 font-semibold">Salvo: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
+                                    ) : (
+                                      "Não palpitado"
+                                    )}
+                                  </span>
+                                  <button
+                                    disabled={savingMatchId === game.id}
+                                    onClick={() => handleSavePrediction(game.id)}
+                                    className="copa-btn-primary px-4 py-1.5 text-[10px] shadow-md flex items-center gap-1"
+                                  >
+                                    {savingMatchId === game.id ? (
+                                      <>
+                                        <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                        Salvando...
+                                      </>
+                                    ) : (
+                                      "Salvar"
+                                    )}
+                                  </button>
                                 </div>
                               )}
                             </div>
-
-                            {/* Team B */}
-                            <div className="flex flex-col items-center flex-1 min-w-0">
-                              <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
-                                {game.awayTeam.flag ? (
-                                  <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
-                                ) : (
-                                  game.awayTeam.code
-                                )}
-                              </div>
-                              <span className="font-bold text-xs text-white/80 truncate text-center w-full cursor-help" title={game.awayTeam.name}>{game.awayTeam.name}</span>
-                            </div>
-                          </div>
-                          {!isClosed && (
-                            <div className="p-2.5 px-3.5 bg-black/20 border-t border-white/5 flex justify-between items-center">
-                              <span className="text-[9px] text-white/40 truncate max-w-[50%]">
-                                {game.predictedHomeScore !== null ? (
-                                  <span className="text-emerald-400 font-semibold">Salvo: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
-                                ) : (
-                                  "Não palpitado"
-                                )}
-                              </span>
-                              <button
-                                disabled={savingMatchId === game.id}
-                                onClick={() => handleSavePrediction(game.id)}
-                                className="copa-btn-primary px-4 py-1.5 text-[10px] shadow-md flex items-center gap-1"
-                              >
-                                {savingMatchId === game.id ? (
-                                  <>
-                                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                    Salvando...
-                                  </>
-                                ) : (
-                                  "Salvar"
-                                )}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Pagination Controls for Bolão */}
-                  {games.length > ITEMS_PER_PAGE && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4 mt-4">
-                      <button
-                        onClick={() => setBolaoPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={bolaoPage === 1}
-                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
-                      >
-                        Anterior
-                      </button>
-                      
-                      <div className="flex items-center gap-1.5 flex-wrap justify-center">
-                        {(() => {
-                          const range: (number | string)[] = [];
-                          const delta = 1;
-                          for (let i = 1; i <= bolaoTotalPages; i++) {
-                            if (i === 1 || i === bolaoTotalPages || (i >= bolaoPage - delta && i <= bolaoPage + delta)) {
-                              range.push(i);
-                            } else if (range[range.length - 1] !== "...") {
-                              range.push("...");
-                            }
-                          }
-                          return range.map((page, idx) => {
-                            if (page === "...") {
-                              return (
-                                <span key={`dots-${idx}`} className="px-2 text-white/40 text-xs font-bold">
-                                  ...
-                                </span>
-                              );
-                            }
-                            const isSelected = page === bolaoPage;
-                            return (
-                              <button
-                                key={page}
-                                onClick={() => setBolaoPage(page as number)}
-                                className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
-                                  isSelected
-                                    ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
-                                    : "bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/15"
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            );
-                          });
-                        })()}
+                          );
+                        })}
                       </div>
 
-                      <button
-                        onClick={() => setBolaoPage((prev) => Math.min(prev + 1, bolaoTotalPages))}
-                        disabled={bolaoPage === bolaoTotalPages}
-                        className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
-                      >
-                        Próximo
-                      </button>
-                    </div>
+                      {/* Pagination Controls for Bolão */}
+                      {allFilteredBolaoMatches.length > ITEMS_PER_PAGE && (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4 mt-4">
+                          <button
+                            onClick={() => setBolaoPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={bolaoPage === 1}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            Anterior
+                          </button>
+
+                          <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                            {(() => {
+                              const range: (number | string)[] = [];
+                              const delta = 1;
+                              for (let i = 1; i <= bolaoTotalPages; i++) {
+                                if (i === 1 || i === bolaoTotalPages || (i >= bolaoPage - delta && i <= bolaoPage + delta)) {
+                                  range.push(i);
+                                } else if (range[range.length - 1] !== "...") {
+                                  range.push("...");
+                                }
+                              }
+                              return range.map((page, idx) => {
+                                if (page === "...") {
+                                  return (
+                                    <span key={`dots-${idx}`} className="px-2 text-white/40 text-xs font-bold">
+                                      ...
+                                    </span>
+                                  );
+                                }
+                                const isSelected = page === bolaoPage;
+                                return (
+                                  <button
+                                    key={page}
+                                    onClick={() => setBolaoPage(page as number)}
+                                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
+                                      isSelected
+                                        ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
+                                        : "bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/15"
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                );
+                              });
+                            })()}
+                          </div>
+
+                          <button
+                            onClick={() => setBolaoPage((prev) => Math.min(prev + 1, bolaoTotalPages))}
+                            disabled={bolaoPage === bolaoTotalPages}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            Próximo
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
-                </>
+                </div>
               )
             ) : activeTab === "oraculo" ? (
               <div className="space-y-4 animate-fade-in-up">
-                {/* Cabeçalho do Oráculo com Badge de Tempo */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/30 p-4 border border-white/10 rounded-2xl">
                   <div>
                     <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
