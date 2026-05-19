@@ -241,10 +241,10 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Grid: Próximos Jogos & Tabela de Grupos ao Lado */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Próximos Jogos Panel */}
-        <div className="lg:col-span-2 auth-card p-6 border border-white/5 bg-[#0a0f1e]/40 space-y-6">
+        <div className="auth-card p-6 border border-white/5 bg-[#0a0f1e]/40 space-y-6">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div>
               <h2 className="text-xl font-black text-white flex items-center gap-2.5">
@@ -326,9 +326,22 @@ export default function DashboardPage() {
 
                     <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                       {isFinished ? (
-                        <div className="text-center shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl min-w-[90px]">
-                          <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Resultado</p>
-                          <p className="text-sm font-black text-white mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
+                        <div className="flex flex-col gap-1 items-center shrink-0">
+                          <div className="text-center shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl min-w-[90px]">
+                            <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Resultado</p>
+                            <p className="text-sm font-black text-white mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
+                          </div>
+                          {game.predictedHomeScore !== null && game.predictedAwayScore !== null && (
+                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-md border ${
+                              game.pointsEarned === 3
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                : game.pointsEarned === 1
+                                ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                : "bg-red-500/10 text-red-400 border-red-500/20"
+                            }`}>
+                              +{game.pointsEarned} Ponto{game.pointsEarned !== 1 ? "s" : ""}
+                            </span>
+                          )}
                         </div>
                       ) : hasPredicted ? (
                         <div className="flex flex-col gap-1 text-center shrink-0">
@@ -360,7 +373,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Standings Group Panel */}
-        <div className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 space-y-5 self-start">
+        <div className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 space-y-5 self-start w-full">
           <div className="border-b border-white/5 pb-4">
             <h2 className="text-lg font-black text-white flex items-center gap-2.5">
               <Trophy className="w-5 h-5 text-[#ffd700]" />
@@ -442,14 +455,19 @@ export default function DashboardPage() {
   
           {/* Standings Table */}
           <div className="overflow-hidden border border-white/5 rounded-2xl bg-black/10">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-collapse table-fixed">
               <thead>
                 <tr className="bg-black/35 border-b border-white/5 text-[9px] font-bold uppercase text-white/40 tracking-wider">
-                  <th className="py-2.5 px-3 text-center w-10">Pos</th>
-                  <th className="py-2.5 px-2">Seleção</th>
-                  <th className="py-2.5 px-2 text-center w-8">J</th>
-                  <th className="py-2.5 px-2 text-center w-10">SG</th>
-                  <th className="py-2.5 px-3 text-center w-12">Pts</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">Pos</th>
+                  <th className="py-2.5 px-1 w-[24%]">Seleção</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">J</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">V</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">E</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">D</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">GP</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">GC</th>
+                  <th className="py-2.5 px-1 text-center w-[8%]">SG</th>
+                  <th className="py-2.5 px-1 text-center w-[12%]">Pts</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -469,7 +487,7 @@ export default function DashboardPage() {
                       }`}
                     >
                       {/* Position Badge */}
-                      <td className="py-3 px-3 text-center shrink-0">
+                      <td className="py-3 px-1 text-center shrink-0 w-[8%]">
                         <span className={`inline-flex w-4.5 h-4.5 items-center justify-center rounded-full font-black text-[9px] ${
                           isTop2 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]" :
                           isThird ? "bg-blue-500/20 text-blue-400 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]" :
@@ -480,32 +498,47 @@ export default function DashboardPage() {
                       </td>
  
                       {/* Team Info */}
-                      <td className="py-3 px-2 font-bold">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/40 flex items-center justify-center font-bold text-[6px] shadow-sm">
+                      <td className="py-3 px-1 font-bold w-[24%]">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="w-4 h-4 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/40 flex items-center justify-center font-bold text-[6px] shadow-sm">
                             {team.flag ? (
                               <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
                             ) : (
                               team.code
                             )}
                           </div>
-                          <span className="text-white truncate max-w-[85px] sm:max-w-none text-xs">{team.name}</span>
+                          <span className="text-white truncate max-w-[70px] sm:max-w-none text-[10px] sm:text-xs">{team.name}</span>
                         </div>
                       </td>
  
                       {/* Played */}
-                      <td className="py-3 px-2 text-center font-semibold text-white/70">{team.played}</td>
+                      <td className="py-3 px-1 text-center font-semibold text-white/70 text-[10px] sm:text-xs w-[8%]">{team.played}</td>
+ 
+                      {/* Vitórias */}
+                      <td className="py-3 px-1 text-center font-semibold text-white/70 text-[10px] sm:text-xs w-[8%]">{team.won}</td>
+ 
+                      {/* Empates */}
+                      <td className="py-3 px-1 text-center font-semibold text-white/70 text-[10px] sm:text-xs w-[8%]">{team.drawn}</td>
+ 
+                      {/* Derrotas */}
+                      <td className="py-3 px-1 text-center font-semibold text-white/70 text-[10px] sm:text-xs w-[8%]">{team.lost}</td>
+ 
+                      {/* Gols Pró (Marcados) */}
+                      <td className="py-3 px-1 text-center font-semibold text-white/70 text-[10px] sm:text-xs w-[8%]">{team.gf}</td>
+ 
+                      {/* Gols Contra (Sofridos) */}
+                      <td className="py-3 px-1 text-center font-semibold text-white/70 text-[10px] sm:text-xs w-[8%]">{team.ga}</td>
  
                       {/* Goal Difference */}
-                      <td className={`py-3 px-2 text-center font-black text-xs ${
+                      <td className={`py-3 px-1 text-center font-black text-[10px] sm:text-xs w-[8%] ${
                         team.gd > 0 ? "text-emerald-400" : team.gd < 0 ? "text-red-400" : "text-white/40"
                       }`}>
                         {team.gd > 0 ? `+${team.gd}` : team.gd}
                       </td>
  
                       {/* Points */}
-                      <td className="py-3 px-3 text-center shrink-0">
-                        <span className="font-black text-[#ffd700] text-xs">{team.points}</span>
+                      <td className="py-3 px-1 text-center shrink-0 w-[12%]">
+                        <span className="font-black text-[#ffd700] text-[10px] sm:text-xs">{team.points}</span>
                       </td>
                     </tr>
                   );
