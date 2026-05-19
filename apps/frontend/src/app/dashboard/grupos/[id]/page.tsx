@@ -14,6 +14,315 @@ const MOCK_ORACLE_QUESTIONS = [
   { id: 2, question: "Artilheiro da Copa", answer: "Mbappé", options: ["Mbappé", "Messi", "Kane", "Vini Jr"], points: 30 },
 ];
 
+interface BracketMatchCardProps {
+  game: MatchPredictionData;
+  predScores: Record<string, { home: string; away: string }>;
+  setPredScores: React.Dispatch<React.SetStateAction<Record<string, { home: string; away: string }>>>;
+  savingMatchId: string | null;
+  handleSavePrediction: (matchId: string) => Promise<void>;
+}
+
+function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, handleSavePrediction }: BracketMatchCardProps) {
+  const isFinished = game.status === "FINISHED";
+  const isClosed = new Date(game.date).getTime() < Date.now();
+  const saving = savingMatchId === game.id;
+  
+  // Deadline text
+  const diffMs = new Date(game.date).getTime() - Date.now();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  let deadlineText = "Aberto";
+  let deadlineColor = "text-emerald-400 border-emerald-500/20 bg-emerald-500/10";
+  
+  if (isClosed) {
+    deadlineText = isFinished ? "Encerrado" : "Em andamento";
+    deadlineColor = "text-rose-400 border-rose-500/20 bg-rose-500/10";
+  } else if (diffMs > 0) {
+    if (diffDays > 0) {
+      deadlineText = `Faltam ${diffDays}d`;
+      deadlineColor = "text-emerald-400 border-emerald-500/20 bg-emerald-500/10";
+    } else {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      deadlineText = `Encerra em ${diffHours}h`;
+      deadlineColor = "text-amber-400 border-amber-500/20 bg-amber-500/10";
+    }
+  }
+
+  return (
+    <div className="flex flex-col bg-black/40 border border-white/5 rounded-xl overflow-hidden hover:border-[#ffd700]/25 transition-all w-60 shrink-0 select-none">
+      {/* Small Header */}
+      <div className="bg-black/20 px-2 py-1 flex items-center justify-between border-b border-white/5 text-[9px] text-white/40">
+        <span className="truncate max-w-[120px]" title={game.stage}>{game.stage}</span>
+        <span className={`px-1 rounded border font-semibold ${deadlineColor}`}>{deadlineText}</span>
+      </div>
+      
+      {/* Teams and Scores */}
+      <div className="p-2.5 flex flex-col gap-2">
+        {/* Home Team Row */}
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+              {game.homeTeam.flag ? (
+                <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
+              ) : (
+                game.homeTeam.code
+              )}
+            </div>
+            <span className="text-[10px] font-bold text-white/80 truncate" title={game.homeTeam.name}>
+              {game.homeTeam.name}
+            </span>
+          </div>
+          {isClosed ? (
+            <span className={`text-xs font-black shrink-0 ${isFinished ? "text-white" : "text-[#ffd700]"}`}>
+              {isFinished ? game.realHomeScore : (game.predictedHomeScore ?? "-")}
+            </span>
+          ) : (
+            <input
+              type="number"
+              min="0"
+              placeholder="0"
+              value={predScores[game.id]?.home ?? ""}
+              onChange={(e) => setPredScores(prev => ({
+                ...prev,
+                [game.id]: {
+                  ...(prev[game.id] || { home: "", away: "" }),
+                  home: e.target.value
+                }
+              }))}
+              className="w-7 h-6 text-center text-[10px] font-bold rounded bg-black/60 border border-white/10 text-white focus:border-[#ffd700] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          )}
+        </div>
+
+        {/* Away Team Row */}
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+              {game.awayTeam.flag ? (
+                <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
+              ) : (
+                game.awayTeam.code
+              )}
+            </div>
+            <span className="text-[10px] font-bold text-white/80 truncate" title={game.awayTeam.name}>
+              {game.awayTeam.name}
+            </span>
+          </div>
+          {isClosed ? (
+            <span className={`text-xs font-black shrink-0 ${isFinished ? "text-white" : "text-[#ffd700]"}`}>
+              {isFinished ? game.realAwayScore : (game.predictedAwayScore ?? "-")}
+            </span>
+          ) : (
+            <input
+              type="number"
+              min="0"
+              placeholder="0"
+              value={predScores[game.id]?.away ?? ""}
+              onChange={(e) => setPredScores(prev => ({
+                ...prev,
+                [game.id]: {
+                  ...(prev[game.id] || { home: "", away: "" }),
+                  away: e.target.value
+                }
+              }))}
+              className="w-7 h-6 text-center text-[10px] font-bold rounded bg-black/60 border border-white/10 text-white focus:border-[#ffd700] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Footer (Save button or scored points badge) */}
+      <div className="bg-black/15 p-1.5 flex justify-between items-center text-[8px] border-t border-white/5">
+        {isFinished ? (
+          game.predictedHomeScore !== null ? (
+            <div className="flex items-center justify-between w-full">
+              <span className="text-[8px] text-white/40">Palpite: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
+              <span className={`text-[8px] px-1 py-0.2 rounded font-black border leading-none ${
+                game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
+                game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                "text-red-400 bg-red-500/10 border-red-500/20"
+              }`}>
+                +{game.pointsEarned} pts
+              </span>
+            </div>
+          ) : (
+            <span className="text-white/35 italic">Sem palpite</span>
+          )
+        ) : !isClosed ? (
+          <div className="flex items-center justify-between w-full">
+            <span className="text-white/40 truncate max-w-[100px]">
+              {game.predictedHomeScore !== null ? (
+                <span className="text-emerald-400 font-semibold">Salvo: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
+              ) : (
+                "Não palpitado"
+              )}
+            </span>
+            <button
+              disabled={saving}
+              onClick={() => handleSavePrediction(game.id)}
+              className="bg-[#ffd700] hover:bg-[#f5c800] text-[#0d2b1a] px-2 py-0.5 rounded text-[8px] font-black uppercase transition-all disabled:opacity-40"
+            >
+              {saving ? "..." : "Salvar"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between w-full">
+            <span className="text-white/30 italic">Previsão fechada</span>
+            {game.predictedHomeScore !== null ? (
+              <span className="text-[#ffd700] font-semibold">Seu: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
+            ) : (
+              <span className="text-white/35 italic">Sem palpite</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface OracleBracketCircleMatchProps {
+  game: MatchPredictionData;
+  savingMatchId: string | null;
+  handleSavePredictionDirect: (matchId: string, homeScore: number, awayScore: number) => Promise<void>;
+}
+
+function OracleBracketCircleMatch({ game, savingMatchId, handleSavePredictionDirect }: OracleBracketCircleMatchProps) {
+  const isFinished = game.status === "FINISHED";
+  const isClosed = new Date(game.date).getTime() < Date.now();
+  const saving = savingMatchId === game.id;
+
+  const homePredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null && game.predictedHomeScore > game.predictedAwayScore;
+  const awayPredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null && game.predictedHomeScore < game.predictedAwayScore;
+
+  const homeWon = isFinished && game.realHomeScore !== null && game.realAwayScore !== null && game.realHomeScore > game.realAwayScore;
+  const awayWon = isFinished && game.realHomeScore !== null && game.realAwayScore !== null && game.realHomeScore < game.realAwayScore;
+
+  const handleSelectTeam = async (isHome: boolean) => {
+    if (isClosed || saving) return;
+    const homeScore = isHome ? 1 : 0;
+    const awayScore = isHome ? 0 : 1;
+    await handleSavePredictionDirect(game.id, homeScore, awayScore);
+  };
+
+  const renderTeamCircle = (isHome: boolean) => {
+    const team = isHome ? game.homeTeam : game.awayTeam;
+    const teamName = isHome ? game.homeTeam?.name : game.awayTeam?.name;
+    const isSelected = isHome ? homePredicted : awayPredicted;
+    const isWinner = isHome ? homeWon : awayWon;
+    const isUndecided = !team || !team.code || teamName?.startsWith("Vencedor") || teamName?.startsWith("Perdedor");
+
+    if (isUndecided) {
+      return (
+        <div className="flex flex-col items-center gap-1 group relative">
+          <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/20 bg-white/5 flex items-center justify-center text-white/30 text-xs font-black select-none">
+            ?
+          </div>
+          <span className="text-[8px] font-bold text-white/30 uppercase tracking-wide truncate max-w-[50px]">
+            {teamName?.replace("Vencedor", "Venc.").replace("Perdedor", "Perd.") || "A definir"}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        disabled={isClosed || saving}
+        onClick={() => handleSelectTeam(isHome)}
+        className={`flex flex-col items-center gap-1 group relative transition-all duration-300 focus:outline-none ${
+          isClosed ? "cursor-default" : "cursor-pointer hover:scale-105 active:scale-95"
+        }`}
+      >
+        <div
+          className={`w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 relative transition-all duration-300 bg-[#0d2b1a] flex items-center justify-center ${
+            isSelected
+              ? "border-[#ffd700] ring-4 ring-[#ffd700]/30 shadow-lg shadow-[#ffd700]/20 scale-105"
+              : isWinner
+              ? "border-emerald-400 ring-2 ring-emerald-500/20"
+              : "border-white/10 group-hover:border-white/30"
+          }`}
+        >
+          {team.flag ? (
+            <img src={team.flag} alt={team.code} className="w-full h-full object-cover animate-fade-in" />
+          ) : (
+            <span className="text-white font-black text-[10px]">{team.code}</span>
+          )}
+
+          {isSelected && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center animate-fade-in">
+              <span className="text-[#ffd700] text-xs font-black">✓</span>
+            </div>
+          )}
+
+          {saving && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 text-[#ffd700] animate-spin" />
+            </div>
+          )}
+        </div>
+
+        <span
+          className={`text-[9px] font-black px-1.5 py-0.5 rounded transition-all duration-300 uppercase ${
+            isSelected
+              ? "bg-[#ffd700] text-[#0d2b1a] shadow"
+              : "bg-black/40 text-white/70 group-hover:text-white"
+          }`}
+        >
+          {team.code}
+        </span>
+
+        <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-30 pointer-events-none">
+          <div className="bg-black/90 border border-white/10 text-white text-[9px] font-bold px-2 py-1 rounded shadow-xl whitespace-nowrap">
+            {team.name}
+          </div>
+          <div className="w-1.5 h-1.5 bg-black border-r border-b border-white/10 rotate-45 -mt-1" />
+        </div>
+      </button>
+    );
+  };
+
+  const correctPrediction = (homePredicted && homeWon) || (awayPredicted && awayWon);
+
+  return (
+    <div className="flex flex-col items-center bg-black/25 border border-white/5 rounded-2xl p-2 px-3.5 hover:border-[#ffd700]/10 transition-all duration-300 w-20 shrink-0 relative select-none">
+      {renderTeamCircle(true)}
+
+      <div className="my-1.5 flex flex-col items-center relative z-10">
+        <div className="w-0.5 h-3 bg-white/10" />
+        {isFinished ? (
+          <div className={`text-[8px] font-black px-1 py-0.2 rounded-full border leading-none -my-1 whitespace-nowrap bg-black z-20 ${
+            correctPrediction
+              ? "text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
+              : "text-red-400 border-red-500/30"
+          }`}>
+            {game.realHomeScore}-{game.realAwayScore}
+          </div>
+        ) : (
+          <div className="text-[7px] font-black text-white/30 tracking-widest uppercase bg-black px-1 rounded-full border border-white/5 -my-1 z-20">
+            vs
+          </div>
+        )}
+        <div className="w-0.5 h-3 bg-white/10" />
+
+        {isFinished && game.predictedHomeScore !== null && (
+          <div className="absolute -right-12 top-1/2 -translate-y-1/2 z-20 animate-bounce">
+            <span className={`text-[8px] px-1 py-0.5 rounded font-black border leading-none ${
+              correctPrediction
+                ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shadow-sm shadow-emerald-500/20"
+                : "text-red-400 bg-red-500/10 border-red-500/20"
+            }`}>
+              {correctPrediction ? "+4 pts" : "0 pts"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {renderTeamCircle(false)}
+    </div>
+  );
+}
+
 export default function GroupDetailsPage() {
   const toast = useToast();
   const confirm = useConfirm();
@@ -31,6 +340,8 @@ export default function GroupDetailsPage() {
   const [oracleMessage, setOracleMessage] = useState<string | null>(null);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
   const [draggedItem, setDraggedItem] = useState<{ groupName: string; index: number } | null>(null);
+  const [oracleSubTab, setOracleSubTab] = useState<"grupos" | "matamata">("grupos");
+  const [bracketRound, setBracketRound] = useState<"all" | "r32" | "r16" | "r8" | "r4" | "r2">("all");
 
   // Real games state
   const [games, setGames] = useState<MatchPredictionData[]>([]);
@@ -148,6 +459,35 @@ export default function GroupDetailsPage() {
             : g
         )
       );
+      
+      toast.success("Palpite salvo com sucesso!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar palpite.");
+    } finally {
+      setSavingMatchId(null);
+    }
+  }
+
+  async function handleSavePredictionDirect(matchId: string, homeScore: number, awayScore: number) {
+    setSavingMatchId(matchId);
+    try {
+      await predictionsApi.savePredictions([{ matchId, homeScore, awayScore }]);
+      
+      setGames(prevGames => 
+        prevGames.map(g => 
+          g.id === matchId 
+            ? { ...g, predictedHomeScore: homeScore, predictedAwayScore: awayScore } 
+            : g
+        )
+      );
+
+      setPredScores(prev => ({
+        ...prev,
+        [matchId]: {
+          home: String(homeScore),
+          away: String(awayScore)
+        }
+      }));
       
       toast.success("Palpite salvo com sucesso!");
     } catch (err: any) {
@@ -319,7 +659,7 @@ export default function GroupDetailsPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
         
         {/* Left Panel: Geral, Games or Oracle */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className={`${activeTab === "oraculo" && oracleSubTab === "matamata" ? "xl:col-span-3" : "xl:col-span-2"} space-y-6`}>
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               {activeTab === "geral" ? (
@@ -795,9 +1135,9 @@ export default function GroupDetailsPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/30 p-4 border border-white/10 rounded-2xl">
                   <div>
                     <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                      <Trophy className="w-5 h-5 text-[#ffd700]" /> Oráculo de Grupos
+                      <Trophy className="w-5 h-5 text-[#ffd700]" /> Oráculo da Copa
                     </h2>
-                    <p className="text-[10px] sm:text-xs text-white/50 mt-0.5">Ordene as seleções e preveja os classificados de todos os 12 grupos.</p>
+                    <p className="text-[10px] sm:text-xs text-white/50 mt-0.5">Preveja a ordem da Fase de Grupos e o chaveamento do Mata-Mata.</p>
                   </div>
                   {/* Flag de Prazo */}
                   <div className={`inline-flex items-center self-start sm:self-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black border ${oracleDeadlineText.color}`}>
@@ -806,197 +1146,499 @@ export default function GroupDetailsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.keys(oracleGroups).sort().map((groupName) => (
-                    <div key={groupName} className="auth-card p-4 border border-white/5 relative overflow-hidden bg-[#0d2b1a]/40">
-                      <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-1.5">
-                        <h3 className="text-base font-bold text-[#ffd700] flex items-center gap-2">
-                          Grupo {groupName}
-                        </h3>
-                        <span className="text-[9px] uppercase text-white/40 tracking-wider hidden sm:inline">
-                          {isOracleClosed ? "Visualização" : "Arrastar ou usar setas"}
-                        </span>
+                {/* Alternador de Sub-Abas do Oráculo (Segmented Control) */}
+                <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 w-fit">
+                  <button
+                    onClick={() => setOracleSubTab("grupos")}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      oracleSubTab === "grupos"
+                        ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-md font-black"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    Fase de Grupos
+                  </button>
+                  <button
+                    onClick={() => setOracleSubTab("matamata")}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      oracleSubTab === "matamata"
+                        ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-md font-black"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    Mata-Mata
+                  </button>
+                </div>
+
+                {oracleSubTab === "grupos" ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.keys(oracleGroups).sort().map((groupName) => (
+                        <div key={groupName} className="auth-card p-4 border border-white/5 relative overflow-hidden bg-[#0d2b1a]/40">
+                          <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-1.5">
+                            <h3 className="text-base font-bold text-[#ffd700] flex items-center gap-2">
+                              Grupo {groupName}
+                            </h3>
+                            <span className="text-[9px] uppercase text-white/40 tracking-wider hidden sm:inline">
+                              {isOracleClosed ? "Visualização" : "Arrastar ou usar setas"}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            {oracleGroups[groupName]?.map((team, index) => (
+                              <div
+                                key={team.code}
+                                draggable={!isOracleClosed}
+                                onDragStart={(e) => {
+                                  if (isOracleClosed) return;
+                                  setDraggedItem({ groupName, index });
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDragEnd={() => setDraggedItem(null)}
+                                onDrop={(e) => {
+                                  if (isOracleClosed || !draggedItem) return;
+                                  if (draggedItem.groupName !== groupName) return;
+                                  const newTeams = [...oracleGroups[groupName]];
+                                  const [moved] = newTeams.splice(draggedItem.index, 1);
+                                  newTeams.splice(index, 0, moved);
+                                  setOracleGroups({
+                                    ...oracleGroups,
+                                    [groupName]: newTeams
+                                  });
+                                  setDraggedItem(null);
+                                }}
+                                className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
+                                  isOracleClosed ? "bg-black/10 border-white/5 cursor-default" :
+                                  draggedItem && draggedItem.groupName === groupName && draggedItem.index === index
+                                    ? "bg-white/5 border-[#ffd700] opacity-50 scale-98 cursor-grab"
+                                    : "bg-black/20 border-white/5 hover:border-[#ffd700]/30 hover:bg-white/5 cursor-grab active:cursor-grabbing"
+                                }`}
+                              >
+                                 {/* Position rank */}
+                                <span className={`w-5 text-center font-bold text-xs shrink-0 ${
+                                  index === 0 ? "text-[#ffd700]" :
+                                  index === 1 ? "text-gray-300" :
+                                  index === 2 ? "text-amber-600" : "text-white/40"
+                                }`}>
+                                  {index + 1}º
+                                </span>
+
+                                 {/* Flag container */}
+                                <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-white/5 flex items-center justify-center font-bold text-[10px]">
+                                  {team.flag ? (
+                                    <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                                  ) : (
+                                    team.code
+                                  )}
+                                </div>
+
+                                 {/* Team Name */}
+                                <span className="flex-1 text-xs font-semibold text-white/90 truncate">
+                                  {team.name}
+                                </span>
+
+                                {/* Pontuação do Oráculo */}
+                                {isGroupStageFinished && index < 4 && (
+                                  <div className="flex items-center gap-1.5 shrink-0 ml-auto mr-1">
+                                    {team.realPosition && team.realPosition !== (index + 1) && (
+                                      <span className="text-[9px] text-white/40 italic">
+                                        (Real: {team.realPosition}º)
+                                      </span>
+                                    )}
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
+                                      team.pointsEarned === 4
+                                        ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                                        : "text-red-400 bg-red-500/10 border-red-500/20"
+                                    }`}>
+                                      {team.pointsEarned === 4 ? "+4 pts" : "0 pts"}
+                                    </span>
+                                  </div>
+                                )}
+
+                                 {/* Reorder Arrows (Failsafe for mobile & accessibility!) */}
+                                {!isOracleClosed && (
+                                  <div className="flex flex-col gap-0.5 shrink-0 opacity-40 hover:opacity-100 transition-opacity">
+                                    {index > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newTeams = [...oracleGroups[groupName]];
+                                          const temp = newTeams[index];
+                                          newTeams[index] = newTeams[index - 1];
+                                          newTeams[index - 1] = temp;
+                                          setOracleGroups({
+                                            ...oracleGroups,
+                                            [groupName]: newTeams
+                                          });
+                                        }}
+                                        className="p-0.5 hover:text-[#ffd700] transition-colors"
+                                        title="Mover para cima"
+                                      >
+                                        <ChevronUp className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    {index < oracleGroups[groupName].length - 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newTeams = [...oracleGroups[groupName]];
+                                          const temp = newTeams[index];
+                                          newTeams[index] = newTeams[index + 1];
+                                          newTeams[index + 1] = temp;
+                                          setOracleGroups({
+                                            ...oracleGroups,
+                                            [groupName]: newTeams
+                                          });
+                                        }}
+                                        className="p-0.5 hover:text-[#ffd700] transition-colors"
+                                        title="Mover para baixo"
+                                      >
+                                        <ChevronDown className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Save button and instructions */}
+                    {isOracleClosed ? (
+                      <div className="flex flex-col items-center justify-center p-4.5 border border-red-500/20 rounded-2xl bg-red-500/5 mt-5 text-center shadow-[0_0_15px_rgba(239,68,68,0.05)] animate-fade-in-up">
+                        <p className="text-xs font-black text-red-400 uppercase tracking-widest flex items-center gap-1.5 mb-1.5 justify-center">
+                          🔒 Oráculo Encerrado
+                        </p>
+                        <p className="text-[11px] text-white/60 max-w-md leading-relaxed">
+                          O prazo para enviar e alterar palpites no Oráculo encerrou em <strong className="text-white font-bold">{formattedFirstMatchDate || "o início da fase de grupos"}</strong> com o pontapé inicial do torneio. Agora você pode apenas visualizar as projeções das seleções.
+                        </p>
                       </div>
- 
-                      <div className="space-y-1.5">
-                        {oracleGroups[groupName]?.map((team, index) => (
-                          <div
-                            key={team.code}
-                            draggable={!isOracleClosed}
-                            onDragStart={(e) => {
-                              if (isOracleClosed) return;
-                              setDraggedItem({ groupName, index });
-                              e.dataTransfer.effectAllowed = "move";
-                            }}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDragEnd={() => setDraggedItem(null)}
-                            onDrop={(e) => {
-                              if (isOracleClosed || !draggedItem) return;
-                              if (draggedItem.groupName !== groupName) return;
-                              const newTeams = [...oracleGroups[groupName]];
-                              const [moved] = newTeams.splice(draggedItem.index, 1);
-                              newTeams.splice(index, 0, moved);
-                              setOracleGroups({
-                                ...oracleGroups,
-                                [groupName]: newTeams
-                              });
-                              setDraggedItem(null);
-                            }}
-                            className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
-                              isOracleClosed ? "bg-black/10 border-white/5 cursor-default" :
-                              draggedItem && draggedItem.groupName === groupName && draggedItem.index === index
-                                ? "bg-white/5 border-[#ffd700] opacity-50 scale-98 cursor-grab"
-                                : "bg-black/20 border-white/5 hover:border-[#ffd700]/30 hover:bg-white/5 cursor-grab active:cursor-grabbing"
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-4 border border-white/10 rounded-xl bg-black/20 mt-5">
+                        <p className="text-xs text-white/60 text-center mb-3">
+                          Organize os grupos arrastando as seleções ou usando as setas laterais para prever os classificados em ordem. Os palpites podem ser salvos e alterados até <strong className="text-[#ffd700] font-bold">{formattedFirstMatchDate || "o início da fase de grupos"}</strong>.
+                        </p>
+                        <button
+                          disabled={savingOracle}
+                          onClick={async () => {
+                            setSavingOracle(true);
+                            setOracleMessage(null);
+                            try {
+                              const payload = Object.keys(oracleGroups).map((gName) => ({
+                                groupName: gName,
+                                teamOrder: oracleGroups[gName].map((t) => t.code),
+                              }));
+                              await groupsApi.saveOraclePredictions(groupId, payload);
+                              setOracleMessage("Palpites salvos com sucesso!");
+                              setTimeout(() => setOracleMessage(null), 5000);
+                            } catch (err: any) {
+                              setOracleMessage(err.message || "Erro ao salvar palpites");
+                            } finally {
+                              setSavingOracle(false);
+                            }
+                          }}
+                          className="copa-btn-primary px-6 py-2 text-sm shadow-lg shadow-[#ffd700]/15 w-full sm:w-auto flex items-center justify-center gap-2"
+                        >
+                          {savingOracle ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Salvando palpites...
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4" />
+                              Salvar Palpites do Oráculo
+                            </>
+                          )}
+                        </button>
+                        {oracleMessage && (
+                          <p className={`mt-2 text-xs font-semibold ${
+                            oracleMessage.includes("sucesso") ? "text-emerald-400" : "text-red-400"
+                          }`}>
+                            {oracleMessage}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (() => {
+                  const knockoutMatches = games.filter((g) => !g.stage.startsWith("Fase de Grupos"));
+                  const r32 = knockoutMatches.filter((m) => m.stage === "Dezesseisavos de Final");
+                  const r16 = knockoutMatches.filter((m) => m.stage === "Oitavas de Final");
+                  const r8 = knockoutMatches.filter((m) => m.stage === "Quartas de Final");
+                  const r4 = knockoutMatches.filter((m) => m.stage === "Semifinais" || m.stage === "Semifinal");
+                  const r2 = knockoutMatches.filter((m) => m.stage === "Final" || m.stage === "Terceiro Lugar" || m.stage === "Disputa do 3º Lugar");
+
+                  const getSelectedMatches = () => {
+                    if (bracketRound === "r32") return r32;
+                    if (bracketRound === "r16") return r16;
+                    if (bracketRound === "r8") return r8;
+                    if (bracketRound === "r4") return r4;
+                    if (bracketRound === "r2") return r2;
+                    return [];
+                  };
+
+                  const selectedMatches = getSelectedMatches();
+
+                  // Divisão em dois lados para visualização simétrica (Árvore de Copa do Mundo)
+                  const r32Left = r32.slice(0, 8);
+                  const r32Right = r32.slice(8, 16);
+                  const r16Left = r16.slice(0, 4);
+                  const r16Right = r16.slice(4, 8);
+                  const r8Left = r8.slice(0, 2);
+                  const r8Right = r8.slice(2, 4);
+                  const r4Left = r4.slice(0, 1);
+                  const r4Right = r4.slice(1, 2);
+                  const finalMatch = r2.find(m => m.stage === "Final");
+                  const thirdMatch = r2.find(m => m.stage === "Terceiro Lugar" || m.stage === "Disputa do 3º Lugar");
+
+                  return (
+                    <div className="space-y-4 animate-fade-in-up">
+                      {/* Navegação entre as fases do chaveamento */}
+                      <div className="flex flex-col sm:flex-row gap-3 bg-black/20 p-3 rounded-2xl border border-white/5 items-center justify-between">
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            onClick={() => setBracketRound("all")}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                              bracketRound === "all" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
                             }`}
                           >
-                             {/* Position rank */}
-                            <span className={`w-5 text-center font-bold text-xs shrink-0 ${
-                              index === 0 ? "text-[#ffd700]" :
-                              index === 1 ? "text-gray-300" :
-                              index === 2 ? "text-amber-600" : "text-white/40"
-                            }`}>
-                              {index + 1}º
-                            </span>
- 
-                            {/* Flag container */}
-                            <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-white/20 bg-white/5 flex items-center justify-center font-bold text-[10px]">
-                              {team.flag ? (
-                                <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
-                              ) : (
-                                team.code
-                              )}
-                            </div>
- 
-                            {/* Team Name */}
-                            <span className="flex-1 text-xs font-semibold text-white/90 truncate">
-                              {team.name}
-                            </span>
-
-                            {/* Pontuação do Oráculo */}
-                            {isGroupStageFinished && index < 4 && (
-                              <div className="flex items-center gap-1.5 shrink-0 ml-auto mr-1">
-                                {team.realPosition && team.realPosition !== (index + 1) && (
-                                  <span className="text-[9px] text-white/40 italic">
-                                    (Real: {team.realPosition}º)
-                                  </span>
-                                )}
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
-                                  team.pointsEarned === 4
-                                    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-                                    : "text-red-400 bg-red-500/10 border-red-500/20"
-                                }`}>
-                                  {team.pointsEarned === 4 ? "+4 pts" : "0 pts"}
-                                </span>
-                              </div>
-                            )}
- 
-                            {/* Reorder Arrows (Failsafe for mobile & accessibility!) */}
-                            {!isOracleClosed && (
-                              <div className="flex flex-col gap-0.5 shrink-0 opacity-40 hover:opacity-100 transition-opacity">
-                                {index > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newTeams = [...oracleGroups[groupName]];
-                                      const temp = newTeams[index];
-                                      newTeams[index] = newTeams[index - 1];
-                                      newTeams[index - 1] = temp;
-                                      setOracleGroups({
-                                        ...oracleGroups,
-                                        [groupName]: newTeams
-                                      });
-                                    }}
-                                    className="p-0.5 hover:text-[#ffd700] transition-colors"
-                                    title="Mover para cima"
-                                  >
-                                    <ChevronUp className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                                {index < oracleGroups[groupName].length - 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newTeams = [...oracleGroups[groupName]];
-                                      const temp = newTeams[index];
-                                      newTeams[index] = newTeams[index + 1];
-                                      newTeams[index + 1] = temp;
-                                      setOracleGroups({
-                                        ...oracleGroups,
-                                        [groupName]: newTeams
-                                      });
-                                    }}
-                                    className="p-0.5 hover:text-[#ffd700] transition-colors"
-                                    title="Mover para baixo"
-                                  >
-                                    <ChevronDown className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                            Árvore Completa
+                          </button>
+                          <button
+                            onClick={() => setBracketRound("r32")}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                              bracketRound === "r32" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
+                            }`}
+                          >
+                            Dezesseisavos (32)
+                          </button>
+                          <button
+                            onClick={() => setBracketRound("r16")}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                              bracketRound === "r16" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
+                            }`}
+                          >
+                            Oitavas (16)
+                          </button>
+                          <button
+                            onClick={() => setBracketRound("r8")}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                              bracketRound === "r8" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
+                            }`}
+                          >
+                            Quartas (8)
+                          </button>
+                          <button
+                            onClick={() => setBracketRound("r4")}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                              bracketRound === "r4" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
+                            }`}
+                          >
+                            Semifinais
+                          </button>
+                          <button
+                            onClick={() => setBracketRound("r2")}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                              bracketRound === "r2" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
+                            }`}
+                          >
+                            Finais
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-white/40 italic flex items-center gap-1">
+                          ✨ Selecione clicando na bandeira do time que vai avançar
+                        </span>
                       </div>
-                    </div>
-                  ))}
-                </div>
- 
-                {/* Save button and instructions */}
-                {isOracleClosed ? (
-                  <div className="flex flex-col items-center justify-center p-4.5 border border-red-500/20 rounded-2xl bg-red-500/5 mt-5 text-center shadow-[0_0_15px_rgba(239,68,68,0.05)] animate-fade-in-up">
-                    <p className="text-xs font-black text-red-400 uppercase tracking-widest flex items-center gap-1.5 mb-1.5 justify-center">
-                      🔒 Oráculo Encerrado
-                    </p>
-                    <p className="text-[11px] text-white/60 max-w-md leading-relaxed">
-                      O prazo para enviar e alterar palpites no Oráculo encerrou em <strong className="text-white font-bold">{formattedFirstMatchDate || "o início da fase de grupos"}</strong> com o pontapé inicial do torneio. Agora você pode apenas visualizar as projeções das seleções.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-4 border border-white/10 rounded-xl bg-black/20 mt-5">
-                    <p className="text-xs text-white/60 text-center mb-3">
-                      Organize os grupos arrastando as seleções ou usando as setas laterais para prever os classificados em ordem. Os palpites podem ser salvos e alterados até <strong className="text-[#ffd700] font-bold">{formattedFirstMatchDate || "o início da fase de grupos"}</strong>.
-                    </p>
-                    <button
-                      disabled={savingOracle}
-                      onClick={async () => {
-                        setSavingOracle(true);
-                        setOracleMessage(null);
-                        try {
-                          const payload = Object.keys(oracleGroups).map((gName) => ({
-                            groupName: gName,
-                            teamOrder: oracleGroups[gName].map((t) => t.code),
-                          }));
-                          await groupsApi.saveOraclePredictions(groupId, payload);
-                          setOracleMessage("Palpites salvos com sucesso!");
-                          setTimeout(() => setOracleMessage(null), 5000);
-                        } catch (err: any) {
-                          setOracleMessage(err.message || "Erro ao salvar palpites");
-                        } finally {
-                          setSavingOracle(false);
-                        }
-                      }}
-                      className="copa-btn-primary px-6 py-2 text-sm shadow-lg shadow-[#ffd700]/15 w-full sm:w-auto flex items-center justify-center gap-2"
-                    >
-                      {savingOracle ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Salvando palpites...
-                        </>
+
+                      {/* Exibição da Árvore Symmetrical ou Grade Focada */}
+                      {bracketRound === "all" ? (
+                        <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 justify-start lg:justify-center items-stretch scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent min-w-full">
+                          <div className="flex gap-4 md:gap-6 items-stretch py-2 min-w-[1300px] justify-center mx-auto">
+                            {/* COLUNA 1: Dezesseisavos (Lado Esquerdo) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
+                              <div className="flex flex-col justify-between flex-1 py-1">
+                                {r32Left.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 2: Oitavas (Lado Esquerdo) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
+                              <div className="flex flex-col justify-around flex-1 py-4">
+                                {r16Left.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 3: Quartas (Lado Esquerdo) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
+                              <div className="flex flex-col justify-around flex-1 py-12">
+                                {r8Left.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 4: Semifinal (Lado Esquerdo) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
+                              <div className="flex flex-col justify-around flex-1 py-24">
+                                {r4Left.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 5: FINAIS (Centro do Chaveamento) */}
+                            <div className="flex flex-col gap-4 justify-center items-center px-4 min-w-[210px] bg-black/10 border border-white/5 rounded-3xl relative overflow-hidden py-6">
+                              <div className="absolute inset-0 bg-gradient-to-b from-[#ffd700]/5 to-transparent pointer-events-none" />
+                              
+                              {/* Campeão / Grande Final */}
+                              <div className="flex flex-col items-center gap-2">
+                                <span className="text-[9px] font-black uppercase text-[#ffd700] tracking-widest bg-[#ffd700]/10 border border-[#ffd700]/25 px-2.5 py-1 rounded-full shadow-sm">
+                                  🏆 Grande Final
+                                </span>
+                                {finalMatch ? (
+                                  <OracleBracketCircleMatch
+                                    game={finalMatch}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
+                                    Final
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Disputa do 3º Lugar */}
+                              <div className="flex flex-col items-center gap-2 mt-4">
+                                <span className="text-[9px] font-black uppercase text-teal-400 tracking-widest bg-teal-500/10 border border-teal-500/25 px-2.5 py-1 rounded-full shadow-sm">
+                                  🥉 3º Lugar
+                                </span>
+                                {thirdMatch ? (
+                                  <OracleBracketCircleMatch
+                                    game={thirdMatch}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
+                                    3º Lugar
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 6: Semifinal (Lado Direito) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
+                              <div className="flex flex-col justify-around flex-1 py-24">
+                                {r4Right.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 7: Quartas (Lado Direito) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
+                              <div className="flex flex-col justify-around flex-1 py-12">
+                                {r8Right.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 8: Oitavas (Lado Direito) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
+                              <div className="flex flex-col justify-around flex-1 py-4">
+                                {r16Right.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* COLUNA 9: Dezesseisavos (Lado Direito) */}
+                            <div className="flex flex-col gap-2 w-20">
+                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
+                              <div className="flex flex-col justify-between flex-1 py-1">
+                                {r32Right.map((game) => (
+                                  <OracleBracketCircleMatch
+                                    key={game.id}
+                                    game={game}
+                                    savingMatchId={savingMatchId}
+                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          Salvar Palpites do Oráculo
-                        </>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 justify-items-center pt-2">
+                          {selectedMatches.map((game) => (
+                            <div key={game.id} className="flex flex-col items-center gap-1.5 p-2 bg-black/10 border border-white/5 rounded-2xl">
+                              <span className="text-[8px] font-black text-white/30 uppercase truncate max-w-[80px]">
+                                {game.stage?.replace("Dezesseisavos", "1/16").replace(" de Final", "")}
+                              </span>
+                              <OracleBracketCircleMatch
+                                game={game}
+                                savingMatchId={savingMatchId}
+                                handleSavePredictionDirect={handleSavePredictionDirect}
+                              />
+                            </div>
+                          ))}
+                        </div>
                       )}
-                    </button>
-                    {oracleMessage && (
-                      <p className={`mt-2 text-xs font-semibold ${
-                        oracleMessage.includes("sucesso") ? "text-emerald-400" : "text-red-400"
-                      }`}>
-                        {oracleMessage}
-                      </p>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="space-y-6 animate-fade-in-up">
@@ -1083,9 +1725,9 @@ export default function GroupDetailsPage() {
           </div>
         </div>
 
-        {/* Right Panel: Ranking / Oracle Standings */}
         {/* Right Panel: Ranking / Oracle Standings / Group Stats */}
-        <div className="space-y-6 self-start w-full">
+        {!(activeTab === "oraculo" && oracleSubTab === "matamata") && (
+          <div className="space-y-6 self-start w-full">
           {activeTab === "geral" ? (
             <div className="space-y-6 animate-fade-in-up">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -1346,99 +1988,103 @@ export default function GroupDetailsPage() {
               </div>
 
               {/* Regra Card */}
-              <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-3 opacity-10">
-                  <Trophy className="w-16 h-16 text-[#ffd700]" />
-                </div>
-                <h3 className="text-lg font-bold text-[#ffd700] flex items-center gap-2 mb-3">
-                  🏆 Regra da Copa 2026
-                </h3>
-                <div className="space-y-2 text-xs text-white/70">
-                  <p>A Copa do Mundo de 2026 conta com <strong>12 grupos de 4 seleções</strong>.</p>
-                  <div className="p-2.5 bg-black/30 rounded-lg border border-white/5 space-y-1">
-                    <p className="flex justify-between">
-                      <span>1º e 2º colocados:</span>
-                      <span className="font-bold text-emerald-400">24 vagas</span>
-                    </p>
-                    <p className="flex justify-between">
-                      <span>8 melhores 3ºs:</span>
-                      <span className="font-bold text-emerald-400">8 vagas</span>
-                    </p>
-                    <div className="border-t border-white/10 my-1 pt-1 flex justify-between text-[#ffd700] font-bold">
-                      <span>Total Mata-Mata:</span>
-                      <span>32 times</span>
-                    </div>
+              {oracleSubTab !== "matamata" && (
+                <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-3 opacity-10">
+                    <Trophy className="w-16 h-16 text-[#ffd700]" />
                   </div>
-                  <p className="text-[10px] text-white/40 italic">
-                    Os 32 classificados avançam para os 16-avos de final (primeira fase do mata-mata).
-                  </p>
+                  <h3 className="text-lg font-bold text-[#ffd700] flex items-center gap-2 mb-3">
+                    🏆 Regra da Copa 2026
+                  </h3>
+                  <div className="space-y-2 text-xs text-white/70">
+                    <p>A Copa do Mundo de 2026 conta com <strong>12 grupos de 4 seleções</strong>.</p>
+                    <div className="p-2.5 bg-black/30 rounded-lg border border-white/5 space-y-1">
+                      <p className="flex justify-between">
+                        <span>1º e 2º colocados:</span>
+                        <span className="font-bold text-emerald-400">24 vagas</span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span>8 melhores 3ºs:</span>
+                        <span className="font-bold text-emerald-400">8 vagas</span>
+                      </p>
+                      <div className="border-t border-white/10 my-1 pt-1 flex justify-between text-[#ffd700] font-bold">
+                        <span>Total Mata-Mata:</span>
+                        <span>32 times</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-white/40 italic">
+                      Os 32 classificados avançam para os 16-avos de final (primeira fase do mata-mata).
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Classificados dynamic list */}
-              <div className="auth-card p-5 border border-white/10">
-                <h3 className="text-base font-bold text-white flex items-center gap-2 mb-4">
-                  <Sparkles className="w-4 h-4 text-[#ffd700]" /> Previsão de Classificados
-                </h3>
+              {oracleSubTab !== "matamata" && (
+                <div className="auth-card p-5 border border-white/10">
+                  <h3 className="text-base font-bold text-white flex items-center gap-2 mb-4">
+                    <Sparkles className="w-4 h-4 text-[#ffd700]" /> Previsão de Classificados
+                  </h3>
 
-                <div className="space-y-4">
-                  {/* Classificados Diretos */}
-                  <div>
-                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      Classificados Diretos (1º e 2º)
-                    </h4>
-                    <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 copa-scrollbar">
-                      {Object.keys(oracleGroups).sort().map((groupName) => {
-                        const groupTeams = oracleGroups[groupName] || [];
-                        const first = groupTeams[0];
-                        const second = groupTeams[1];
-                        return [first, second].filter(Boolean).map((team) => (
-                          <div key={team.code} className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs">
-                            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
-                              {team.flag ? (
-                                <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
-                              ) : (
-                                team.code
-                              )}
+                  <div className="space-y-4">
+                    {/* Classificados Diretos */}
+                    <div>
+                      <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        Classificados Diretos (1º e 2º)
+                      </h4>
+                      <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 copa-scrollbar">
+                        {Object.keys(oracleGroups).sort().map((groupName) => {
+                          const groupTeams = oracleGroups[groupName] || [];
+                          const first = groupTeams[0];
+                          const second = groupTeams[1];
+                          return [first, second].filter(Boolean).map((team) => (
+                            <div key={team.code} className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs">
+                              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+                                {team.flag ? (
+                                  <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                                ) : (
+                                  team.code
+                                )}
+                              </div>
+                              <span className="font-semibold text-white/90 truncate flex-1">{team.name}</span>
+                              <span className="text-[9px] font-bold text-[#ffd700] bg-white/5 px-1 rounded uppercase shrink-0">{groupName}</span>
                             </div>
-                            <span className="font-semibold text-white/90 truncate flex-1">{team.name}</span>
-                            <span className="text-[9px] font-bold text-[#ffd700] bg-white/5 px-1 rounded uppercase shrink-0">{groupName}</span>
-                          </div>
-                        ));
-                      })}
+                          ));
+                        })}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Melhores Terceiros */}
-                  <div className="border-t border-white/10 pt-3">
-                    <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-blue-400" />
-                      Terceiros (Repescagem 2026)
-                    </h4>
-                    <div className="grid grid-cols-2 gap-1.5 max-h-[120px] overflow-y-auto pr-1 copa-scrollbar">
-                      {Object.keys(oracleGroups).sort().map((groupName) => {
-                        const groupTeams = oracleGroups[groupName] || [];
-                        const third = groupTeams[2];
-                        if (!third) return null;
-                        return (
-                          <div key={third.code} className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/5 border border-blue-500/10 text-xs">
-                            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
-                              {third.flag ? (
-                                <img src={third.flag} alt={third.code} className="w-full h-full object-cover" />
-                              ) : (
-                                third.code
-                              )}
+                    {/* Melhores Terceiros */}
+                    <div className="border-t border-white/10 pt-3">
+                      <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-400" />
+                        Terceiros (Repescagem 2026)
+                      </h4>
+                      <div className="grid grid-cols-2 gap-1.5 max-h-[120px] overflow-y-auto pr-1 copa-scrollbar">
+                        {Object.keys(oracleGroups).sort().map((groupName) => {
+                          const groupTeams = oracleGroups[groupName] || [];
+                          const third = groupTeams[2];
+                          if (!third) return null;
+                          return (
+                            <div key={third.code} className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/5 border border-blue-500/10 text-xs">
+                              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+                                {third.flag ? (
+                                  <img src={third.flag} alt={third.code} className="w-full h-full object-cover" />
+                                ) : (
+                                  third.code
+                                )}
+                              </div>
+                              <span className="font-semibold text-white/90 truncate flex-1">{third.name}</span>
+                              <span className="text-[9px] font-bold text-white/40 bg-white/5 px-1 rounded uppercase shrink-0">{groupName}</span>
                             </div>
-                            <span className="font-semibold text-white/90 truncate flex-1">{third.name}</span>
-                            <span className="text-[9px] font-bold text-white/40 bg-white/5 px-1 rounded uppercase shrink-0">{groupName}</span>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className="space-y-6 animate-fade-in-up">
@@ -1492,6 +2138,7 @@ export default function GroupDetailsPage() {
             </div>
           )}
         </div>
+      )}
 
       </div>
     </div>
