@@ -166,7 +166,7 @@ export const groupsApi = {
 
   getOraclePredictions: (groupId: string) =>
     api
-      .get<{ groups: Record<string, any[]>; hasPredictions: boolean }>(`/groups/${groupId}/oracle`)
+      .get<{ groups: Record<string, any[]>; hasPredictions: boolean; isGroupStageFinished: boolean }>(`/groups/${groupId}/oracle`)
       .then((r) => r.data),
 
   saveOraclePredictions: (

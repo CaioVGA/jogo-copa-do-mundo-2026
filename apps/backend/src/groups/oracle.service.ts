@@ -86,9 +86,127 @@ export class OracleService {
       }
     });
 
+    // 5. Verificar se a fase de grupos terminou e calcular a classificação real
+    const pendingGroupMatches = await this.prisma.match.count({
+      where: {
+        stage: { startsWith: 'Fase de Grupos' },
+        status: 'PENDING',
+      },
+    });
+    const isGroupStageFinished = pendingGroupMatches === 0;
+
+    const sortedStandings: Record<string, any[]> = {};
+    if (isGroupStageFinished) {
+      const matches = await this.prisma.match.findMany({
+        where: { stage: { startsWith: 'Fase de Grupos' } },
+        include: { homeTeam: true, awayTeam: true },
+      });
+
+      const allTeams = await this.prisma.team.findMany({
+        where: { group: { not: null } },
+      });
+
+      const standingsMap: Record<string, Record<string, any>> = {};
+
+      allTeams.forEach((t) => {
+        const g = t.group!;
+        if (!standingsMap[g]) {
+          standingsMap[g] = {};
+        }
+        standingsMap[g][t.code] = {
+          code: t.code,
+          name: t.name,
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          gf: 0,
+          ga: 0,
+          gd: 0,
+          points: 0,
+        };
+      });
+
+      matches.forEach((m) => {
+        if (m.status !== 'FINISHED' || !m.homeTeam || !m.awayTeam) return;
+        const g = m.homeTeam.group!;
+        const home = standingsMap[g]?.[m.homeTeam.code];
+        const away = standingsMap[g]?.[m.awayTeam.code];
+
+        if (!home || !away) return;
+
+        home.played += 1;
+        away.played += 1;
+
+        const hs = m.homeScore ?? 0;
+        const as = m.awayScore ?? 0;
+
+        home.gf += hs;
+        home.ga += as;
+        away.gf += as;
+        away.ga += hs;
+
+        home.gd = home.gf - home.ga;
+        away.gd = away.gf - away.ga;
+
+        if (hs > as) {
+          home.won += 1;
+          home.points += 3;
+          away.lost += 1;
+        } else if (hs < as) {
+          away.won += 1;
+          away.points += 3;
+          home.lost += 1;
+        } else {
+          home.drawn += 1;
+          home.points += 1;
+          away.drawn += 1;
+          away.points += 1;
+        }
+      });
+
+      Object.keys(standingsMap).forEach((g) => {
+        const list = Object.values(standingsMap[g]);
+        list.sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.gd !== a.gd) return b.gd - a.gd;
+          if (b.gf !== a.gf) return b.gf - a.gf;
+          return a.name.localeCompare(b.name);
+        });
+        sortedStandings[g] = list;
+      });
+    }
+
+    // 6. Enriquecer os times ordenados com as informações de pontuação real do Oráculo
+    const enrichedGrouped: Record<string, any[]> = {};
+    Object.keys(grouped).forEach((gName) => {
+      const teamsList = grouped[gName];
+      const actualList = sortedStandings[gName];
+
+      enrichedGrouped[gName] = teamsList.map((team, index) => {
+        let pointsEarned = 0;
+        let realPosition = null;
+
+        if (isGroupStageFinished && actualList) {
+          realPosition = actualList.findIndex((t) => t.code === team.code) + 1;
+          if (index < 3 && team.code === actualList[index].code) {
+            pointsEarned = 4;
+          }
+        }
+
+        return {
+          ...team,
+          pointsEarned,
+          realPosition,
+          isPredictedCorrectly: realPosition === (index + 1),
+        };
+      });
+    });
+
     return {
-      groups: grouped,
+      groups: enrichedGrouped,
       hasPredictions: savedPredictions.length > 0,
+      isGroupStageFinished,
     };
   }
 

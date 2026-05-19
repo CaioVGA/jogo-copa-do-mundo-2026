@@ -29,6 +29,7 @@ export default function GroupDetailsPage() {
   const [oracleGroups, setOracleGroups] = useState<Record<string, any[]>>({});
   const [savingOracle, setSavingOracle] = useState(false);
   const [oracleMessage, setOracleMessage] = useState<string | null>(null);
+  const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
   const [draggedItem, setDraggedItem] = useState<{ groupName: string; index: number } | null>(null);
 
   // Real games state
@@ -89,6 +90,7 @@ export default function GroupDetailsPage() {
       try {
         const data = await groupsApi.getOraclePredictions(groupId);
         setOracleGroups(data.groups);
+        setIsGroupStageFinished(data.isGroupStageFinished || false);
       } catch (err) {
         console.error("Erro ao carregar oráculo:", err);
       }
@@ -858,6 +860,24 @@ export default function GroupDetailsPage() {
                             <span className="flex-1 text-xs font-semibold text-white/90 truncate">
                               {team.name}
                             </span>
+
+                            {/* Pontuação do Oráculo */}
+                            {isGroupStageFinished && index < 3 && (
+                              <div className="flex items-center gap-1.5 shrink-0 ml-auto mr-1">
+                                {team.realPosition && team.realPosition !== (index + 1) && (
+                                  <span className="text-[9px] text-white/40 italic">
+                                    (Real: {team.realPosition}º)
+                                  </span>
+                                )}
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
+                                  team.pointsEarned === 4
+                                    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                                    : "text-red-400 bg-red-500/10 border-red-500/20"
+                                }`}>
+                                  {team.pointsEarned === 4 ? "+4 pts" : "0 pts"}
+                                </span>
+                              </div>
+                            )}
  
                             {/* Reorder Arrows (Failsafe for mobile & accessibility!) */}
                             {!isOracleClosed && (

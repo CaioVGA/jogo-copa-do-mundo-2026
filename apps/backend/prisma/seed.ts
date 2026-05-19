@@ -8,6 +8,12 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  const existingTeamsCount = await prisma.team.count();
+  if (existingTeamsCount > 0) {
+    console.log('Database already seeded. Skipping cleanup and seeding.');
+    return;
+  }
+
   console.log('Cleaning up existing database records...');
   await prisma.match.deleteMany();
   await prisma.oraclePrediction.deleteMany();
