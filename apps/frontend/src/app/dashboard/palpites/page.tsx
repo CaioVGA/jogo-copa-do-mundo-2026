@@ -427,7 +427,7 @@ export default function CopaGamesPage() {
                           month: "2-digit",
                           hour: "2-digit",
                           minute: "2-digit",
-                        })}</span>
+                        })}{game.stadium && ` • ${game.stadium}`}</span>
                       </span>
                       {isFinished ? (
                         <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider text-[8px] border border-emerald-500/20">

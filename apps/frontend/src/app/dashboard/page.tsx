@@ -171,7 +171,7 @@ export default function DashboardPage() {
   const gamesTodayCount = allGames.filter((g) => new Date(g.date).toDateString() === todayStr).length;
 
   const stats = [
-    { title: "Jogos da Copa", value: String(allGames.length || 104), icon: CalendarDays, color: "text-[#ffd700]", bg: "bg-[#ffd700]/10" },
+    { title: "Jogos Restantes", value: String(allGames.filter((g) => g.status !== "FINISHED").length), icon: CalendarDays, color: "text-[#ffd700]", bg: "bg-[#ffd700]/10" },
     { title: "Meus Palpites", value: String(totalPredictionsMade), icon: Star, color: "text-blue-400", bg: "bg-blue-400/10" },
     { title: "Meus Pontos", value: String(totalPointsEarned), icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-400/10" },
     { title: "Jogos Hoje", value: String(gamesTodayCount), icon: Calendar, color: "text-purple-400", bg: "bg-purple-400/10" },
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex flex-col gap-2 min-w-0">
                       <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 uppercase tracking-wider">
-                        {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}
                       </span>
                       
                       <div className="flex items-center gap-3.5 mt-0.5">

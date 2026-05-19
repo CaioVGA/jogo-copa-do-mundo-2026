@@ -125,7 +125,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-4 border-t border-white/5 space-y-3 bg-black/10 relative">
           {/* User Profile Card */}
           {user && (
-            <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3 relative overflow-hidden group/user transition-all duration-300 hover:bg-white/[0.04]">
+            <Link 
+              href="/dashboard/configuracoes"
+              className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3 relative overflow-hidden group/user transition-all duration-300 hover:bg-white/[0.04] cursor-pointer"
+            >
               <div className="absolute -right-8 -bottom-8 w-16 h-16 bg-[#ffd700]/5 rounded-full blur-xl pointer-events-none group-hover/user:bg-[#ffd700]/10 transition-colors" />
               <div className="w-9 h-9 rounded-full border border-white/10 overflow-hidden bg-black/40 shrink-0 relative flex items-center justify-center">
                 {user.avatar ? (
@@ -147,7 +150,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
                 <p className="text-[10px] text-white/40 truncate">{user.email}</p>
               </div>
-            </div>
+            </Link>
           )}
 
           <button

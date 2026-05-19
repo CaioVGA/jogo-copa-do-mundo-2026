@@ -65,8 +65,9 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
   return (
     <div className="flex flex-col bg-black/40 border border-white/5 rounded-xl overflow-hidden hover:border-[#ffd700]/25 transition-all w-60 shrink-0 select-none">
       {/* Small Header */}
-      <div className="bg-black/20 px-2 py-1 flex items-center justify-between border-b border-white/5 text-[9px] text-white/40">
-        <span className="truncate max-w-[120px]" title={game.stage}>{game.stage}</span>
+      <div className="bg-black/20 px-2 py-1 flex items-center justify-between border-b border-white/5 text-[9px] text-white/40" title={game.stadium || undefined}>
+        <span className="truncate max-w-[90px]" title={game.stage}>{game.stage}</span>
+        <span className="text-[8px] text-white/50">{new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
         <span className={`px-1 rounded border font-semibold ${deadlineColor}`}>{deadlineText}</span>
       </div>
       
@@ -852,7 +853,7 @@ export default function GroupDetailsPage() {
                             <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all bg-black/20 hover:scale-[1.01] duration-300">
                               {/* Top bar with game status */}
                               <div className="bg-black/40 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
-                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}</span>
                                 {isFinished ? (
                                   <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-emerald-500/20">Finalizado</span>
                                 ) : isStarted ? (
@@ -1195,7 +1196,7 @@ export default function GroupDetailsPage() {
                           return (
                             <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all hover:scale-[1.01] duration-300 group">
                               <div className="bg-black/20 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
-                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}</span>
                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${deadlineColor}`}>
                                   {deadlineText}
                                 </span>
