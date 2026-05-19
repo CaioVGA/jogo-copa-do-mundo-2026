@@ -862,7 +862,7 @@ export default function GroupDetailsPage() {
                             </span>
 
                             {/* Pontuação do Oráculo */}
-                            {isGroupStageFinished && index < 3 && (
+                            {isGroupStageFinished && index < 4 && (
                               <div className="flex items-center gap-1.5 shrink-0 ml-auto mr-1">
                                 {team.realPosition && team.realPosition !== (index + 1) && (
                                   <span className="text-[9px] text-white/40 italic">

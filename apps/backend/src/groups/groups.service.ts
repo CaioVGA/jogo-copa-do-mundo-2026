@@ -335,7 +335,7 @@ export class GroupsService {
             if (!actualList || actualList.length < 4) return;
 
             const predList = pred.teamOrder.split(',');
-            if (predList.length < 3) return;
+            if (predList.length < 4) return;
 
             // 1st place prediction
             if (predList[0] === actualList[0].code) {
@@ -349,6 +349,11 @@ export class GroupsService {
 
             // 3rd place prediction
             if (predList[2] === actualList[2].code) {
+              oraclePoints += 4;
+            }
+
+            // 4th place prediction
+            if (predList[3] === actualList[3].code) {
               oraclePoints += 4;
             }
           });
