@@ -19,6 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null; role?: string } | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -186,7 +187,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <button
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold text-sm cursor-pointer transition-all duration-300 active:scale-98 border border-transparent hover:border-red-500/15"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
           >
             <LogOut className="w-4 h-4" />
             Sair da Conta
@@ -230,7 +231,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
           <button
             className="p-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-500/15"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -243,6 +244,119 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </div>
       </main>
+
+      {/* Soccer-themed Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
+          {/* Modal Card */}
+          <div className="auth-card max-w-sm w-full p-8 text-center flex flex-col items-center gap-6 relative overflow-hidden border border-white/10 shadow-2xl scale-in">
+            {/* Glowing lights */}
+            <div className="absolute -left-8 -top-8 w-20 h-20 bg-[#2d8a50]/10 rounded-full blur-xl pointer-events-none" />
+            <div className="absolute -right-8 -bottom-8 w-20 h-20 bg-[#ffd700]/5 rounded-full blur-xl pointer-events-none" />
+            
+            {/* Player Leaving the Field Tired SVG Illustration */}
+            <div className="relative w-28 h-28 flex items-center justify-center bg-black/30 rounded-full border border-white/5 shadow-inner">
+              <svg
+                viewBox="0 0 100 100"
+                className="w-16 h-16 drop-shadow-[0_0_15px_rgba(255,215,0,0.25)] animate-pulse"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                {/* Pitch Boundary Line & Exit Arrow */}
+                <path d="M 10 85 L 75 85" stroke="#4a5568" strokeWidth="2.5" />
+                <path d="M 75 85 L 90 85 L 82 77" stroke="#ef4444" strokeWidth="2.5" />
+
+                {/* Sweat Drops */}
+                <path d="M 52 35 C 50 35, 48 38, 50 40 C 51 41, 52 41, 53 40 C 55 38, 53 35, 52 35 Z" fill="#60a5fa" stroke="none" />
+                <path d="M 42 45 C 41 45, 40 47, 41 49 C 41 50, 42 50, 42 49 C 43 47, 43 45, 42 45 Z" fill="#60a5fa" stroke="none" />
+
+                {/* Player Silhouette */}
+                {/* Head (tilted down forward) */}
+                <circle cx="48" cy="25" r="6" fill="#fbd38d" stroke="#fbd38d" />
+
+                {/* Slouched Torso (fatigued curve) */}
+                <path
+                  d="M 46 31 C 41 35, 38 42, 42 56"
+                  stroke="#2d8a50"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                />
+
+                {/* Left Arm (hanging limp in front) */}
+                <path
+                  d="M 43 34 C 47 42, 48 50, 46 58"
+                  stroke="#fbd38d"
+                  strokeWidth="2"
+                />
+
+                {/* Right Arm (resting on waist in fatigue) */}
+                <path
+                  d="M 39 37 C 35 41, 35 46, 38 50"
+                  stroke="#2d8a50"
+                  strokeWidth="2"
+                />
+
+                {/* Shorts */}
+                <path
+                  d="M 42 56 L 46 56"
+                  stroke="#a0aec0"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
+
+                {/* Left Leg (stepping slowly) */}
+                <path
+                  d="M 45 58 L 52 70 L 56 85"
+                  stroke="#a0aec0"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                />
+
+                {/* Right Leg (dragging behind) */}
+                <path
+                  d="M 41 58 L 36 72 L 34 85"
+                  stroke="#a0aec0"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+
+            {/* Texts */}
+            <div className="space-y-2">
+              <div className="inline-flex px-3 py-1 rounded-full text-[10px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/25 uppercase tracking-widest">
+                Substituição
+              </div>
+              <h2 className="text-2xl font-black text-white tracking-tight">
+                CANSOU DO JOGO? 🥵
+              </h2>
+              <p className="text-white/60 text-sm leading-relaxed">
+                Você correu muito e parece cansado. Tem certeza de que deseja pedir substituição e ir direto para o vestiário?
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full flex flex-col gap-2 pt-2">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="copa-btn-primary w-full py-3 text-sm flex items-center justify-center font-bold shadow-lg shadow-[#ffd700]/5 hover:scale-102 transition-all duration-300 cursor-pointer"
+              >
+                Continuar no Jogo ⚽
+              </button>
+              
+              <button
+                onClick={handleLogout}
+                className="w-full py-2.5 rounded-xl border border-red-500/20 text-red-400 bg-red-500/5 hover:bg-red-500/10 hover:text-red-300 text-xs font-bold transition-all duration-300 cursor-pointer"
+              >
+                Sair de Campo (Logout)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

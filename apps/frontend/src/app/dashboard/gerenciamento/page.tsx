@@ -24,8 +24,7 @@ export default function GerenciamentoPage() {
       setUsers(allUsers);
     } catch (err: any) {
       toast.error(err.message || "Erro ao carregar lista de usuários.");
-      // Redirect to dashboard if forbidden
-      router.push("/dashboard");
+      router.push("/forbidden");
     } finally {
       setLoading(false);
     }
@@ -41,8 +40,7 @@ export default function GerenciamentoPage() {
           setCurrentUser(parsed);
           
           if (parsed.role !== "ADMIN") {
-            toast.error("Acesso restrito apenas a administradores.");
-            router.push("/dashboard");
+            router.push("/forbidden");
             return;
           }
         } catch (e) {
