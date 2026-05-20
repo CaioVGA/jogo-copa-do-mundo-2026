@@ -260,7 +260,8 @@ export class MailService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getActivationTemplate(name: string, token: string): string {
-    const frontendUrl = this.config.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrlRaw = this.config.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = frontendUrlRaw.split(',')[0].trim();
     const activationUrl = `${frontendUrl}/ativar?token=${token}`;
 
     return `
