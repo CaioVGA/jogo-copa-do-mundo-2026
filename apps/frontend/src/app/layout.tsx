@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     "Participe do maior jogo de previsões da Copa do Mundo 2026! Dispute no Bolão acertando placares ou no Oráculo prevendo quem vai passar de fase.",
   keywords: ["copa do mundo 2026", "bolão", "previsão", "futebol", "oráculo"],
   authors: [{ name: "Copa 2026 Game" }],
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 import { NotificationProvider } from "@/components/ui/toast";
