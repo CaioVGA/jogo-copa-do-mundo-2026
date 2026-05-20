@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Home, Trophy, Settings, Users, CalendarDays, Sparkles, ShieldCheck } from "lucide-react";
 import { usersApi } from "@/lib/api";
 
@@ -16,7 +16,9 @@ function handleLogout() {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null; role?: string } | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -31,6 +33,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("copa_token");
+      if (!token) {
+        setIsAuthenticated(false);
+        router.push("/login");
+        return;
+      }
+      setIsAuthenticated(true);
+    }
+
     async function syncProfile() {
       try {
         const profile = await usersApi.getProfile();
@@ -40,6 +52,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
       } catch (e) {
         console.error("Erro ao sincronizar perfil:", e);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("copa_token");
+          localStorage.removeItem("copa_user");
+        }
+        setIsAuthenticated(false);
+        router.push("/login");
       }
     }
 
@@ -64,11 +82,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => {
       window.removeEventListener("user-profile-updated", loadUser);
     };
-  }, []);
+  }, [router]);
 
   function isActive(item: { href: string; exact?: boolean }) {
     if (item.exact) return pathname === item.href;
     return pathname.startsWith(item.href);
+  }
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="copa-auth-bg min-h-screen text-white flex flex-col items-center justify-center gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-[#ffd700]" />
+        <p className="text-white/60 text-sm font-semibold">Verificando autenticação...</p>
+      </div>
+    );
+  }
+
+  if (isAuthenticated === false) {
+    return null;
   }
 
   return (

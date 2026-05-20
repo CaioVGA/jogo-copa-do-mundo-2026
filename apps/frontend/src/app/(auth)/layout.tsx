@@ -29,7 +29,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <p className="mt-10 text-white/20 text-xs text-center animate-fade-in-up delay-500">
-        © 2026 Copa do Mundo Game · Todos os direitos reservados
+        © 2026 Copa do Mundo - Bolão e Oráculo · Todos os direitos reservados
       </p>
     </div>
   );

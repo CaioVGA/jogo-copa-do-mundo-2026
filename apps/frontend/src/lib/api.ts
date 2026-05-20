@@ -23,6 +23,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      const isAuthEndpoint = error.config?.url?.includes("/auth/");
+      if (!isAuthEndpoint) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("copa_token");
+          localStorage.removeItem("copa_user");
+          window.location.href = "/login";
+        }
+      }
+    }
+
     const message =
       error.response?.data?.message ||
       (Array.isArray(error.response?.data?.message)
