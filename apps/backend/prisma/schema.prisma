@@ -20,6 +20,8 @@ model User {
   activationToken String?
   otpCode         String?
   otpExpiresAt    DateTime?
+  newEmail        String?
+  emailChangeToken String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   ownedGroups     Group[]       @relation("OwnedGroups")

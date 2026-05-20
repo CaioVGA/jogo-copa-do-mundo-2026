@@ -56,3 +56,13 @@ export class ResetPasswordDto {
   @IsString()
   confirmPassword: string;
 }
+
+export class ResendActivationDto {
+  @IsEmail({}, { message: 'Email inválido' })
+  email: string;
+}
+
+export class ConfirmEmailChangeDto {
+  @IsString()
+  token: string;
+}

@@ -90,7 +90,7 @@ export interface AuthResponse {
 
 export const authApi = {
   register: (data: RegisterPayload) =>
-    api.post<AuthResponse>("/auth/register", data).then((r) => r.data),
+    api.post<{ message: string }>("/auth/register", data).then((r) => r.data),
 
   login: (data: LoginPayload) =>
     api.post<AuthResponse>("/auth/login", data).then((r) => r.data),
@@ -113,6 +113,16 @@ export const authApi = {
   activate: (token: string) =>
     api
       .post<{ message: string }>("/auth/activate", { token })
+      .then((r) => r.data),
+
+  resendActivation: (email: string) =>
+    api
+      .post<{ message: string }>("/auth/resend-activation", { email })
+      .then((r) => r.data),
+
+  confirmEmailChange: (token: string) =>
+    api
+      .post<{ message: string }>("/auth/confirm-email-change", { token })
       .then((r) => r.data),
 };
 
@@ -278,6 +288,9 @@ export const usersApi = {
 
   updateUserActiveStatus: (id: string, active: boolean) =>
     api.put<UserProfileResponse>(`/users/${id}/active`, { active }).then((r) => r.data),
+
+  requestEmailChange: (newEmail: string) =>
+    api.put<{ message: string }>("/users/profile/request-email-change", { newEmail }).then((r) => r.data),
 };
 
 export default api;

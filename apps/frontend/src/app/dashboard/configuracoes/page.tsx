@@ -46,6 +46,13 @@ export default function ConfiguracoesPage() {
   const [showModalNewPassword, setShowModalNewPassword] = useState(false);
   const [showModalConfirmPassword, setShowModalConfirmPassword] = useState(false);
 
+  // Estados de E-mail (para o Modal)
+  const [newEmail, setNewEmail] = useState("");
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailModalError, setEmailModalError] = useState<string | null>(null);
+  const [emailModalSuccess, setEmailModalSuccess] = useState<string | null>(null);
+  const [emailSaving, setEmailSaving] = useState(false);
+
   // Controle do Modal de Corte (Cropper)
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
@@ -230,6 +237,34 @@ export default function ConfiguracoesPage() {
     }
   };
 
+  const handleEmailChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailModalError(null);
+    setEmailModalSuccess(null);
+
+    if (!newEmail) {
+      setEmailModalError("O novo e-mail não pode estar vazio.");
+      return;
+    }
+
+    setEmailSaving(true);
+    try {
+      const response = await usersApi.requestEmailChange(newEmail);
+      setEmailModalSuccess(response.message || "E-mail de confirmação enviado com sucesso!");
+      setNewEmail("");
+
+      // Fecha o modal após 3 segundos
+      setTimeout(() => {
+        setIsEmailModalOpen(false);
+        setEmailModalSuccess(null);
+      }, 3000);
+    } catch (err: any) {
+      setEmailModalError(err.message || "Erro ao solicitar alteração de e-mail.");
+    } finally {
+      setEmailSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[450px] space-y-4">
@@ -345,9 +380,23 @@ export default function ConfiguracoesPage() {
                 <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Nome</span>
                 <p className="text-sm font-semibold text-white/90">{name || "Carregando..."}</p>
               </div>
-              <div className="space-y-1 p-1">
-                <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">E-mail</span>
-                <p className="text-sm font-semibold text-white/90 break-all">{email || "Carregando..."}</p>
+              <div className="space-y-1 p-1 flex flex-col justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-white/40 tracking-wider uppercase">E-mail</span>
+                  <p className="text-sm font-semibold text-white/90 break-all">{email || "Carregando..."}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewEmail("");
+                    setEmailModalError(null);
+                    setEmailModalSuccess(null);
+                    setIsEmailModalOpen(true);
+                  }}
+                  className="mt-2 text-left text-xs font-bold text-[#ffd700] hover:text-[#ffd700]/80 cursor-pointer transition-colors"
+                >
+                  Alterar E-mail
+                </button>
               </div>
             </div>
           </div>
@@ -688,6 +737,116 @@ export default function ConfiguracoesPage() {
               </div>
 
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Modal */}
+      {isEmailModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Overlay */}
+          <div 
+            onClick={() => !emailSaving && setIsEmailModalOpen(false)}
+            className="fixed inset-0 bg-[#0a0f1e]/85 backdrop-blur-xl transition-all duration-300" 
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-gradient-to-br from-[#0d2b1a] to-[#04140d] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-[0_0_50px_-12px_rgba(255,215,0,0.15)] z-10 animate-fade-in-up overflow-hidden">
+            {/* Ambient Background Glows */}
+            <div className="absolute -right-16 -top-16 w-36 h-36 bg-[#ffd700]/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-16 -bottom-16 w-36 h-36 bg-[#2d8a50]/10 rounded-full blur-3xl pointer-events-none" />
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/5 pb-3.5 mb-5 relative">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-b from-[#ffd700]/20 to-transparent p-2.5 rounded-xl border border-[#ffd700]/25 shadow-inner">
+                  <Mail className="w-5 h-5 text-[#ffd700]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white tracking-wide">Alterar E-mail</h3>
+                  <p className="text-[10px] text-white/50 font-medium">Solicite a alteração do seu e-mail de acesso</p>
+                </div>
+              </div>
+              <button
+                disabled={emailSaving}
+                onClick={() => setIsEmailModalOpen(false)}
+                className="text-white/40 hover:text-white hover:bg-white/5 p-1.5 rounded-lg cursor-pointer transition-all border border-transparent hover:border-white/10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Error/Success Feedbacks */}
+            {emailModalError && (
+              <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-500/20 text-red-400 p-3.5 rounded-xl text-xs mb-4.5 animate-shake">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <p className="font-semibold">{emailModalError}</p>
+              </div>
+            )}
+
+            {emailModalSuccess && (
+              <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-3.5 rounded-xl text-xs mb-4.5 animate-fade-in">
+                <CheckCircle className="w-4 h-4 shrink-0" />
+                <p className="font-semibold">{emailModalSuccess}</p>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleEmailChangeSubmit} className="space-y-5 relative">
+              
+              {/* Novo E-mail */}
+              <div className="space-y-1.5 group/modal-field">
+                <label htmlFor="newEmailField" className="text-xs font-bold text-white/50 tracking-wide uppercase group-focus-within/modal-field:text-[#ffd700] transition-colors">
+                  Novo E-mail
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-white/30 group-focus-within/modal-field:text-[#ffd700] transition-colors pointer-events-none">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <input
+                    id="newEmailField"
+                    type="email"
+                    required
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="copa-input w-full pl-10 pr-4 py-3 text-sm focus:border-[#ffd700]/40 focus:ring-0 focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[0_0_12px_rgba(255,215,0,0.06)]"
+                    placeholder="Digite seu novo e-mail"
+                  />
+                </div>
+                <p className="text-[10px] text-white/40 leading-normal mt-1.5">
+                  ⚠️ Um link de confirmação será enviado para este novo e-mail. A alteração só será efetivada após a confirmação.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3.5 border-t border-white/5">
+                <button
+                  type="button"
+                  disabled={emailSaving}
+                  onClick={() => setIsEmailModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-white/10 hover:bg-white/5 text-white/70 text-xs font-bold cursor-pointer transition-all hover:border-white/20 active:scale-98"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={emailSaving}
+                  className="copa-btn-primary px-5 py-2.5 text-xs font-black flex items-center gap-1.5 shadow-md cursor-pointer hover:scale-102 active:scale-98"
+                >
+                  {emailSaving ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      Confirmar
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -14,13 +14,43 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const registered = searchParams.get("registered") === "true";
   const activated = searchParams.get("activated") === "true";
+  const resent = searchParams.get("resent") === "true";
+
+  const [resendingActivation, setResendingActivation] = useState(false);
+  const [resendStatus, setResendStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("copa_token");
+      const isRemembered = localStorage.getItem("copa_remember_me") === "true";
+      const lastActivity = localStorage.getItem("copa_last_activity");
+
+      let sessionExpired = false;
+      if (token && !isRemembered && lastActivity) {
+        const elapsed = Date.now() - Number(lastActivity);
+        if (elapsed > 30 * 60 * 1000) {
+          sessionExpired = true;
+          localStorage.removeItem("copa_token");
+          localStorage.removeItem("copa_user");
+          localStorage.removeItem("copa_last_activity");
+          localStorage.removeItem("copa_remember_me");
+        }
+      }
+
+      if (token && !sessionExpired) {
+        router.replace("/dashboard");
+      }
+    }
+  }, [router]);
 
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -32,9 +62,32 @@ function LoginContent() {
       const res = await authApi.login(data);
       localStorage.setItem("copa_token", res.token);
       localStorage.setItem("copa_user", JSON.stringify(res.user));
+      localStorage.setItem("copa_remember_me", rememberMe ? "true" : "false");
+      localStorage.setItem("copa_last_activity", Date.now().toString());
       router.push("/dashboard");
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Erro ao fazer login");
+    }
+  };
+
+  const handleResendFromLogin = async () => {
+    const email = getValues("email");
+    if (!email) {
+      setResendStatus({ type: "error", message: "Insira seu e-mail no campo acima primeiro." });
+      return;
+    }
+    setResendingActivation(true);
+    setResendStatus(null);
+    try {
+      const res = await authApi.resendActivation(email);
+      setResendStatus({ type: "success", message: res.message || "Link enviado!" });
+    } catch (err) {
+      setResendStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : "Erro ao reenviar e-mail.",
+      });
+    } finally {
+      setResendingActivation(false);
     }
   };
 
@@ -48,19 +101,45 @@ function LoginContent() {
         {/* API Error */}
         {apiError && (
           <div
-            className="animate-shake p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm text-center"
+            className="animate-shake p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm text-center space-y-2"
             role="alert"
             data-testid="login-error"
           >
-            {apiError}
+            <p>{apiError}</p>
+            {apiError.toLowerCase().includes("inativa") && (
+              <div className="pt-1.5 border-t border-red-500/10">
+                <button
+                  type="button"
+                  onClick={handleResendFromLogin}
+                  disabled={resendingActivation}
+                  className="text-xs text-[#ffd700] hover:text-[#ffd700]/80 underline font-semibold transition-colors cursor-pointer"
+                >
+                  {resendingActivation ? "Enviando..." : "Reenviar e-mail de ativação"}
+                </button>
+                {resendStatus && (
+                  <p className={`text-xs mt-1 font-semibold ${resendStatus.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
+                    {resendStatus.message}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {/* Mensagem de conta criada */}
         {registered && !apiError && (
           <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm text-center">
-            Conta criada com sucesso! 🏆 <br />
-            Por favor, <strong>verifique seu e-mail</strong> para ativar sua conta antes de entrar.
+            {resent ? (
+              <>
+                Sua conta já estava cadastrada, mas ainda não foi ativada. <br />
+                Enviamos um <strong>novo e-mail de ativação</strong>. Por favor, verifique sua caixa de entrada! 📧
+              </>
+            ) : (
+              <>
+                Conta criada com sucesso! 🏆 <br />
+                Por favor, <strong>verifique seu e-mail</strong> para ativar sua conta antes de entrar.
+              </>
+            )}
           </div>
         )}
 
@@ -151,6 +230,20 @@ function LoginContent() {
               {errors.password.message}
             </p>
           )}
+        </div>
+
+        {/* Lembrar de mim */}
+        <div className="flex items-center pt-1 select-none">
+          <label className="copa-checkbox-container">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="copa-checkbox-input"
+            />
+            <span className="copa-checkbox-custom" />
+            Lembrar de mim
+          </label>
         </div>
 
         {/* Submit */}
