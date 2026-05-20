@@ -1,0 +1,123 @@
+services:
+  # ─── Banco de dados PostgreSQL ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: copa2026_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-copa2026}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-copa2026_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-copa2026}
+    volumes:
+      - ./.postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - copa_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-copa2026} -d ${POSTGRES_DB:-copa2026}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─── Migrations (roda e sai) ───────────────────────────────────────────────
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: copa2026_migrate
+    command: >
+      sh -c "cd /app/apps/backend &&
+             npx prisma db push &&
+             npx prisma db seed &&
+             echo 'Migrations concluídas!'"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-copa2026}:${POSTGRES_PASSWORD:-copa2026_secret}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-copa2026}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - copa_network
+    restart: "no"
+
+  # ─── Backend NestJS ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: copa2026_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-copa2026}:${POSTGRES_PASSWORD:-copa2026_secret}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-copa2026}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      MAIL_HOST: ${MAIL_HOST:?MAIL_HOST is required}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USER: ${MAIL_USER:?MAIL_USER is required}
+      MAIL_PASS: ${MAIL_PASS:?MAIL_PASS is required}
+      MAIL_FROM: ${MAIL_FROM:-noreply@copa2026.com}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - copa_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ─── Redis Cache ───────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: copa2026_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - copa_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Frontend Next.js ──────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        # URL da API acessível pelo BROWSER do usuário (não dentro do Docker)
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+    container_name: copa2026_frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - copa_network
+
+# ─── Rede interna ──────────────────────────────────────────────────────────
+networks:
+  copa_network:
+    driver: bridge

@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String        @id @default(cuid())
+  name            String
+  email           String        @unique
+  passwordHash    String
+  avatar          String?
+  role            String        @default("USER")
+  active          Boolean       @default(false)
+  activationToken String?
+  otpCode         String?
+  otpExpiresAt    DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  ownedGroups     Group[]       @relation("OwnedGroups")
+  groupMembers    GroupMember[]
+  oraclePredictions OraclePrediction[]
+  matchPredictions MatchPrediction[]
+
+  @@map("users")
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique
+  flag        String?
+  group       String?
+  homeMatches Match[]  @relation("HomeTeam")
+  awayMatches Match[]  @relation("AwayTeam")
+
+  @@map("teams")
+}
+
+model Match {
+  id           String   @id @default(cuid())
+  homeTeamId   String?
+  awayTeamId   String?
+  homeTeam     Team?    @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam     Team?    @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeamName String?
+  awayTeamName String?
+  date         DateTime
+  stadium      String?
+  city         String?
+  stage        String
+  status       String   @default("PENDING")
+  homeScore    Int?
+  awayScore    Int?
+  predictions  MatchPrediction[]
+
+  @@map("matches")
+}
+
+model Group {
+  id         String        @id @default(cuid())
+  name       String
+  inviteCode String        @unique
+  maxMembers Int           @default(20)
+  ownerId    String
+  owner      User          @relation("OwnedGroups", fields: [ownerId], references: [id])
+  members    GroupMember[]
+  oraclePredictions OraclePrediction[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model OraclePrediction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupName String   @map("group_name")
+  teamOrder String   @map("team_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, groupId, groupName])
+  @@map("oracle_predictions")
+}
+
+model MatchPrediction {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId    String
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  homeScore  Int      @map("home_score")
+  awayScore  Int      @map("away_score")
+  points     Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, matchId])
+  @@map("match_predictions")
+}
