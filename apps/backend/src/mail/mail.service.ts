@@ -145,12 +145,39 @@ export class MailService implements OnModuleInit, OnModuleDestroy {
           html = this.getActivationTemplate(task.name, task.tokenOrOtp);
         }
 
-        await this.transporter.sendMail({
-          from: `"Copa do Mundo 2026 🏆" <${this.config.get('MAIL_FROM')}>`,
-          to: task.to,
-          subject,
-          html,
-        });
+        const resendApiKey = this.config.get<string>('RESEND_API_KEY');
+
+        if (resendApiKey) {
+          // Use Resend HTTP API (Port 443 - never blocked by VPS)
+          const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${resendApiKey}`,
+            },
+            body: JSON.stringify({
+              from: `"Copa do Mundo 2026 🏆" <${this.config.get('MAIL_FROM') || 'onboarding@resend.dev'}>`,
+              to: [task.to],
+              subject,
+              html,
+            }),
+          });
+
+          if (!response.ok) {
+            const errBody = await response.text();
+            throw new Error(`Resend API error: ${response.status} - ${errBody}`);
+          }
+
+          this.logger.log(`Background email successfully sent to=${task.to} via Resend HTTP API`);
+        } else {
+          // Fallback to standard SMTP
+          await this.transporter.sendMail({
+            from: `"Copa do Mundo 2026 🏆" <${this.config.get('MAIL_FROM')}>`,
+            to: task.to,
+            subject,
+            html,
+          });
+        }
 
         this.logger.log(`Background email successfully sent to=${task.to}`);
         return; // Sucesso!
