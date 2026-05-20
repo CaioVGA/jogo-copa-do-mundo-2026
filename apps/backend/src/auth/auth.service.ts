@@ -14,6 +14,7 @@ import {
   RegisterDto,
   ResetPasswordDto,
   VerifyOtpDto,
+  ResendActivationDto,
 } from './dto/auth.dto';
 
 @Injectable()
@@ -32,7 +33,25 @@ export class AuthService {
 
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) {
-      throw new ConflictException('Este email já está cadastrado');
+      if (existing.active) {
+        throw new ConflictException('Este email já está cadastrado');
+      } else {
+        // User exists but is NOT active. Update details, password and activation token, then resend email!
+        const passwordHash = await bcrypt.hash(dto.password, 12);
+        const activationToken = require('crypto').randomBytes(32).toString('hex');
+        
+        await this.prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            name: dto.name,
+            passwordHash,
+            activationToken
+          }
+        });
+
+        await this.mailService.sendActivationEmail(existing.email, dto.name, activationToken);
+        return { message: 'Conta existente mas inativa. Um novo e-mail de ativação foi enviado!' };
+      }
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -67,6 +86,29 @@ export class AuthService {
     });
 
     return { message: 'Conta ativada com sucesso!' };
+  }
+
+  // ─── RESEND ACTIVATION EMAIL ───────────────────────────────────────────────
+  async resendActivation(dto: ResendActivationDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user) {
+      // Retorna sucesso para evitar enumeração de emails
+      return { message: 'Se a conta correspondente não estiver ativa, um novo e-mail foi enviado.' };
+    }
+
+    if (user.active) {
+      throw new BadRequestException('Esta conta já está ativa.');
+    }
+
+    const activationToken = require('crypto').randomBytes(32).toString('hex');
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { activationToken },
+    });
+
+    await this.mailService.sendActivationEmail(user.email, user.name, activationToken);
+
+    return { message: 'Um novo link de ativação foi enviado para o seu e-mail.' };
   }
 
   // ─── LOGIN ─────────────────────────────────────────────────────────────────
@@ -154,6 +196,43 @@ export class AuthService {
     });
 
     return { message: 'Senha redefinida com sucesso!' };
+  }
+
+  async confirmEmailChange(token: string) {
+    if (!token) {
+      throw new BadRequestException('Token de confirmação inválido');
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { emailChangeToken: token },
+    });
+
+    if (!user || !user.newEmail) {
+      throw new BadRequestException('Link de confirmação inválido ou já expirou.');
+    }
+
+    const newEmailFormatted = user.newEmail.toLowerCase().trim();
+
+    // Validar novamente se o email não está em uso por outro usuário
+    const existing = await this.prisma.user.findUnique({
+      where: { email: newEmailFormatted },
+    });
+
+    if (existing) {
+      throw new ConflictException('Este e-mail já está sendo utilizado por outra conta.');
+    }
+
+    // Efetivar alteração de e-mail e limpar campos temporários
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email: newEmailFormatted,
+        newEmail: null,
+        emailChangeToken: null,
+      },
+    });
+
+    return { message: 'E-mail alterado com sucesso!' };
   }
 
   // ─── HELPERS ───────────────────────────────────────────────────────────────

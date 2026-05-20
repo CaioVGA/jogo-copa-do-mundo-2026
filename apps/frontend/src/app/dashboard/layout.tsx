@@ -10,6 +10,8 @@ function handleLogout() {
   if (typeof window !== "undefined") {
     localStorage.removeItem("copa_token");
     localStorage.removeItem("copa_user");
+    localStorage.removeItem("copa_last_activity");
+    localStorage.removeItem("copa_remember_me");
     window.location.href = "/login";
   }
 }
@@ -84,6 +86,51 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       window.removeEventListener("user-profile-updated", loadUser);
     };
   }, [router]);
+
+  // ─── Inactivity/Remember Me Tracker ──────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const isRemembered = localStorage.getItem("copa_remember_me") === "true";
+    if (isRemembered) return;
+
+    const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms
+
+    const checkInactivity = () => {
+      const lastActivity = localStorage.getItem("copa_last_activity");
+      if (lastActivity) {
+        const elapsed = Date.now() - Number(lastActivity);
+        if (elapsed > INACTIVITY_TIMEOUT) {
+          handleLogout();
+        }
+      } else {
+        localStorage.setItem("copa_last_activity", Date.now().toString());
+      }
+    };
+
+    const updateActivity = () => {
+      localStorage.setItem("copa_last_activity", Date.now().toString());
+    };
+
+    // Run check immediately on mount
+    checkInactivity();
+
+    // Listen to user interaction events to refresh inactivity timestamp
+    const events = ["mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach((event) => {
+      window.addEventListener(event, updateActivity);
+    });
+
+    // Check inactivity status every 10 seconds
+    const interval = setInterval(checkInactivity, 10000);
+
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, updateActivity);
+      });
+      clearInterval(interval);
+    };
+  }, []);
 
   function isActive(item: { href: string; exact?: boolean }) {
     if (item.exact) return pathname === item.href;

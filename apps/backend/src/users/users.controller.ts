@@ -11,7 +11,13 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength, IsEmail, IsNotEmpty } from 'class-validator';
+
+export class RequestEmailChangeDto {
+  @IsNotEmpty({ message: 'O e-mail não pode estar vazio' })
+  @IsEmail({}, { message: 'Formato de e-mail inválido' })
+  newEmail: string;
+}
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -41,6 +47,11 @@ export class UsersController {
   @Put('profile')
   updateProfile(@Body() dto: UpdateProfileDto, @Request() req: any) {
     return this.usersService.updateProfile(req.user.id, dto);
+  }
+
+  @Put('profile/request-email-change')
+  requestEmailChange(@Body() dto: RequestEmailChangeDto, @Request() req: any) {
+    return this.usersService.requestEmailChange(req.user.id, dto.newEmail);
   }
 
   @Get()

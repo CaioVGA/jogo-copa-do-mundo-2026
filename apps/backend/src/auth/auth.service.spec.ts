@@ -17,6 +17,7 @@ const mockPrisma = {
     findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    findFirst: jest.fn(),
   },
 };
 
@@ -97,10 +98,26 @@ describe('AuthService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('deve lançar ConflictException se o email já está cadastrado', async () => {
+    it('deve lançar ConflictException se o email já está cadastrado e ativo', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
+    });
+
+    it('deve reenviar e-mail de ativação e retornar mensagem de conta inativa se o email estiver cadastrado mas não ativo', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, active: false });
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      const result = await service.register(dto);
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockUser.id },
+          data: expect.objectContaining({ name: dto.name }),
+        }),
+      );
+      expect(mockMail.sendActivationEmail).toHaveBeenCalled();
+      expect(result.message).toContain('Conta existente mas inativa');
     });
   });
 
@@ -276,6 +293,88 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, otpCode: null });
 
       await expect(service.resetPassword(baseDto)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // ─── RESEND ACTIVATION ────────────────────────────────────────────────────
+  describe('resendActivation()', () => {
+    it('deve reenviar o e-mail de ativação para uma conta inativa', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, active: false });
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      const result = await service.resendActivation({ email: mockUser.email });
+
+      expect(mockPrisma.user.update).toHaveBeenCalled();
+      expect(mockMail.sendActivationEmail).toHaveBeenCalled();
+      expect(result.message).toContain('Um novo link de ativação foi enviado');
+    });
+
+    it('deve lançar BadRequestException se a conta já estiver ativa', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, active: true });
+
+      await expect(
+        service.resendActivation({ email: mockUser.email }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve retornar mensagem de sucesso genérica mesmo se o email não existir (proteção contra enumeração)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.resendActivation({ email: 'naoexiste@example.com' });
+
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockMail.sendActivationEmail).not.toHaveBeenCalled();
+      expect(result.message).toContain('Se a conta correspondente não estiver ativa');
+    });
+  });
+
+  // ─── CONFIRM EMAIL CHANGE ────────────────────────────────────────────────
+  describe('confirmEmailChange()', () => {
+    const mockToken = 'change-email-token-123';
+    const pendingEmail = 'novoemail@example.com';
+
+    it('deve confirmar a alteração de e-mail com sucesso', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        ...mockUser,
+        newEmail: pendingEmail,
+        emailChangeToken: mockToken,
+      });
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, email: pendingEmail });
+
+      const result = await service.confirmEmailChange(mockToken);
+
+      expect(mockPrisma.user.findFirst).toHaveBeenCalledWith({
+        where: { emailChangeToken: mockToken },
+      });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockUser.id },
+          data: expect.objectContaining({
+            email: pendingEmail,
+            newEmail: null,
+            emailChangeToken: null,
+          }),
+        }),
+      );
+      expect(result.message).toContain('E-mail alterado com sucesso');
+    });
+
+    it('deve lançar BadRequestException se o token for inválido/inexistente', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(service.confirmEmailChange('token-invalido')).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve lançar ConflictException se o novo email já estiver em uso por outra conta', async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({
+        ...mockUser,
+        newEmail: pendingEmail,
+        emailChangeToken: mockToken,
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, email: pendingEmail });
+
+      await expect(service.confirmEmailChange(mockToken)).rejects.toThrow(ConflictException);
     });
   });
 });

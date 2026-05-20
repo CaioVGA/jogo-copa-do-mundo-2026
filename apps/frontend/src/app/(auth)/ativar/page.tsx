@@ -14,6 +14,26 @@ function AtivarContent() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Ativando sua conta...");
 
+  const [resendEmail, setResendEmail] = useState("");
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+
+  const handleResendActivation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResending(true);
+    setResendSuccess(null);
+    setResendError(null);
+    try {
+      const res = await authApi.resendActivation(resendEmail);
+      setResendSuccess(res.message || "E-mail de ativação reenviado com sucesso!");
+    } catch (err) {
+      setResendError(err instanceof Error ? err.message : "Erro ao reenviar e-mail.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   useEffect(() => {
     if (!token) {
       setStatus("error");
@@ -82,8 +102,37 @@ function AtivarContent() {
               </svg>
             </div>
             <p className="text-red-300 font-semibold text-lg">Erro na ativação</p>
-            <p className="text-white/70 text-sm">{message}</p>
-            <Link href="/cadastro" className="copa-btn-primary w-full py-3.5 text-sm mt-4 block text-center">
+            <p className="text-white/70 text-sm mb-2">{message}</p>
+            
+            {/* Form de reenvio de e-mail */}
+            <div className="w-full pt-4 border-t border-white/5 space-y-3">
+              <p className="text-white/50 text-xs">Insira seu e-mail cadastrado para receber um novo link:</p>
+              <form onSubmit={handleResendActivation} className="space-y-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="seu@email.com"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  className="copa-input w-full px-4 py-2.5 text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={resending}
+                  className="copa-btn-ghost w-full py-2.5 text-xs font-bold"
+                >
+                  {resending ? "Enviando..." : "Reenviar e-mail de ativação"}
+                </button>
+              </form>
+              {resendSuccess && (
+                <p className="text-emerald-400 text-xs font-semibold text-center">{resendSuccess}</p>
+              )}
+              {resendError && (
+                <p className="text-red-400 text-xs font-semibold text-center">{resendError}</p>
+              )}
+            </div>
+
+            <Link href="/cadastro" className="copa-btn-primary w-full py-3.5 text-sm mt-2 block text-center">
               Criar nova conta
             </Link>
           </>

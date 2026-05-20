@@ -484,6 +484,74 @@ input[type="number"] {
   appearance: textfield;
 }
 
+/* ─── Copa Custom Checkbox ─────────────────────────────────────────────────── */
+.copa-checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s ease;
+  padding-left: 0.0625rem;
+}
+
+.copa-checkbox-container:hover {
+  color: #ffffff;
+}
+
+.copa-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.copa-checkbox-custom {
+  position: relative;
+  height: 1.125rem;
+  width: 1.125rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.25rem;
+  margin-right: 0.75rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.copa-checkbox-container:hover .copa-checkbox-custom {
+  border-color: rgba(255, 215, 0, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.copa-checkbox-input:focus-visible ~ .copa-checkbox-custom {
+  outline: 0.125rem solid rgba(255, 215, 0, 0.5);
+  outline-offset: 0.0625rem;
+}
+
+.copa-checkbox-input:checked ~ .copa-checkbox-custom {
+  background: linear-gradient(135deg, #ffd700 0%, #f5c800 100%);
+  border-color: #ffd700;
+  box-shadow: 0 0 0.75rem rgba(255, 215, 0, 0.25);
+}
+
+.copa-checkbox-custom::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 0.3125rem;
+  top: 0.125rem;
+  width: 0.25rem;
+  height: 0.5rem;
+  border: solid #05110a;
+  border-width: 0 0.125rem 0.125rem 0;
+  transform: rotate(45deg);
+}
+
+.copa-checkbox-input:checked ~ .copa-checkbox-custom::after {
+  display: block;
+}
+
 /* ─── Global Selection Cursor Rules ─────────────────────────────────────────── */
 button,
 select,

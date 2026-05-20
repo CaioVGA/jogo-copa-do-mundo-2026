@@ -6,6 +6,8 @@ import {
   RegisterDto,
   ResetPasswordDto,
   VerifyOtpDto,
+  ResendActivationDto,
+  ConfirmEmailChangeDto,
 } from './dto/auth.dto';
 
 @Controller('auth')
@@ -21,6 +23,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   activate(@Body('token') token: string) {
     return this.authService.activateAccount(token);
+  }
+
+  @Post('resend-activation')
+  @HttpCode(HttpStatus.OK)
+  resendActivation(@Body() dto: ResendActivationDto) {
+    return this.authService.resendActivation(dto);
   }
 
   @Post('login')
@@ -45,5 +53,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('confirm-email-change')
+  @HttpCode(HttpStatus.OK)
+  confirmEmailChange(@Body() dto: ConfirmEmailChangeDto) {
+    return this.authService.confirmEmailChange(dto.token);
   }
 }

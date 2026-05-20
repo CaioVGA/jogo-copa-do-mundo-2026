@@ -32,8 +32,12 @@ export default function CadastroPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setApiError(null);
     try {
-      await authApi.register(data);
-      router.push("/login?registered=true");
+      const res = await authApi.register(data);
+      if (res.message && res.message.toLowerCase().includes("inativa")) {
+        router.push("/login?registered=true&resent=true");
+      } else {
+        router.push("/login?registered=true");
+      }
     } catch (err) {
       setApiError(err instanceof Error ? err.message : "Erro ao criar conta");
     }
