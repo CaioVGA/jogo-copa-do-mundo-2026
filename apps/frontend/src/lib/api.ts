@@ -141,6 +141,9 @@ export interface GroupData {
   ownerId: string;
   owner: GroupOwner;
   _count: { members: number };
+  pixKey?: string;
+  pixPayload?: string;
+  entryFee?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -162,8 +165,11 @@ export interface MyGroupsResponse {
 }
 
 export const groupsApi = {
-  createGroup: (name: string) =>
-    api.post<GroupData>("/groups", { name }).then((r) => r.data),
+  createGroup: (name: string, pixKey?: string, entryFee?: number) =>
+    api.post<GroupData>("/groups", { name, pixKey, entryFee }).then((r) => r.data),
+
+  updateGroup: (id: string, data: { name?: string; pixKey?: string | null; entryFee?: number | null }) =>
+    api.put<GroupData>(`/groups/${id}`, data).then((r) => r.data),
 
   getMyGroups: () =>
     api.get<MyGroupsResponse>("/groups/my").then((r) => r.data),
@@ -200,6 +206,9 @@ export const groupsApi = {
 
   removeMember: (groupId: string, memberId: string) =>
     api.delete<{ message: string }>(`/groups/${groupId}/members/${memberId}`).then((r) => r.data),
+
+  toggleMemberPaid: (groupId: string, memberId: string, paid: boolean) =>
+    api.patch(`/groups/${groupId}/members/${memberId}/paid`, { paid }).then((r) => r.data),
 };
 
 // ─── Teams endpoints ───────────────────────────────────────────────────────

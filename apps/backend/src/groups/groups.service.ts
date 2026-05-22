@@ -9,6 +9,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../prisma/redis.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
+import { generatePixPayload } from '../utils/pix';
 
 @Injectable()
 export class GroupsService {
@@ -66,6 +68,8 @@ export class GroupsService {
         name: dto.name,
         inviteCode,
         ownerId: userId,
+        pixKey: dto.pixKey,
+        entryFee: dto.entryFee,
         members: {
           create: { userId },
         },
@@ -392,6 +396,7 @@ export class GroupsService {
 
     const result = {
       ...group,
+      pixPayload: group.pixKey ? generatePixPayload(group.pixKey, group.owner.name) : undefined,
       isGroupStageFinished,
       members: membersWithPoints,
       predictions,
@@ -462,5 +467,49 @@ export class GroupsService {
     await this.redis.del(`group:details:${groupId}`);
 
     return { message: 'Membro removido com sucesso' };
+  }
+
+  // ─── Atualizar configurações do grupo (somente dono) ───────────────────
+  async updateGroup(groupId: string, dto: UpdateGroupDto, userId: string) {
+    const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+    if (!group) throw new NotFoundException('Grupo não encontrado');
+    if (group.ownerId !== userId) {
+      throw new ForbiddenException('Apenas o criador do grupo pode alterar as configurações.');
+    }
+
+    await this.prisma.group.update({
+      where: { id: groupId },
+      data: {
+        name: dto.name,
+        pixKey: dto.pixKey,
+        entryFee: dto.entryFee,
+      },
+    });
+
+    await this.redis.del(`group:details:${groupId}`);
+    return this.getGroupById(groupId, userId);
+  }
+
+  // ─── Alterar status de pagamento do participante (somente dono) ───────────
+  async toggleMemberPaid(groupId: string, memberId: string, paid: boolean, ownerId: string) {
+    const group = await this.prisma.group.findUnique({ where: { id: groupId } });
+    if (!group) throw new NotFoundException('Grupo não encontrado');
+    if (group.ownerId !== ownerId) {
+      throw new ForbiddenException('Apenas o criador do grupo pode alterar o status de pagamento');
+    }
+
+    const membership = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId: memberId } },
+    });
+    if (!membership) throw new NotFoundException('O usuário não faz parte deste grupo');
+
+    const updated = await this.prisma.groupMember.update({
+      where: { groupId_userId: { groupId, userId: memberId } },
+      data: { paid },
+    });
+
+    await this.redis.del(`group:details:${groupId}`);
+
+    return updated;
   }
 }
