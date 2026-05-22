@@ -11,13 +11,18 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GroupsService } from './groups.service';
+import { PredictionsService } from '../predictions/predictions.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
+import { SavePredictionsDto } from '../predictions/dto/save-predictions.dto';
 
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(
+    private readonly groupsService: GroupsService,
+    private readonly predictionsService: PredictionsService,
+  ) {}
 
   // POST /api/groups
   @Post()
@@ -41,6 +46,24 @@ export class GroupsController {
   @Post('join')
   join(@Body() dto: JoinGroupDto, @Request() req: any) {
     return this.groupsService.join(dto, req.user.id);
+  }
+
+  // GET /api/groups/:id/predictions  ← NEW: group-scoped predictions
+  @Get(':id/predictions')
+  getPredictions(@Param('id') groupId: string, @Request() req: any) {
+    return this.predictionsService.getPredictions(req.user.id, groupId);
+  }
+
+  // POST /api/groups/:id/predictions  ← NEW: save group-scoped predictions
+  @Post(':id/predictions')
+  savePredictions(
+    @Param('id') groupId: string,
+    @Body() dto: SavePredictionsDto,
+    @Request() req: any,
+  ) {
+    // Ensure the groupId from the URL is used (ignore body groupId if different)
+    dto.groupId = groupId;
+    return this.predictionsService.savePredictions(req.user.id, dto);
   }
 
   // DELETE /api/groups/:id/leave

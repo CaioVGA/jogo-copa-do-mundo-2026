@@ -73,6 +73,7 @@ model Group {
   owner      User          @relation("OwnedGroups", fields: [ownerId], references: [id])
   members    GroupMember[]
   oraclePredictions OraclePrediction[]
+  matchPredictions  MatchPrediction[]
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
@@ -112,12 +113,14 @@ model MatchPrediction {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   matchId    String
   match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  groupId    String   @map("group_id")
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   homeScore  Int      @map("home_score")
   awayScore  Int      @map("away_score")
   points     Int      @default(0)
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  @@unique([userId, matchId])
+  @@unique([userId, matchId, groupId])
   @@map("match_predictions")
 }

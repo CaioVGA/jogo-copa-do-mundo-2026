@@ -318,7 +318,7 @@ export class GroupsService {
     const membersWithPoints = await Promise.all(
       group.members.map(async (member) => {
         const pointsAggregate = await this.prisma.matchPrediction.aggregate({
-          where: { userId: member.userId },
+          where: { userId: member.userId, groupId },
           _sum: { points: true },
         });
 
@@ -339,22 +339,22 @@ export class GroupsService {
 
             // 1st place prediction
             if (predList[0] === actualList[0].code) {
-              oraclePoints += 4;
+              oraclePoints += 3;
             }
 
             // 2nd place prediction
             if (predList[1] === actualList[1].code) {
-              oraclePoints += 4;
+              oraclePoints += 3;
             }
 
             // 3rd place prediction
             if (predList[2] === actualList[2].code) {
-              oraclePoints += 4;
+              oraclePoints += 3;
             }
 
             // 4th place prediction
             if (predList[3] === actualList[3].code) {
-              oraclePoints += 4;
+              oraclePoints += 3;
             }
           });
         }
@@ -379,7 +379,7 @@ export class GroupsService {
     // Busca todas as previsões de jogos feitas pelos membros do grupo
     const memberIds = group.members.map((m) => m.userId);
     const predictions = await this.prisma.matchPrediction.findMany({
-      where: { userId: { in: memberIds } },
+      where: { userId: { in: memberIds }, groupId },
       select: {
         userId: true,
         matchId: true,

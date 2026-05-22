@@ -190,7 +190,7 @@ export class OracleService {
         if (isGroupStageFinished && actualList) {
           realPosition = actualList.findIndex((t) => t.code === team.code) + 1;
           if (index < 4 && team.code === actualList[index].code) {
-            pointsEarned = 4;
+            pointsEarned = 3;
           }
         }
 

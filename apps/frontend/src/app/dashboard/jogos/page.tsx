@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
-import { predictionsApi } from "@/lib/api";
+import { predictionsApi, matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 
@@ -95,7 +95,7 @@ export default function CopaGamesPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await predictionsApi.getPredictions();
+      const data = await matchesApi.getMatches();
       setGrouped(data);
     } catch (err: any) {
       setError(err.message || "Erro ao carregar os jogos da Copa.");
@@ -143,7 +143,7 @@ export default function CopaGamesPage() {
     try {
       await predictionsApi.updateMatchScore(matchId, homeVal, awayVal);
       // reload
-      const data = await predictionsApi.getPredictions();
+      const data = await matchesApi.getMatches();
       setGrouped(data);
       setEditingMatchId(null);
       toast.success("Placar oficial salvo com sucesso!");

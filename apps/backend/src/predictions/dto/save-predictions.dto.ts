@@ -15,6 +15,9 @@ export class SinglePredictionDto {
 }
 
 export class SavePredictionsDto {
+  @IsString()
+  groupId: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SinglePredictionDto)
