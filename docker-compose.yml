@@ -30,7 +30,7 @@ services:
     container_name: copa2026_migrate
     command: >
       sh -c "cd /app/apps/backend &&
-             npx prisma db push &&
+             npx prisma db push --accept-data-loss &&
              npx prisma db seed &&
              echo 'Migrations concluídas!'"
     environment:
