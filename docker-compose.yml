@@ -26,6 +26,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+      target: builder
     container_name: copa2026_migrate
     command: >
       sh -c "cd /app/apps/backend &&
