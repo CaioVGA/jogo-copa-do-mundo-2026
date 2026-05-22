@@ -274,4 +274,41 @@ export class PredictionsService {
 
     return { success: true, message: 'Placar atualizado e pontos calculados com sucesso!' };
   }
+
+  async syncMatchScore(matchId: string, homeScore: number, awayScore: number, status: string) {
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+    });
+
+    if (!match) {
+      throw new BadRequestException('Partida não encontrada.');
+    }
+
+    await this.prisma.match.update({
+      where: { id: matchId },
+      data: {
+        homeScore,
+        awayScore,
+        status,
+      },
+    });
+
+    if (status === 'FINISHED') {
+      const predictions = await this.prisma.matchPrediction.findMany({
+        where: { matchId },
+      });
+
+      for (const pred of predictions) {
+        const points = this.calculatePredictionPoints(homeScore, awayScore, pred.homeScore, pred.awayScore);
+        await this.prisma.matchPrediction.update({
+          where: { id: pred.id },
+          data: { points },
+        });
+      }
+    }
+
+    await this.redis.delByPattern('group:details:*');
+
+    return { success: true, message: 'Placar sincronizado com sucesso!' };
+  }
 }

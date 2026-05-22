@@ -46,6 +46,7 @@ model Team {
 
 model Match {
   id           String   @id @default(cuid())
+  apiFixtureId Int?     @unique
   homeTeamId   String?
   awayTeamId   String?
   homeTeam     Team?    @relation("HomeTeam", fields: [homeTeamId], references: [id])
