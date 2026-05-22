@@ -10,7 +10,56 @@ export class PredictionsService {
     private readonly redis: RedisService,
   ) {}
 
-  async getPredictions(userId: string) {
+  async getMatches() {
+    const matches = await this.prisma.match.findMany({
+      include: { homeTeam: true, awayTeam: true },
+      orderBy: { date: 'asc' },
+    });
+
+    const grouped: Record<string, any[]> = {};
+
+    matches.forEach((match) => {
+      const mappedMatch = {
+        id: match.id,
+        date: match.date,
+        stadium: match.stadium,
+        city: match.city,
+        stage: match.stage,
+        status: match.status,
+        realHomeScore: match.homeScore,
+        realAwayScore: match.awayScore,
+        predictedHomeScore: null,
+        predictedAwayScore: null,
+        pointsEarned: 0,
+        homeTeam: match.homeTeam
+          ? { name: match.homeTeam.name, code: match.homeTeam.code, flag: match.homeTeam.flag, group: match.homeTeam.group }
+          : { name: match.homeTeamName || 'TBD', code: 'TBD', flag: null, group: null },
+        awayTeam: match.awayTeam
+          ? { name: match.awayTeam.name, code: match.awayTeam.code, flag: match.awayTeam.flag, group: match.awayTeam.group }
+          : { name: match.awayTeamName || 'TBD', code: 'TBD', flag: null, group: null },
+      };
+
+      let groupName = match.stage || 'Fase Final';
+      if (match.stage && match.stage.startsWith('Fase de Grupos') && match.homeTeam?.group) {
+        groupName = `Grupo ${match.homeTeam.group}`;
+      }
+
+      if (!grouped[groupName]) grouped[groupName] = [];
+      grouped[groupName].push(mappedMatch);
+    });
+
+    return grouped;
+  }
+
+  async getPredictions(userId: string, groupId: string) {
+    // 0. Verify user is member of the group
+    const membership = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+    });
+    if (!membership) {
+      throw new ForbiddenException('Você não faz parte deste grupo.');
+    }
+
     // 1. Fetch all matches with teams
     const matches = await this.prisma.match.findMany({
       include: {
@@ -22,9 +71,9 @@ export class PredictionsService {
       },
     });
 
-    // 2. Fetch all predictions by this user
+    // 2. Fetch all predictions by this user in this group
     const userPredictions = await this.prisma.matchPrediction.findMany({
-      where: { userId },
+      where: { userId, groupId },
     });
 
     // Create a map for fast lookup
@@ -90,7 +139,16 @@ export class PredictionsService {
   }
 
   async savePredictions(userId: string, dto: SavePredictionsDto) {
+    const { groupId } = dto;
     const now = new Date();
+
+    // 0. Verify user is member of the group
+    const membership = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+    });
+    if (!membership) {
+      throw new ForbiddenException('Você não faz parte deste grupo.');
+    }
 
     for (const pred of dto.predictions) {
       // Find match and verify if it exists and is open for predictions
@@ -111,12 +169,13 @@ export class PredictionsService {
         );
       }
 
-      // Upsert prediction
+      // Upsert prediction scoped to group
       await this.prisma.matchPrediction.upsert({
         where: {
-          userId_matchId: {
+          userId_matchId_groupId: {
             userId,
             matchId: pred.matchId,
+            groupId,
           },
         },
         update: {
@@ -126,20 +185,15 @@ export class PredictionsService {
         create: {
           userId,
           matchId: pred.matchId,
+          groupId,
           homeScore: pred.homeScore,
           awayScore: pred.awayScore,
         },
       });
     }
 
-    // Invalida cache de todos os grupos do usuário para atualizar os rankings em tempo real
-    const memberships = await this.prisma.groupMember.findMany({
-      where: { userId },
-      select: { groupId: true },
-    });
-    for (const m of memberships) {
-      await this.redis.del(`group:details:${m.groupId}`);
-    }
+    // Invalida cache do grupo específico para atualizar o ranking em tempo real
+    await this.redis.del(`group:details:${groupId}`);
 
     return { success: true, message: 'Palpites salvos com sucesso!' };
   }
@@ -177,33 +231,6 @@ export class PredictionsService {
     }
   }
 
-  async recalculateGroupStagePredictions() {
-    const groupMatches = await this.prisma.match.findMany({
-      where: { stage: { startsWith: 'Fase de Grupos' } },
-      include: { predictions: true },
-    });
-
-    for (const match of groupMatches) {
-      if (match.status !== 'FINISHED' || match.homeScore === null || match.awayScore === null) {
-        continue;
-      }
-
-      for (const pred of match.predictions) {
-        const points = this.calculatePredictionPoints(
-          match.homeScore,
-          match.awayScore,
-          pred.homeScore,
-          pred.awayScore,
-        );
-
-        await this.prisma.matchPrediction.update({
-          where: { id: pred.id },
-          data: { points },
-        });
-      }
-    }
-  }
-
   async updateMatchScore(userId: string, matchId: string, homeScore: number, awayScore: number) {
     // 1. Verify if user is an ADMIN
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -229,8 +256,7 @@ export class PredictionsService {
       },
     });
 
-    // 3. Score predictions accordingly
-    // 3. Score predictions accordingly (calculate and save points immediately for all stages)
+    // 3. Score ALL predictions for this match across all groups
     const predictions = await this.prisma.matchPrediction.findMany({
       where: { matchId },
     });

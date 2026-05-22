@@ -525,7 +525,7 @@ export default function GroupDetailsPage() {
     }
     async function loadGames() {
       try {
-        const data = await predictionsApi.getPredictions();
+        const data = await predictionsApi.getPredictions(groupId);
         const allMatches: MatchPredictionData[] = [];
         Object.values(data).forEach((groupMatches) => {
           allMatches.push(...groupMatches);
@@ -567,7 +567,7 @@ export default function GroupDetailsPage() {
 
     setSavingMatchId(matchId);
     try {
-      await predictionsApi.savePredictions([{ matchId, homeScore: homeVal, awayScore: awayVal }]);
+      await predictionsApi.savePredictions(groupId, [{ matchId, homeScore: homeVal, awayScore: awayVal }]);
       
       setGames(prevGames => 
         prevGames.map(g => 
@@ -588,7 +588,7 @@ export default function GroupDetailsPage() {
   async function handleSavePredictionDirect(matchId: string, homeScore: number, awayScore: number) {
     setSavingMatchId(matchId);
     try {
-      await predictionsApi.savePredictions([{ matchId, homeScore, awayScore }]);
+      await predictionsApi.savePredictions(groupId, [{ matchId, homeScore, awayScore }]);
       
       setGames(prevGames => 
         prevGames.map(g => 
@@ -2237,12 +2237,12 @@ export default function GroupDetailsPage() {
                   <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
                     <p className="font-bold text-white flex items-center gap-1.5">
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-[10px]">
-                        +4
+                        +3
                       </span>
-                      Posições Exatas (1º, 2º e 3º)
+                      Posições Exatas (1º, 2º, 3º e 4º)
                     </p>
                     <p className="text-[11px] text-white/50 leading-normal pl-6">
-                      Você ganha **4 pontos** para cada time que acertar a posição exata (1º, 2º ou 3º colocado) no grupo. Qualquer erro de colocação resultará em **0 pontos**.
+                      Você ganha <strong className="text-white font-bold">3 pontos</strong> para cada time que acertar a posição exata (1º, 2º, 3º ou 4º colocado) no grupo. Qualquer erro de colocação resultará em <strong className="text-white font-bold">0 pontos</strong>.
                     </p>
                   </div>
                 </div>

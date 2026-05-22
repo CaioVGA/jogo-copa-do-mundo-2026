@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Users, Crown, ShieldAlert, Power, Calendar, Mail, Loader2, UserCheck, UserX } from "lucide-react";
+import { ShieldCheck, Users, Crown, ShieldAlert, Power, Calendar, Mail, Loader2, UserCheck, UserX, Search } from "lucide-react";
 import { usersApi, UserProfileResponse } from "@/lib/api";
 import { useToast, useConfirm } from "@/components/ui/toast";
 
@@ -15,6 +15,8 @@ export default function GerenciamentoPage() {
   const [currentUser, setCurrentUser] = useState<UserProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Load users and verify permissions
   async function loadData() {
@@ -112,9 +114,21 @@ export default function GerenciamentoPage() {
     }
   }
 
-  // Filter users by role
-  const admins = users.filter((u) => u.role === "ADMIN");
-  const regularUsers = users.filter((u) => u.role === "USER");
+  // Filter users by search term
+  const filteredUsers = users.filter((u) =>
+    u.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const admins = filteredUsers.filter((u) => u.role === "ADMIN");
+  const regularUsers = filteredUsers.filter((u) => u.role === "USER");
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(regularUsers.length / itemsPerPage);
+  const activePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1;
+  const paginatedRegularUsers = regularUsers.slice(
+    (activePage - 1) * itemsPerPage,
+    activePage * itemsPerPage
+  );
 
   if (loading) {
     return (
@@ -165,7 +179,9 @@ export default function GerenciamentoPage() {
           </div>
           <div>
             <p className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Administradores</p>
-            <p className="text-xl font-black text-white">{admins.length}</p>
+            <p className="text-xl font-black text-white">
+              {users.filter((u) => u.role === "ADMIN").length}
+            </p>
           </div>
         </div>
 
@@ -183,6 +199,23 @@ export default function GerenciamentoPage() {
         </div>
       </div>
 
+      {/* Search Input Bar */}
+      <div className="relative max-w-md">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40">
+          <Search className="w-4 h-4" />
+        </div>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          placeholder="Buscar usuários pelo nome..."
+          className="w-full pl-10 pr-4 py-3 bg-[#0a0f1e]/50 border border-white/10 rounded-2xl text-white placeholder-white/40 text-xs focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all shadow-xl font-semibold backdrop-blur-sm"
+        />
+      </div>
+
       {/* Main Grid: Admins & Regular Users */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
@@ -195,7 +228,9 @@ export default function GerenciamentoPage() {
 
           <div className="space-y-4">
             {admins.length === 0 ? (
-              <p className="text-xs text-white/40 italic">Nenhum administrador encontrado.</p>
+              <p className="text-xs text-white/40 italic">
+                {searchTerm ? "Nenhum administrador corresponde à busca." : "Nenhum administrador encontrado."}
+              </p>
             ) : (
               admins.map((u) => (
                 <UserCard
@@ -219,10 +254,12 @@ export default function GerenciamentoPage() {
           </h2>
 
           <div className="space-y-4">
-            {regularUsers.length === 0 ? (
-              <p className="text-xs text-white/40 italic">Nenhum usuário comum encontrado.</p>
+            {paginatedRegularUsers.length === 0 ? (
+              <p className="text-xs text-white/40 italic">
+                {searchTerm ? "Nenhum usuário comum corresponde à busca." : "Nenhum usuário comum encontrado."}
+              </p>
             ) : (
-              regularUsers.map((u) => (
+              paginatedRegularUsers.map((u) => (
                 <UserCard
                   key={u.id}
                   user={u}
@@ -234,6 +271,43 @@ export default function GerenciamentoPage() {
               ))
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1.5 pt-6">
+              <button
+                disabled={activePage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className="px-3.5 py-2 rounded-xl border border-white/10 bg-[#0a0f1e]/40 hover:bg-[#0a0f1e]/80 hover:border-white/20 text-white/70 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-bold shrink-0 cursor-pointer shadow-md"
+              >
+                Anterior
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black border transition-all cursor-pointer shadow-sm ${
+                      activePage === page
+                        ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                        : "bg-[#0a0f1e]/40 border-white/5 text-white/40 hover:border-white/15 hover:text-white"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                disabled={activePage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                className="px-3.5 py-2 rounded-xl border border-white/10 bg-[#0a0f1e]/40 hover:bg-[#0a0f1e]/80 hover:border-white/20 text-white/70 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all text-xs font-bold shrink-0 cursor-pointer shadow-md"
+              >
+                Próximo
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

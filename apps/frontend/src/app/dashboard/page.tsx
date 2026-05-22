@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy, Calendar, Users, Activity, Star, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Trophy, Calendar, Users, Activity, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { predictionsApi, teamsApi } from "@/lib/api";
+import { matchesApi, teamsApi } from "@/lib/api";
 import type { MatchPredictionData, TeamData } from "@/lib/api";
 
 const GROUPS_LIST = [
@@ -35,7 +35,7 @@ export default function DashboardPage() {
     async function loadDashboardData() {
       try {
         const [data, fetchedTeams] = await Promise.all([
-          predictionsApi.getPredictions(),
+          matchesApi.getMatches(),
           teamsApi.getTeams(),
         ]);
         setGamesData(data);
@@ -164,16 +164,16 @@ export default function DashboardPage() {
     });
   })();
 
-  // Estatísticas do Usuário
-  const totalPointsEarned = allGames.reduce((acc, g) => acc + (g.pointsEarned || 0), 0);
-  const totalPredictionsMade = allGames.filter((g) => g.predictedHomeScore !== null).length;
+  // Estatísticas gerais
+  const totalFinished = allGames.filter((g) => g.status === "FINISHED").length;
+  const totalPending = allGames.filter((g) => g.status !== "FINISHED").length;
   const todayStr = new Date().toDateString();
   const gamesTodayCount = allGames.filter((g) => new Date(g.date).toDateString() === todayStr).length;
 
   const stats = [
-    { title: "Jogos Restantes", value: String(allGames.filter((g) => g.status !== "FINISHED").length), icon: CalendarDays, color: "text-[#ffd700]", bg: "bg-[#ffd700]/10" },
-    { title: "Meus Palpites", value: String(totalPredictionsMade), icon: Star, color: "text-blue-400", bg: "bg-blue-400/10" },
-    { title: "Meus Pontos", value: String(totalPointsEarned), icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+    { title: "Jogos Pendentes", value: String(totalPending), icon: CalendarDays, color: "text-[#ffd700]", bg: "bg-[#ffd700]/10" },
+    { title: "Jogos Encerrados", value: String(totalFinished), icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+    { title: "Total de Jogos", value: String(allGames.length), icon: Activity, color: "text-blue-400", bg: "bg-blue-400/10" },
     { title: "Jogos Hoje", value: String(gamesTodayCount), icon: Calendar, color: "text-purple-400", bg: "bg-purple-400/10" },
   ];
 
@@ -203,7 +203,7 @@ export default function DashboardPage() {
         </div>
         
         <Link 
-          href="/dashboard/palpites"
+          href="/dashboard/jogos"
           className="copa-btn-primary px-7 py-3.5 text-sm inline-flex items-center gap-2 max-w-fit shadow-xl shadow-[#ffd700]/15 hover:scale-102 transition-all duration-300 relative z-10"
         >
           <CalendarDays className="w-4.5 h-4.5" />
@@ -253,7 +253,7 @@ export default function DashboardPage() {
               </h2>
               <p className="text-xs text-white/45 mt-1">Os próximos 5 confrontos agendados no torneio</p>
             </div>
-            <Link href="/dashboard/palpites" className="text-xs font-bold text-[#ffd700] hover:underline flex items-center gap-1 group">
+            <Link href="/dashboard/jogos" className="text-xs font-bold text-[#ffd700] hover:underline flex items-center gap-1 group">
               Ver todos <span className="group-hover:translate-x-0.5 transition-transform">→</span>
             </Link>
           </div>

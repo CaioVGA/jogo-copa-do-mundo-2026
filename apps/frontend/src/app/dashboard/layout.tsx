@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Home, Trophy, Settings, Users, CalendarDays, Sparkles, ShieldCheck } from "lucide-react";
+import { LogOut, Home, Settings, Users, Sparkles, ShieldCheck, CalendarDays } from "lucide-react";
 import { usersApi } from "@/lib/api";
 
 function handleLogout() {
@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const dynamicNavItems = [
     { href: "/dashboard", label: "Visão Geral", icon: Home, exact: true },
-    { href: "/dashboard/palpites", label: "Jogos", icon: CalendarDays },
+    { href: "/dashboard/jogos", label: "Jogos", icon: CalendarDays },
     { href: "/dashboard/grupos", label: "Grupos", icon: Users },
     ...(isAdmin
       ? [{ href: "/dashboard/gerenciamento", label: "Gerenciamento", icon: ShieldCheck }]

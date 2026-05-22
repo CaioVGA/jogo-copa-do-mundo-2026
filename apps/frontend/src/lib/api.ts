@@ -244,12 +244,21 @@ export interface MatchPredictionData {
   };
 }
 
-export const predictionsApi = {
-  getPredictions: () =>
-    api.get<Record<string, MatchPredictionData[]>>("/predictions").then((r) => r.data),
+// ─── Matches (public schedule) endpoint ────────────────────────────────────
+// Returns all matches grouped by stage with real scores, no personal predictions.
+// Use this for dashboards, standings tables, and calendars.
 
-  savePredictions: (predictions: { matchId: string; homeScore: number; awayScore: number }[]) =>
-    api.post<{ success: boolean; message: string }>("/predictions", { predictions }).then((r) => r.data),
+export const matchesApi = {
+  getMatches: () =>
+    api.get<Record<string, MatchPredictionData[]>>("/predictions/matches").then((r) => r.data),
+};
+
+export const predictionsApi = {
+  getPredictions: (groupId: string) =>
+    api.get<Record<string, MatchPredictionData[]>>(`/groups/${groupId}/predictions`).then((r) => r.data),
+
+  savePredictions: (groupId: string, predictions: { matchId: string; homeScore: number; awayScore: number }[]) =>
+    api.post<{ success: boolean; message: string }>(`/groups/${groupId}/predictions`, { groupId, predictions }).then((r) => r.data),
 
   updateMatchScore: (matchId: string, homeScore: number, awayScore: number) =>
     api.post<{ success: boolean; message: string }>(`/predictions/matches/${matchId}/score`, { homeScore, awayScore }).then((r) => r.data),
