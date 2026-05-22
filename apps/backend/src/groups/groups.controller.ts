@@ -4,7 +4,9 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
+  Put,
   Query,
   Request,
   UseGuards,
@@ -14,6 +16,7 @@ import { GroupsService } from './groups.service';
 import { PredictionsService } from '../predictions/predictions.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto';
 import { SavePredictionsDto } from '../predictions/dto/save-predictions.dto';
 
 @Controller('groups')
@@ -92,5 +95,26 @@ export class GroupsController {
     @Request() req: any
   ) {
     return this.groupsService.removeMember(groupId, memberId, req.user.id);
+  }
+
+  // PUT /api/groups/:id
+  @Put(':id')
+  updateGroup(
+    @Param('id') groupId: string,
+    @Body() dto: UpdateGroupDto,
+    @Request() req: any,
+  ) {
+    return this.groupsService.updateGroup(groupId, dto, req.user.id);
+  }
+
+  // PATCH /api/groups/:id/members/:memberId/paid
+  @Patch(':id/members/:memberId/paid')
+  toggleMemberPaid(
+    @Param('id') groupId: string,
+    @Param('memberId') memberId: string,
+    @Body('paid') paid: boolean,
+    @Request() req: any,
+  ) {
+    return this.groupsService.toggleMemberPaid(groupId, memberId, paid, req.user.id);
   }
 }

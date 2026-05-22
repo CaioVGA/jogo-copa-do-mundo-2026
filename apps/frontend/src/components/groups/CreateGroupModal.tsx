@@ -11,10 +11,27 @@ interface Props {
 
 export default function CreateGroupModal({ onClose, onCreated }: Props) {
   const [name, setName] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [entryFee, setEntryFee] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [createdGroup, setCreatedGroup] = useState<GroupData | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const handleEntryFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const digits = value.replace(/\D/g, "");
+    if (!digits) {
+      setEntryFee("");
+      return;
+    }
+    const valNumber = parseFloat(digits) / 100;
+    const formatted = valNumber.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    setEntryFee(formatted);
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +47,16 @@ export default function CreateGroupModal({ onClose, onCreated }: Props) {
     setError(null);
     setLoading(true);
     try {
-      const group = await groupsApi.createGroup(name.trim());
+      let parsedFee: number | undefined = undefined;
+      if (entryFee) {
+        const numericString = entryFee.replace(/\./g, "").replace(",", ".");
+        parsedFee = parseFloat(numericString);
+      }
+      const group = await groupsApi.createGroup(
+        name.trim(),
+        pixKey.trim() || undefined,
+        parsedFee
+      );
       setCreatedGroup(group);
       onCreated(group);
     } catch (err) {
@@ -154,6 +180,43 @@ export default function CreateGroupModal({ onClose, onCreated }: Props) {
                   {name.length}/50
                 </p>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="group-pix" className="block text-sm font-medium text-white/70">
+                Chave Pix ou Código Copia e Cola (Opcional)
+              </label>
+              <input
+                id="group-pix"
+                type="text"
+                value={pixKey}
+                onChange={(e) => setPixKey(e.target.value)}
+                placeholder="CPF, celular, e-mail ou código Pix Copia e Cola"
+                className="copa-input w-full px-4 py-3 text-sm"
+              />
+              <p className="text-[10px] text-white/40 font-semibold leading-normal">
+                Use para facilitar a arrecadação da taxa de inscrição do bolão entre os participantes. O QR Code será gerado automaticamente.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="group-fee" className="block text-sm font-medium text-white/70">
+                Valor de Entrada (Opcional)
+              </label>
+              <div className="relative flex items-center">
+                <span className="absolute left-4 text-white/40 text-sm select-none font-semibold">R$</span>
+                <input
+                  id="group-fee"
+                  type="text"
+                  value={entryFee}
+                  onChange={handleEntryFeeChange}
+                  placeholder="0,00"
+                  className="copa-input w-full pl-10 pr-4 py-3 text-sm"
+                />
+              </div>
+              <p className="text-[10px] text-white/40 font-semibold leading-normal">
+                Opcional. Defina o valor da taxa de participação neste bolão.
+              </p>
             </div>
 
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[#ffd700]/8 border border-[#ffd700]/20">

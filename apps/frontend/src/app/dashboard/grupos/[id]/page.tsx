@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, QrCode, Coins, Copy, Check } from "lucide-react";
 import { groupsApi, teamsApi, predictionsApi } from "@/lib/api";
 import { useToast, useConfirm } from "@/components/ui/toast";
 import type { MatchPredictionData } from "@/lib/api";
+import EditGroupModal from "@/components/groups/EditGroupModal";
 
 type TabType = "geral" | "bolao" | "oraculo" | "participantes";
 
@@ -347,6 +348,7 @@ export default function GroupDetailsPage() {
   const groupId = params.id as string;
 
   const [group, setGroup] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("geral");
@@ -363,6 +365,7 @@ export default function GroupDetailsPage() {
   const [games, setGames] = useState<MatchPredictionData[]>([]);
   const [predScores, setPredScores] = useState<Record<string, { home: string; away: string }>>({});
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
+  const [updatingPaidMemberId, setUpdatingPaidMemberId] = useState<string | null>(null);
 
   // Paginação dos palpites na aba Geral
   const [currentPage, setCurrentPage] = useState(1);
@@ -479,6 +482,7 @@ export default function GroupDetailsPage() {
   };
 
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const isOwner = group && currentUser && group.ownerId === currentUser.id;
 
   useEffect(() => {
     const userStr = localStorage.getItem("copa_user");
@@ -680,8 +684,11 @@ export default function GroupDetailsPage() {
   // Ordenação dos participantes do grupo pelos pontos reais acumulados
   const rankedMembers = [...group.members].sort((a, b) => (b.points || 0) - (a.points || 0));
 
+  const isCopiaCola = group.pixKey?.trim().startsWith("000201");
+
   return (
-    <div className="space-y-8 animate-fade-in-up pb-20">
+    <>
+      <div className="space-y-8 animate-fade-in-up pb-20">
       {/* Header Back & Info */}
       <div className="flex flex-col gap-4">
         <button 
@@ -701,6 +708,14 @@ export default function GroupDetailsPage() {
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="copa-badge text-[9px] px-2 py-0.5">Copa 2026</span>
                 <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono font-semibold">{group.inviteCode}</span>
+                {group.entryFee !== undefined && group.entryFee !== null && (
+                  <span className="bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[9px] px-2 py-0.5 rounded-full font-bold">
+                    {group.entryFee.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl md:text-3.5xl font-black text-white tracking-tight mb-1">
                 {group.name}
@@ -716,6 +731,14 @@ export default function GroupDetailsPage() {
                 </span>
               </div>
             </div>
+            {isOwner && (
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="copa-btn-ghost text-xs py-2 px-4 border border-white/10 hover:border-[#ffd700] hover:text-[#ffd700] transition-all shrink-0 cursor-pointer"
+              >
+                Editar Grupo
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -897,50 +920,52 @@ export default function GroupDetailsPage() {
                               {/* Members predictions */}
                               <div className="p-3 bg-black/10 space-y-1.5">
                                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest px-2 mb-1">Palpites do Grupo</p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                  {rankedMembers.map((member) => {
-                                    const pred = gamePredictions.find((p: any) => p.userId === member.userId);
-                                    // Apenas exibe o palpite de outros membros se o jogo já iniciou/fechou!
-                                    const canSee = isClosed;
+                                <div className="max-h-48 overflow-y-auto copa-scrollbar pr-1">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                    {rankedMembers.map((member) => {
+                                      const pred = gamePredictions.find((p: any) => p.userId === member.userId);
+                                      // Apenas exibe o palpite de outros membros se o jogo já iniciou/fechou!
+                                      const canSee = isClosed;
 
-                                    return (
-                                      <div key={member.id} className="flex items-center justify-between p-2 rounded-lg bg-black/20 border border-white/5 text-[11px]">
-                                        <div className="flex items-center gap-1.5 min-w-0">
-                                          <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-[9px] font-bold">
-                                            {member.user.name.charAt(0).toUpperCase()}
+                                      return (
+                                        <div key={member.id} className="flex items-center justify-between p-2 rounded-lg bg-black/20 border border-white/5 text-[11px]">
+                                          <div className="flex items-center gap-1.5 min-w-0">
+                                            <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-[9px] font-bold">
+                                              {member.user.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <span className="font-medium text-white/70 truncate">{member.user.name}</span>
                                           </div>
-                                          <span className="font-medium text-white/70 truncate">{member.user.name}</span>
-                                        </div>
 
-                                        <div className="shrink-0 font-bold">
-                                          {pred ? (
-                                            canSee ? (
-                                              <div className="flex items-center gap-1.5">
-                                                <span className="text-[#ffd700]">{pred.homeScore} x {pred.awayScore}</span>
-                                                {isFinished && (
-                                                  <span className={`text-[8px] px-1 py-0.5 rounded font-black ${
-                                                    pred.points === 5 ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20" :
-                                                    pred.points === 4 ? "text-teal-400 bg-teal-500/10 border border-teal-500/20" :
-                                                    pred.points === 3 ? "text-blue-400 bg-blue-500/10 border border-blue-500/20" :
-                                                    pred.points === 1 ? "text-amber-400 bg-amber-500/10 border border-amber-500/20" :
-                                                    "text-red-400 bg-red-500/10 border border-red-500/20"
-                                                  }`}>
-                                                    +{pred.points}
-                                                  </span>
-                                                )}
-                                              </div>
+                                          <div className="shrink-0 font-bold">
+                                            {pred ? (
+                                              canSee ? (
+                                                <div className="flex items-center gap-1.5">
+                                                  <span className="text-[#ffd700]">{pred.homeScore} x {pred.awayScore}</span>
+                                                  {isFinished && (
+                                                    <span className={`text-[8px] px-1 py-0.5 rounded font-black ${
+                                                      pred.points === 5 ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20" :
+                                                      pred.points === 4 ? "text-teal-400 bg-teal-500/10 border border-teal-500/20" :
+                                                      pred.points === 3 ? "text-blue-400 bg-blue-500/10 border border-blue-500/20" :
+                                                      pred.points === 1 ? "text-amber-400 bg-amber-500/10 border border-amber-500/20" :
+                                                      "text-red-400 bg-red-500/10 border border-red-500/20"
+                                                    }`}>
+                                                      +{pred.points}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <span className="text-white/30 flex items-center gap-1 text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                                                  🔒 Oculto
+                                                </span>
+                                              )
                                             ) : (
-                                              <span className="text-white/30 flex items-center gap-1 text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-                                                🔒 Oculto
-                                              </span>
-                                            )
-                                          ) : (
-                                            <span className="text-white/35 italic text-[9px]">Sem palpite</span>
-                                          )}
+                                              <span className="text-white/35 italic text-[9px]">Sem palpite</span>
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
-                                    );
-                                  })}
+                                      );
+                                    })}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1920,12 +1945,18 @@ export default function GroupDetailsPage() {
                   </div>
 
                   <div className="divide-y divide-white/5">
-                    {group?.members?.map((member: any) => {
-                      const isOwner = member.userId === group.ownerId;
-                      const isMe = currentUser && member.userId === currentUser.id;
-                      const isGroupCreator = currentUser && group.ownerId === currentUser.id;
+                    {[...(group?.members || [])]
+                      .sort((a: any, b: any) => {
+                        const timeA = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
+                        const timeB = b.joinedAt ? new Date(b.joinedAt).getTime() : 0;
+                        return timeA - timeB;
+                      })
+                      .map((member: any) => {
+                        const isOwner = member.userId === group.ownerId;
+                        const isMe = currentUser && member.userId === currentUser.id;
+                        const isGroupCreator = currentUser && group.ownerId === currentUser.id;
 
-                      return (
+                        return (
                         <div key={member.id} className="flex items-center justify-between py-4 group/item">
                           <div className="flex items-center gap-3">
                             <div className="relative w-10 h-10 shrink-0">
@@ -1952,6 +1983,13 @@ export default function GroupDetailsPage() {
                                     Você
                                   </span>
                                 )}
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                                  member.paid
+                                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                }`}>
+                                  {member.paid ? "Pago" : "Pendente"}
+                                </span>
                               </div>
                               <p className="text-[10px] text-white/40 mt-0.5">
                                 Entrou em {new Date(member.joinedAt).toLocaleDateString("pt-BR")} • <span className="text-[#ffd700] font-bold">{member.points || 0} pts</span> (Bolão: {member.matchPoints || 0} | Oráculo: {member.oraclePoints || 0})
@@ -1959,26 +1997,69 @@ export default function GroupDetailsPage() {
                             </div>
                           </div>
 
-                          {/* Kick/Remove member action */}
-                          {isGroupCreator && !isOwner && (
-                            <button
-                              onClick={async () => {
-                                const ok = await confirm(`Deseja mesmo remover o participante ${member.user.name} do grupo?`, "Remover Participante");
-                                if (ok) {
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            {/* Toggle Paid Button for Group Creator */}
+                            {isGroupCreator && (
+                              <button
+                                disabled={updatingPaidMemberId === member.userId}
+                                onClick={async () => {
+                                  if (updatingPaidMemberId) return;
+                                  setUpdatingPaidMemberId(member.userId);
                                   try {
-                                    await groupsApi.removeMember(groupId, member.userId);
-                                    toast.success("Membro removido com sucesso!");
-                                    window.location.reload();
+                                    await groupsApi.toggleMemberPaid(groupId, member.userId, !member.paid);
+                                    const updatedGroup = await groupsApi.getGroupById(groupId);
+                                    setGroup(updatedGroup);
+                                    toast.success(`Status de pagamento de ${member.user.name} atualizado!`);
                                   } catch (err: any) {
-                                    toast.error(err.message || "Erro ao remover membro");
+                                    toast.error(err.message || "Erro ao atualizar status de pagamento");
+                                  } finally {
+                                    setUpdatingPaidMemberId(null);
                                   }
-                                }
-                              }}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-md shrink-0 md:opacity-0 group-hover/item:opacity-100 focus:opacity-100"
-                            >
-                              Remover
-                            </button>
-                          )}
+                                }}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all shadow-md shrink-0 flex items-center gap-1 ${
+                                  member.paid
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-white"
+                                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                {updatingPaidMemberId === member.userId ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : member.paid ? (
+                                  "Marcar Pendente"
+                                ) : (
+                                  "Marcar Pago"
+                                )}
+                              </button>
+                            )}
+
+                            {/* Kick/Remove member action */}
+                            {isGroupCreator && (
+                              isOwner ? (
+                                <div className="px-3 py-1.5 text-xs font-semibold invisible select-none shrink-0 pointer-events-none">
+                                  Remover
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={async () => {
+                                    const ok = await confirm(`Deseja mesmo remover o participante ${member.user.name} do grupo?`, "Remover Participante");
+                                    if (ok) {
+                                      try {
+                                        await groupsApi.removeMember(groupId, member.userId);
+                                        toast.success("Membro removido com sucesso!");
+                                        window.location.reload();
+                                      } catch (err: any) {
+                                        toast.error(err.message || "Erro ao remover membro");
+                                      }
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all shadow-md shrink-0 md:opacity-0 group-hover/item:opacity-100 focus:opacity-100"
+                                >
+                                  Remover
+                                </button>
+                              )
+                            )}
+                          </div>
                         </div>
                       );
                     })}
@@ -2023,9 +2104,11 @@ export default function GroupDetailsPage() {
                 </div>
               </div>
 
+
+
               {/* Group stats card */}
               <div className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 rounded-3xl shadow-md">
-                <h3 className="text-xs font-black text-white/40 mb-3 uppercase tracking-wider">Estatísticas</h3>
+                <h3 className="text-xs font-black text-white/40 mb-3 uppercase tracking-wider">Resumo</h3>
                 <div className="space-y-3 text-xs text-white/70">
                   <div className="flex justify-between py-2 border-b border-white/5 items-center font-semibold">
                     <span className="text-white/40">Participantes:</span>
@@ -2035,6 +2118,17 @@ export default function GroupDetailsPage() {
                     <span className="text-white/40">Criado por:</span>
                     <span className="font-black text-white">{group.owner.name}</span>
                   </div>
+                  {group.entryFee !== undefined && group.entryFee !== null && (
+                    <div className="flex justify-between py-2 border-b border-white/5 items-center font-semibold">
+                      <span className="text-white/40">Taxa de Entrada:</span>
+                      <span className="font-black text-emerald-400">
+                        {group.entryFee.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-2 items-center font-semibold">
                     <span className="text-white/40">Criado em:</span>
                     <span className="font-black text-white">{new Date(group.createdAt).toLocaleDateString("pt-BR")}</span>
@@ -2113,6 +2207,92 @@ export default function GroupDetailsPage() {
                   })}
                 </div>
               </div>
+
+              {/* Card de Pagamento do Bolão (Pix) */}
+              {group.pixKey && (
+                <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/10 relative overflow-hidden rounded-3xl shadow-lg animate-fade-in-up">
+                  <div className="absolute top-0 right-0 p-3 opacity-[0.03]">
+                    <Sparkles className="w-16 h-16 text-emerald-400" />
+                  </div>
+                  <h3 className="text-base font-black text-white mb-2 flex items-center gap-2">
+                    <Coins className="w-5 h-5 text-emerald-400" /> Contribuição do Grupo
+                  </h3>
+                  
+                  {isCopiaCola ? (
+                    <>
+                      <p className="text-xs text-white/50 mb-4 font-semibold leading-normal">
+                        Escaneie o QR Code abaixo ou copie o código Copia e Cola para realizar o pagamento da taxa do bolão.
+                      </p>
+                      
+                      {/* QR Code Container */}
+                      <div className="flex flex-col items-center justify-center p-4 mb-4 rounded-2xl bg-white/5 border border-white/10 relative group/qr">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-[#ffd700] rounded-2xl blur opacity-0 group-hover/qr:opacity-10 transition duration-500" />
+                        
+                        <div className="relative p-2.5 bg-white rounded-xl shadow-lg transition-transform duration-300 group-hover/qr:scale-105">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(group.pixPayload || group.pixKey)}`}
+                            alt="Pix QR Code"
+                            className="w-[180px] h-[180px] object-contain select-none"
+                            loading="lazy"
+                          />
+                        </div>
+                        
+                        <p className="text-[10px] text-white/40 mt-2.5 font-bold uppercase tracking-wider flex items-center gap-1">
+                          <QrCode className="w-3.5 h-3.5 text-emerald-400" /> Valor definido pelo organizador
+                        </p>
+                      </div>
+
+                      {/* Pix Key Display (Copia e Cola) */}
+                      <div className="mb-4">
+                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mb-1">Código Copia e Cola:</p>
+                        <div className="bg-black/30 border border-white/5 px-3 py-2 rounded-xl text-xs font-mono text-center text-white/80 select-all truncate">
+                          {group.pixPayload || group.pixKey}
+                        </div>
+                      </div>
+
+                      {/* Copy & Paste Code */}
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(group.pixPayload || group.pixKey);
+                            toast.success("Código Pix Copia e Cola copiado!");
+                          }}
+                          className="w-full copa-btn-primary flex items-center justify-center gap-2 py-2.5 text-xs font-black shadow-lg shadow-emerald-500/10 rounded-xl cursor-pointer"
+                        >
+                          Copiar Pix Copia e Cola
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs text-white/50 mb-4 font-semibold leading-normal">
+                        Copie a chave Pix cadastrada abaixo para realizar a transferência da taxa do bolão.
+                      </p>
+                      
+                      {/* Pix Key Display */}
+                      <div className="mb-4">
+                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider mb-1">Chave Pix cadastrada:</p>
+                        <div className="bg-black/30 border border-[#ffd700]/15 px-3 py-2.5 rounded-xl text-sm font-mono text-center font-black text-[#ffd700] tracking-wider select-all truncate">
+                          {group.pixKey}
+                        </div>
+                      </div>
+
+                      {/* Copy Key Button */}
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(group.pixKey);
+                            toast.success("Chave Pix copiada!");
+                          }}
+                          className="w-full copa-btn-primary flex items-center justify-center gap-2 py-2.5 text-xs font-black shadow-lg shadow-[#ffd700]/10 rounded-xl cursor-pointer"
+                        >
+                          Copiar Chave Pix
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           ) : activeTab === "bolao" ? (
             <div className="space-y-6 animate-fade-in-up">
@@ -2393,6 +2573,17 @@ export default function GroupDetailsPage() {
                     <span>Criador:</span>
                     <span className="font-bold text-white">{group.owner.name}</span>
                   </div>
+                  {group.entryFee !== undefined && group.entryFee !== null && (
+                    <div className="flex justify-between py-1.5 border-b border-white/5">
+                      <span>Taxa de Entrada:</span>
+                      <span className="font-bold text-emerald-400">
+                        {group.entryFee.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-1.5">
                     <span>Criado em:</span>
                     <span className="font-bold text-white">{new Date(group.createdAt).toLocaleDateString("pt-BR")}</span>
@@ -2406,5 +2597,17 @@ export default function GroupDetailsPage() {
 
       </div>
     </div>
+
+    {isEditModalOpen && (
+      <EditGroupModal
+        group={group}
+        onClose={() => setIsEditModalOpen(false)}
+        onUpdated={(updatedGroup) => {
+          setGroup(updatedGroup);
+          setIsEditModalOpen(false);
+        }}
+      />
+    )}
+  </>
   );
 }

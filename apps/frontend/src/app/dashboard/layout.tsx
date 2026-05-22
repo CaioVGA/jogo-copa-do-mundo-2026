@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Home, Settings, Users, Sparkles, ShieldCheck, CalendarDays } from "lucide-react";
+import { LogOut, Home, Settings, Users, Sparkles, ShieldCheck, CalendarDays, ChevronUp } from "lucide-react";
 import { usersApi } from "@/lib/api";
 
 function handleLogout() {
@@ -22,6 +22,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState<{ name: string; email: string; avatar?: string | null; role?: string } | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -243,7 +266,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Mobile Header */}
-      <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-gradient-to-r from-[#0d2b1a] to-[#040e09] backdrop-blur-md sticky top-0 z-50 shadow-md">
+      <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-gradient-to-r from-[#0d2b1a]/95 via-[#081a10]/95 to-[#040e09]/95 backdrop-blur-md fixed top-0 left-0 right-0 z-50 shadow-md">
         <div className="flex items-center gap-2.5">
           <div className="bg-black rounded-lg border border-[#ffd700]/20 shadow-sm flex items-center justify-center w-7 h-7 shrink-0 overflow-hidden p-0">
             <img 
@@ -286,7 +309,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 md:pl-64 overflow-x-hidden relative">
+      <main className="flex-1 pt-[69px] md:pt-0 md:pl-64 overflow-x-hidden relative">
         <div className="max-w-7xl xl:max-w-[1440px] mx-auto p-4 md:p-8">
           {children}
         </div>
@@ -404,6 +427,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       )}
+      {/* Scroll to Top Button */}
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-6 right-6 z-50 p-3 rounded-full bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-black shadow-lg shadow-[#ffd700]/10 border border-[#ffd700]/30 transition-all duration-500 hover:scale-110 active:scale-95 ${
+          showScrollTop
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 translate-y-4 pointer-events-none"
+        }`}
+        aria-label="Voltar ao topo"
+      >
+        <ChevronUp className="w-5 h-5 stroke-[2.5]" />
+      </button>
     </div>
   );
 }
