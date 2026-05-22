@@ -1,8 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+const host = process.env.POSTGRES_HOST || 'localhost';
+const user = process.env.POSTGRES_USER || 'copa2026';
+const password = process.env.POSTGRES_PASSWORD || 'postgres';
+const db = process.env.POSTGRES_DB || 'copa2026';
+const port = process.env.POSTGRES_PORT || '5432';
 
-const databaseUrl = process.env.DATABASE_URL || 'postgresql://copa2026:postgres@localhost:5432/copa2026?schema=public';
+const databaseUrl = process.env.DATABASE_URL || `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
 const pool = new Pool({ connectionString: databaseUrl });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });

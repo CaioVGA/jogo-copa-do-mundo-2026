@@ -9,9 +9,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private pool: Pool;
 
   constructor(private configService: ConfigService) {
+    const host = configService.get<string>('POSTGRES_HOST') || 'localhost';
+    const user = configService.get<string>('POSTGRES_USER') || 'copa2026';
+    const password = configService.get<string>('POSTGRES_PASSWORD') || 'postgres';
+    const db = configService.get<string>('POSTGRES_DB') || 'copa2026';
+    const port = configService.get<string>('POSTGRES_PORT') || '5432';
+
     const databaseUrl =
       configService.get<string>('DATABASE_URL') ||
-      'postgresql://copa2026:postgres@localhost:5432/copa2026?schema=public';
+      `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
+
     const pool = new Pool({ connectionString: databaseUrl });
     const adapter = new PrismaPg(pool);
     super({ adapter });

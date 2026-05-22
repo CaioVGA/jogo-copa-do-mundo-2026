@@ -272,6 +272,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {upcomingGames.map((game) => {
                 const isFinished = game.status === "FINISHED";
+                const isLive = game.status === "LIVE";
                 const hasPredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null;
                 const gameDate = new Date(game.date);
 
@@ -281,9 +282,28 @@ export default function DashboardPage() {
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4.5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-[#ffd700]/20 transition-all duration-300"
                   >
                     <div className="flex flex-col gap-2 min-w-0">
-                      <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 uppercase tracking-wider">
-                        {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 uppercase tracking-wider">
+                          {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}
+                        </span>
+                        
+                        {isLive ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Ao Vivo
+                          </span>
+                        ) : isFinished ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black text-red-400 bg-red-500/10 border border-red-500/20 uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                            Finalizado
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/15 uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            Pendente
+                          </span>
+                        )}
+                      </div>
                       
                       <div className="flex items-center gap-3.5 mt-0.5">
                         {/* Home Team */}
@@ -325,10 +345,23 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                      {isFinished ? (
+                      {isLive ? (
                         <div className="flex flex-col gap-1 items-center shrink-0">
-                          <div className="text-center shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl min-w-[90px]">
-                            <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Resultado</p>
+                          <div className="text-center shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-xl min-w-[95px] shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                            <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest flex items-center justify-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              Ao Vivo
+                            </p>
+                            <p className="text-sm font-black text-[#ffd700] mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
+                          </div>
+                        </div>
+                      ) : isFinished ? (
+                        <div className="flex flex-col gap-1 items-center shrink-0">
+                          <div className="text-center shrink-0 bg-red-500/10 border border-red-500/20 px-3.5 py-2 rounded-xl min-w-[95px]">
+                            <p className="text-[8px] font-black text-red-400 uppercase tracking-widest flex items-center justify-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                              Finalizado
+                            </p>
                             <p className="text-sm font-black text-white mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
                           </div>
                           {game.predictedHomeScore !== null && game.predictedAwayScore !== null && (
@@ -345,8 +378,11 @@ export default function DashboardPage() {
                         </div>
                       ) : hasPredicted ? (
                         <div className="flex flex-col gap-1 text-center shrink-0">
-                          <div className="text-center bg-black/45 border border-[#ffd700]/30 px-3.5 py-1.5 rounded-xl shadow-inner min-w-[90px]">
-                            <p className="text-[8px] font-black text-[#ffd700] uppercase tracking-widest">Meu Palpite</p>
+                          <div className="text-center bg-black/45 border border-[#ffd700]/30 px-3.5 py-1.5 rounded-xl shadow-inner min-w-[95px] flex flex-col items-center">
+                            <p className="text-[8px] font-black text-[#ffd700] uppercase tracking-widest flex items-center justify-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                              Pendente
+                            </p>
                             <p className="text-xs font-black text-white mt-0.5">{game.predictedHomeScore} - {game.predictedAwayScore}</p>
                           </div>
                           <Link 
@@ -357,12 +393,14 @@ export default function DashboardPage() {
                           </Link>
                         </div>
                       ) : (
-                        <Link 
-                          href="/dashboard/grupos" 
-                          className="copa-btn-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-center shrink-0 min-w-[90px] justify-center block hover:scale-102 transition-all duration-300"
-                        >
-                          Palpitar
-                        </Link>
+                        <div className="flex flex-col gap-1 text-center shrink-0">
+                          <Link 
+                            href="/dashboard/grupos" 
+                            className="copa-btn-primary px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-center shrink-0 min-w-[95px] justify-center block hover:scale-102 transition-all duration-300"
+                          >
+                            Palpitar
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>

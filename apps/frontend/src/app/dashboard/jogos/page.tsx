@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert, ChevronLeft, ChevronRight, Activity } from "lucide-react";
 import { predictionsApi, matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
@@ -407,14 +407,17 @@ export default function CopaGamesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {paginatedMatches.map(({ groupName, match: game }) => {
                 const isFinished = game.status === "FINISHED";
+                const isLive = game.status === "LIVE";
 
                 return (
                   <div
                     key={game.id}
-                    className={`auth-card p-0 rounded-3xl overflow-hidden border border-white/5 transition-all duration-300 flex flex-col justify-between min-h-[200px] bg-[#0a0f1e]/40 ${
-                      isFinished 
-                        ? "opacity-90 hover:border-white/10" 
-                        : "hover:border-[#ffd700]/25 hover:bg-[#0d2b1a]/20 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#ffd700]/5"
+                    className={`auth-card p-0 rounded-3xl overflow-hidden border transition-all duration-300 flex flex-col justify-between min-h-[200px] bg-[#0a0f1e]/40 ${
+                      isLive 
+                        ? "border-emerald-500/30 bg-[#0d2b1a]/20 shadow-[0_0_20px_rgba(16,185,129,0.08)] hover:border-emerald-500/50 hover:-translate-y-1"
+                        : isFinished 
+                          ? "border-white/5 opacity-90 hover:border-white/10" 
+                          : "border-white/5 hover:border-[#ffd700]/25 hover:bg-[#0d2b1a]/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#ffd700]/5"
                     }`}
                   >
                     {/* Top Info Banner */}
@@ -429,12 +432,19 @@ export default function CopaGamesPage() {
                           minute: "2-digit",
                         })}{game.stadium && ` • ${game.stadium}`}</span>
                       </span>
-                      {isFinished ? (
-                        <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider text-[8px] border border-emerald-500/20">
-                          Encerrado
+                      {isLive ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Ao Vivo
+                        </span>
+                      ) : isFinished ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black text-red-400 bg-red-500/10 border border-red-500/20 uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          Finalizado
                         </span>
                       ) : (
-                        <span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider text-[8px] border border-amber-500/20 animate-pulse">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/15 uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                           Pendente
                         </span>
                       )}
@@ -507,13 +517,13 @@ export default function CopaGamesPage() {
                           <div className="flex flex-col items-center gap-1">
                             <div className="flex items-center gap-2.5">
                               <span className={`w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center font-black text-base shadow-inner ${
-                                isFinished && game.realHomeScore !== null ? "text-[#ffd700]" : "text-white/25"
+                                (isFinished || isLive) && game.realHomeScore !== null ? "text-[#ffd700]" : "text-white/25"
                               }`}>
                                 {game.realHomeScore !== null ? game.realHomeScore : "—"}
                               </span>
                               <span className="text-white/20 font-bold text-xs">x</span>
                               <span className={`w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center font-black text-base shadow-inner ${
-                                isFinished && game.realAwayScore !== null ? "text-[#ffd700]" : "text-white/25"
+                                (isFinished || isLive) && game.realAwayScore !== null ? "text-[#ffd700]" : "text-white/25"
                               }`}>
                                 {game.realAwayScore !== null ? game.realAwayScore : "—"}
                               </span>
@@ -548,6 +558,19 @@ export default function CopaGamesPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Info Footer for LIVE Matches */}
+                    {isLive && (
+                      <div className="bg-emerald-500/[0.03] px-4 py-2 border-t border-white/5 flex justify-between items-center text-[9px] text-emerald-400 font-bold tracking-wider uppercase">
+                        <span className="flex items-center gap-1.5">
+                          <Activity className="w-3 h-3 text-emerald-400 animate-pulse" />
+                          Partida em andamento
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md font-black text-[8px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 animate-pulse">
+                          Sincronizando Ao Vivo
+                        </span>
+                      </div>
+                    )}
 
                     {/* Info Footer for Finished Matches */}
                     {isFinished && (
