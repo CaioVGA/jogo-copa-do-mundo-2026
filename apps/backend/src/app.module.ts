@@ -9,10 +9,14 @@ import { RedisModule } from './prisma/redis.module';
 import { MailModule } from './mail/mail.module';
 import { GroupsModule } from './groups/groups.module';
 import { PredictionsModule } from './predictions/predictions.module';
+import { SyncModule } from './sync/sync.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      envFilePath: ['.env', '../../.env'],
+      isGlobal: true,
+    }),
     PrismaModule,
     RedisModule,
     MailModule,
@@ -20,6 +24,7 @@ import { PredictionsModule } from './predictions/predictions.module';
     AuthModule,
     GroupsModule,
     PredictionsModule,
+    SyncModule,
   ],
   controllers: [AppController],
   providers: [AppService],

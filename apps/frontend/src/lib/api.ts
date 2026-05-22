@@ -311,4 +311,23 @@ export const usersApi = {
     api.put<{ message: string }>("/users/profile/request-email-change", { newEmail }).then((r) => r.data),
 };
 
+export interface SyncStatusResponse {
+  totalMatches: number;
+  mappedMatches: number;
+  pendingMatches: number;
+  apiConfigured: boolean;
+  apiStatus: string;
+}
+
+export const scoreSyncApi = {
+  getStatus: () =>
+    api.get<SyncStatusResponse>("/admin/sync/status").then((r) => r.data),
+
+  mapMatches: () =>
+    api.post<{ success: boolean; message: string; mappedCount: number }>("/admin/sync/map").then((r) => r.data),
+
+  syncScores: () =>
+    api.post<{ success: boolean; message: string; updatedCount: number }>("/admin/sync/scores").then((r) => r.data),
+};
+
 export default api;

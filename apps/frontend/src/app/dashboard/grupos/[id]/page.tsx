@@ -40,6 +40,7 @@ interface BracketMatchCardProps {
 
 function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, handleSavePrediction }: BracketMatchCardProps) {
   const isFinished = game.status === "FINISHED";
+  const isLive = game.status === "LIVE";
   const isClosed = new Date(game.date).getTime() < Date.now();
   const saving = savingMatchId === game.id;
   
@@ -49,9 +50,15 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
   let deadlineText = "Aberto";
   let deadlineColor = "text-emerald-400 border-emerald-500/20 bg-emerald-500/10";
   
-  if (isClosed) {
-    deadlineText = isFinished ? "Encerrado" : "Em andamento";
+  if (isLive) {
+    deadlineText = "Ao Vivo";
+    deadlineColor = "text-emerald-400 border-emerald-500/20 bg-emerald-500/10 shadow-[0_0_8px_rgba(16,185,129,0.15)]";
+  } else if (isFinished) {
+    deadlineText = "Finalizado";
     deadlineColor = "text-rose-400 border-rose-500/20 bg-rose-500/10";
+  } else if (isClosed) {
+    deadlineText = "Pendente";
+    deadlineColor = "text-amber-400 border-amber-500/20 bg-amber-500/10";
   } else if (diffMs > 0) {
     if (diffDays > 0) {
       deadlineText = `Faltam ${diffDays}d`;
@@ -69,7 +76,12 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
       <div className="bg-black/20 px-2 py-1 flex items-center justify-between border-b border-white/5 text-[9px] text-white/40" title={game.stadium || undefined}>
         <span className="truncate max-w-[90px]" title={game.stage}>{game.stage}</span>
         <span className="text-[8px] text-white/50">{new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-        <span className={`px-1 rounded border font-semibold ${deadlineColor}`}>{deadlineText}</span>
+        <span className={`px-1.5 py-0.5 rounded border font-bold flex items-center gap-1 ${deadlineColor}`}>
+          {isLive && <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />}
+          {isFinished && <span className="w-1 h-1 rounded-full bg-red-500" />}
+          {isClosed && !isLive && !isFinished && <span className="w-1 h-1 rounded-full bg-amber-400" />}
+          {deadlineText}
+        </span>
       </div>
       
       {/* Teams and Scores */}
@@ -89,8 +101,8 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
             </span>
           </div>
           {isClosed ? (
-            <span className={`text-xs font-black shrink-0 ${isFinished ? "text-white" : "text-[#ffd700]"}`}>
-              {isFinished ? game.realHomeScore : (game.predictedHomeScore ?? "-")}
+            <span className={`text-xs font-black shrink-0 ${isFinished || isLive ? (isLive ? "text-emerald-400 animate-pulse" : "text-white") : "text-[#ffd700]"}`}>
+              {isFinished || isLive ? game.realHomeScore : (game.predictedHomeScore ?? "-")}
             </span>
           ) : (
             <input
@@ -125,8 +137,8 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
             </span>
           </div>
           {isClosed ? (
-            <span className={`text-xs font-black shrink-0 ${isFinished ? "text-white" : "text-[#ffd700]"}`}>
-              {isFinished ? game.realAwayScore : (game.predictedAwayScore ?? "-")}
+            <span className={`text-xs font-black shrink-0 ${isFinished || isLive ? (isLive ? "text-emerald-400 animate-pulse" : "text-white") : "text-[#ffd700]"}`}>
+              {isFinished || isLive ? game.realAwayScore : (game.predictedAwayScore ?? "-")}
             </span>
           ) : (
             <input
@@ -149,22 +161,35 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
 
       {/* Footer (Save button or scored points badge) */}
       <div className="bg-black/15 p-1.5 flex justify-between items-center text-[8px] border-t border-white/5">
-        {isFinished ? (
+        {isFinished || isLive ? (
           game.predictedHomeScore !== null ? (
             <div className="flex items-center justify-between w-full">
               <span className="text-[8px] text-white/40">Palpite: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
-              <span className={`text-[8px] px-1 py-0.2 rounded font-black border leading-none ${
-                game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-                game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
-                game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
-                game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
-                "text-red-400 bg-red-500/10 border-red-500/20"
-              }`}>
-                +{game.pointsEarned} pts
-              </span>
+              {isFinished ? (
+                <span className={`text-[8px] px-1 py-0.2 rounded font-black border leading-none ${
+                  game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                  game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
+                  game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                  game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                  "text-red-400 bg-red-500/10 border-red-500/20"
+                }`}>
+                  +{game.pointsEarned} pts
+                </span>
+              ) : (
+                <span className="text-[8px] px-1.5 py-0.5 rounded font-black border leading-none text-emerald-400 bg-emerald-500/10 border-emerald-500/20 animate-pulse">
+                  Ao Vivo
+                </span>
+              )}
             </div>
           ) : (
-            <span className="text-white/35 italic">Sem palpite</span>
+            <div className="flex items-center justify-between w-full text-white/35 italic">
+              <span>Sem palpite</span>
+              {isLive && (
+                <span className="text-[8px] px-1.5 py-0.5 rounded font-black border leading-none text-emerald-400 bg-emerald-500/10 border-emerald-500/20 animate-pulse">
+                  Ao Vivo
+                </span>
+              )}
+            </div>
           )
         ) : !isClosed ? (
           <div className="flex items-center justify-between w-full">
@@ -206,6 +231,7 @@ interface OracleBracketCircleMatchProps {
 
 function OracleBracketCircleMatch({ game, savingMatchId, handleSavePredictionDirect }: OracleBracketCircleMatchProps) {
   const isFinished = game.status === "FINISHED";
+  const isLive = game.status === "LIVE";
   const isClosed = new Date(game.date).getTime() < Date.now();
   const saving = savingMatchId === game.id;
 
@@ -307,9 +333,11 @@ function OracleBracketCircleMatch({ game, savingMatchId, handleSavePredictionDir
 
       <div className="my-1.5 flex flex-col items-center relative z-10">
         <div className="w-0.5 h-3 bg-white/10" />
-        {isFinished ? (
-          <div className={`text-[8px] font-black px-1 py-0.2 rounded-full border leading-none -my-1 whitespace-nowrap bg-black z-20 ${
-            correctPrediction
+        {isFinished || isLive ? (
+          <div className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border leading-none -my-1 whitespace-nowrap bg-black z-20 ${
+            isLive
+              ? "text-emerald-400 border-emerald-500/30 animate-pulse shadow-sm shadow-emerald-500/10"
+              : correctPrediction
               ? "text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
               : "text-red-400 border-red-500/30"
           }`}>
@@ -838,6 +866,7 @@ export default function GroupDetailsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {paginatedGames.map((game) => {
                           const isFinished = game.status === "FINISHED";
+                          const isLive = game.status === "LIVE";
                           const gameDate = new Date(game.date);
                           const isStarted = new Date() >= gameDate;
                           const isClosed = isFinished || isStarted;
@@ -877,10 +906,21 @@ export default function GroupDetailsPage() {
                               {/* Top bar with game status */}
                               <div className="bg-black/40 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
                                 <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}</span>
-                                {isFinished ? (
-                                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-emerald-500/20">Finalizado</span>
+                                {isLive ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)] animate-pulse">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    Ao Vivo
+                                  </span>
+                                ) : isFinished ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-red-400 bg-red-500/10 border border-red-500/20 uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                    Finalizado
+                                  </span>
                                 ) : isStarted ? (
-                                  <span className="text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded text-[9px] uppercase border border-amber-500/20">Encerrado</span>
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    Pendente
+                                  </span>
                                 ) : (
                                   <span className={`font-bold px-2 py-0.5 rounded text-[9px] uppercase border ${deadlineColor}`}>
                                     {deadlineText}
@@ -898,11 +938,11 @@ export default function GroupDetailsPage() {
                                 </div>
 
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-black/40 rounded-lg border border-white/5 font-extrabold text-xs shrink-0">
-                                  {isFinished ? (
+                                  {isFinished || isLive ? (
                                     <div className="flex items-center gap-2">
-                                      <span className="text-white">{game.realHomeScore}</span>
+                                      <span className={isLive ? "text-emerald-400 animate-pulse" : "text-white"}>{game.realHomeScore}</span>
                                       <span className="text-white/30 text-xs">x</span>
-                                      <span className="text-white">{game.realAwayScore}</span>
+                                      <span className={isLive ? "text-emerald-400 animate-pulse" : "text-white"}>{game.realAwayScore}</span>
                                     </div>
                                   ) : (
                                     <span className="text-white/40 text-xs uppercase tracking-wider font-semibold">Aguardando</span>
@@ -1187,6 +1227,7 @@ export default function GroupDetailsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {paginatedBolaoGames.map((game) => {
                           const isFinished = game.status === "FINISHED";
+                          const isLive = game.status === "LIVE";
                           const gameDate = new Date(game.date);
                           const isStarted = new Date() >= gameDate;
                           const isClosed = isFinished || isStarted;
@@ -1222,9 +1263,26 @@ export default function GroupDetailsPage() {
                             <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all hover:scale-[1.01] duration-300 group">
                               <div className="bg-black/20 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
                                 <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}</span>
-                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${deadlineColor}`}>
-                                  {deadlineText}
-                                </span>
+                                {isLive ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)] animate-pulse">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    Ao Vivo
+                                  </span>
+                                ) : isFinished ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-red-400 bg-red-500/10 border border-red-500/20 uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                    Finalizado
+                                  </span>
+                                ) : isStarted ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    Pendente
+                                  </span>
+                                ) : (
+                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold border ${deadlineColor}`}>
+                                    {deadlineText}
+                                  </span>
+                                )}
                               </div>
                               <div className="p-3.5 flex items-center justify-between gap-3 sm:gap-4">
                                 {/* Team A */}
@@ -1244,11 +1302,11 @@ export default function GroupDetailsPage() {
                                   {isClosed ? (
                                     <div className="flex flex-col items-center gap-1">
                                       <div className="flex items-center gap-2">
-                                        {isFinished ? (
+                                        {isFinished || isLive ? (
                                           <>
-                                            <span className="text-xl sm:text-2xl font-black text-white">{game.realHomeScore}</span>
+                                            <span className={`text-xl sm:text-2xl font-black ${isLive ? "text-emerald-400 animate-pulse" : "text-white"}`}>{game.realHomeScore}</span>
                                             <span className="text-white/30 text-xs font-bold">x</span>
-                                            <span className="text-xl sm:text-2xl font-black text-white">{game.realAwayScore}</span>
+                                            <span className={`text-xl sm:text-2xl font-black ${isLive ? "text-emerald-400 animate-pulse" : "text-white"}`}>{game.realAwayScore}</span>
                                           </>
                                         ) : game.predictedHomeScore !== null ? (
                                           <>
@@ -1260,20 +1318,22 @@ export default function GroupDetailsPage() {
                                           <span className="text-[10px] text-white/35 italic">Sem palpite</span>
                                         )}
                                       </div>
-                                      {isFinished && game.predictedHomeScore !== null && (
+                                      {(isFinished || isLive) && game.predictedHomeScore !== null && (
                                         <div className="flex flex-col items-center gap-1 mt-1">
                                           <span className="text-[8px] text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 px-1.5 py-0.5 rounded font-semibold">
                                             Seu: {game.predictedHomeScore}x{game.predictedAwayScore}
                                           </span>
-                                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
-                                            game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
-                                            game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
-                                            game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
-                                            game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
-                                            "text-red-400 bg-red-500/10 border-red-500/20"
-                                          }`}>
-                                            +{game.pointsEarned} {game.pointsEarned === 1 ? "ponto" : "pontos"}
-                                          </span>
+                                          {isFinished && (
+                                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-black border ${
+                                              game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+                                              game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
+                                              game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
+                                              game.pointsEarned === 1 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" :
+                                              "text-red-400 bg-red-500/10 border-red-500/20"
+                                            }`}>
+                                              +{game.pointsEarned} {game.pointsEarned === 1 ? "ponto" : "pontos"}
+                                            </span>
+                                          )}
                                         </div>
                                       )}
                                     </div>

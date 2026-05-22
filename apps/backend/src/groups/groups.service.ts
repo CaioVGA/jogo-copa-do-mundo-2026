@@ -198,7 +198,7 @@ export class GroupsService {
     const pendingGroupMatches = await this.prisma.match.count({
       where: {
         stage: { startsWith: 'Fase de Grupos' },
-        status: 'PENDING',
+        status: { not: 'FINISHED' },
       },
     });
     const isGroupStageFinished = pendingGroupMatches === 0;
