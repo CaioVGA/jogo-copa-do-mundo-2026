@@ -69,8 +69,8 @@ export default function JoinGroupModal({ onClose, onJoined }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-400/15 border border-blue-400/25 flex items-center justify-center">
-              <Search className="w-5 h-5 text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-white/5 border border-[#009E4F]/40 flex items-center justify-center">
+              <Search className="w-5 h-5 text-[#009E4F]" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
@@ -156,7 +156,7 @@ export default function JoinGroupModal({ onClose, onJoined }: Props) {
                     <p className="text-xs text-white/40 mb-1 uppercase tracking-wider">Grupo encontrado</p>
                     <h3 className="text-xl font-bold text-white">{preview.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <Crown className="w-3.5 h-3.5 text-[#ffd700]" />
+                      <Crown className="w-3.5 h-3.5 text-white" />
                       <span className="text-sm text-white/60">
                         Criado por <strong className="text-white/80">{preview.owner.name}</strong>
                       </span>
@@ -192,9 +192,9 @@ export default function JoinGroupModal({ onClose, onJoined }: Props) {
                     </div>
                   )}
                   {preview.alreadyMember && !preview.isFull && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/25">
-                      <CheckCircle className="w-4 h-4 text-blue-400 shrink-0" />
-                      <p className="text-blue-300 text-sm">Você já faz parte deste grupo</p>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-[#009E4F]/40">
+                      <CheckCircle className="w-4 h-4 text-[#009E4F] shrink-0" />
+                      <p className="text-[#009E4F] text-sm">Você já faz parte deste grupo</p>
                     </div>
                   )}
                 </div>

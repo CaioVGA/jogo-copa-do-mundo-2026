@@ -510,7 +510,21 @@ export default function GroupDetailsPage() {
   };
 
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const isOwner = group && currentUser && group.ownerId === currentUser.id;
+  const isCurrentUserGroupOwner = group && (
+    (currentUser && String(group.ownerId) === String(currentUser.id)) ||
+    (typeof window !== "undefined" && (() => {
+      const stored = localStorage.getItem("copa_user");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          return String(group.ownerId) === String(parsed.id);
+        } catch (e) {
+          return false;
+        }
+      }
+      return false;
+    })())
+  );
 
   useEffect(() => {
     const userStr = localStorage.getItem("copa_user");
@@ -727,9 +741,9 @@ export default function GroupDetailsPage() {
           Voltar
         </button>
         
-        <div className="auth-card p-4 sm:p-5 border border-white/10 relative overflow-hidden bg-gradient-to-r from-[#0d2b1a]/30 to-transparent">
+        <div className="auth-card p-4 sm:p-5 border border-white/10 relative overflow-hidden bg-gradient-to-r from-white/5 to-transparent">
           <div className="absolute top-0 right-0 p-4 sm:p-6 opacity-10">
-            <Trophy className="w-20 h-20 text-[#ffd700]" />
+            <Trophy className="w-20 h-20 text-white" />
           </div>
           <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
@@ -737,7 +751,7 @@ export default function GroupDetailsPage() {
                 <span className="copa-badge text-[9px] px-2 py-0.5">Copa 2026</span>
                 <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono font-semibold">{group.inviteCode}</span>
                 {group.entryFee !== undefined && group.entryFee !== null && (
-                  <span className="bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[9px] px-2 py-0.5 rounded-full font-bold">
+                  <span className="bg-white/5 border border-[#009E4F]/40 text-[#009E4F] text-[9px] px-2 py-0.5 rounded-full font-bold">
                     {group.entryFee.toLocaleString("pt-BR", {
                       style: "currency",
                       currency: "BRL",
@@ -750,7 +764,7 @@ export default function GroupDetailsPage() {
               </h1>
               <div className="flex items-center gap-4 text-xs text-white/60">
                 <span className="flex items-center gap-1.5">
-                  <Crown className="w-3.5 h-3.5 text-[#ffd700]" />
+                  <Crown className="w-3.5 h-3.5 text-white" />
                   Criado por {group.owner.name}
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -759,7 +773,7 @@ export default function GroupDetailsPage() {
                 </span>
               </div>
             </div>
-            {isOwner && (
+            {isCurrentUserGroupOwner && (
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="copa-btn-ghost text-xs py-2 px-4 border border-white/10 hover:border-[#ffd700] hover:text-[#ffd700] transition-all shrink-0 cursor-pointer"
@@ -2014,24 +2028,31 @@ export default function GroupDetailsPage() {
                         return timeA - timeB;
                       })
                       .map((member: any) => {
-                        const isOwner = member.userId === group.ownerId;
-                        const isMe = currentUser && member.userId === currentUser.id;
-                        const isGroupCreator = currentUser && group.ownerId === currentUser.id;
+                        const isMemberGroupOwner = String(member.userId) === String(group.ownerId);
+                        const isMe = currentUser
+                          ? String(member.userId) === String(currentUser.id)
+                          : (typeof window !== "undefined" && (() => {
+                              const stored = localStorage.getItem("copa_user");
+                              if (stored) {
+                                try { return String(member.userId) === String(JSON.parse(stored).id); } catch(e) {}
+                              }
+                              return false;
+                            })());
 
                         return (
                         <div key={member.id} className="flex items-center justify-between py-4 group/item">
                           <div className="flex items-center gap-3">
                             <div className="relative w-10 h-10 shrink-0">
-                              <div className="w-full h-full rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center font-bold text-white shadow-inner overflow-hidden">
+                              <div className="w-full h-full rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/20 flex items-center justify-center font-bold text-white shadow-inner overflow-hidden">
                                 {member.user.avatar ? (
                                   <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
                                 ) : (
                                   member.user.name.charAt(0).toUpperCase()
                                 )}
                               </div>
-                              {isOwner && (
-                                <div className="absolute -top-2.5 -right-1 bg-gradient-to-r from-[#ffd700] to-[#f5c800] p-1 rounded-full shadow-lg border border-black/20 z-10" title="Criador do Grupo">
-                                  <Crown className="w-3 h-3 text-[#0d2b1a]" />
+                              {isMemberGroupOwner && (
+                                <div className="absolute -top-2.5 -right-1 bg-gradient-to-r from-white to-gray-300 p-1 rounded-full shadow-lg border border-white/30 z-10" title="Criador do Grupo">
+                                  <Crown className="w-3 h-3 text-black" />
                                 </div>
                               )}
                             </div>
@@ -2041,7 +2062,7 @@ export default function GroupDetailsPage() {
                                   {member.user.name}
                                 </span>
                                 {isMe && (
-                                  <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                                  <span className="text-[9px] font-bold text-white bg-white/10 border border-white/20 px-1.5 py-0.5 rounded">
                                     Você
                                   </span>
                                 )}
@@ -2054,7 +2075,7 @@ export default function GroupDetailsPage() {
                                 </span>
                               </div>
                               <p className="text-[10px] text-white/40 mt-0.5">
-                                Entrou em {new Date(member.joinedAt).toLocaleDateString("pt-BR")} • <span className="text-[#ffd700] font-bold">{member.points || 0} pts</span> (Bolão: {member.matchPoints || 0} | Oráculo: {member.oraclePoints || 0})
+                                Entrou em {new Date(member.joinedAt).toLocaleDateString("pt-BR")} • <span className="text-white font-bold">{member.points || 0} pts</span> (Bolão: {member.matchPoints || 0} | Oráculo: {member.oraclePoints || 0})
                               </p>
                             </div>
                           </div>
@@ -2062,7 +2083,7 @@ export default function GroupDetailsPage() {
                           {/* Actions */}
                           <div className="flex items-center gap-2">
                             {/* Toggle Paid Button for Group Creator */}
-                            {isGroupCreator && (
+                            {isCurrentUserGroupOwner && (
                               <button
                                 disabled={updatingPaidMemberId === member.userId}
                                 onClick={async () => {
@@ -2096,8 +2117,8 @@ export default function GroupDetailsPage() {
                             )}
 
                             {/* Kick/Remove member action */}
-                            {isGroupCreator && (
-                              isOwner ? (
+                            {isCurrentUserGroupOwner && (
+                              isMemberGroupOwner ? (
                                 <div className="px-3 py-1.5 text-xs font-semibold invisible select-none shrink-0 pointer-events-none">
                                   Remover
                                 </div>
@@ -2221,16 +2242,16 @@ export default function GroupDetailsPage() {
                         key={member.id} 
                         className={`flex items-center justify-between gap-2.5 p-2 px-3 rounded-xl transition-all ${
                           index === 0 
-                            ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 border border-[#ffd700]/30 shadow-sm shadow-[#ffd700]/5" 
+                            ? "bg-gradient-to-r from-white/15 to-white/5 border border-white/25 shadow-sm shadow-white/5" 
                             : "hover:bg-white/5 bg-white/[0.02] border border-white/5"
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           {/* Position Badge */}
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 shadow-sm ${
-                            index === 0 ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_0_8px_rgba(255,215,0,0.3)]" : 
-                            index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-[#0d2b1a] shadow-[0_0_8px_rgba(200,200,200,0.3)]" : 
-                            index === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-[0_0_8px_rgba(180,83,9,0.3)]" : 
+                            index === 0 ? "bg-gradient-to-r from-white to-gray-300 text-black border border-white/20 shadow-[0_0_8px_rgba(255,255,255,0.2)]" : 
+                            index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-black border border-gray-400/25 shadow-[0_0_8px_rgba(200,200,200,0.15)]" : 
+                            index === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white border border-amber-700/25 shadow-[0_0_8px_rgba(180,83,9,0.15)]" : 
                             "bg-white/5 text-white/50 border border-white/10"
                           }`}>
                             {index + 1}º
@@ -2250,7 +2271,7 @@ export default function GroupDetailsPage() {
                           <div className="min-w-0">
                             <p className="text-[11px] font-black text-white truncate flex items-center gap-1">
                               {member.user.name}
-                              {index === 0 && <Crown className="w-3.5 h-3.5 text-[#ffd700] animate-pulse" />}
+                              {index === 0 && <Crown className="w-3.5 h-3.5 text-white animate-pulse" />}
                             </p>
                             <p className="text-[9px] text-white/40 mt-0.5">
                               Bolão: <span className="text-white/60 font-bold">{member.matchPoints || 0} pts</span>
@@ -2261,7 +2282,7 @@ export default function GroupDetailsPage() {
                         </div>
 
                         <div className="text-right shrink-0 flex items-center gap-1">
-                          <span className="text-xs font-black text-[#ffd700]">{member.points || 0}</span>
+                          <span className="text-xs font-black text-white">{member.points || 0}</span>
                           <span className="text-[8px] text-white/40 uppercase font-black">pts</span>
                         </div>
                       </div>
@@ -2272,12 +2293,12 @@ export default function GroupDetailsPage() {
 
               {/* Card de Pagamento do Bolão (Pix) */}
               {group.pixKey && (
-                <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/10 relative overflow-hidden rounded-3xl shadow-lg animate-fade-in-up">
+                <div className="auth-card p-5 border border-white/10 bg-white/[0.02] relative overflow-hidden rounded-3xl shadow-lg animate-fade-in-up">
                   <div className="absolute top-0 right-0 p-3 opacity-[0.03]">
-                    <Sparkles className="w-16 h-16 text-emerald-400" />
+                    <Sparkles className="w-16 h-16 text-white" />
                   </div>
                   <h3 className="text-base font-black text-white mb-2 flex items-center gap-2">
-                    <Coins className="w-5 h-5 text-emerald-400" /> Contribuição do Grupo
+                    <Coins className="w-5 h-5 text-white" /> Contribuição do Grupo
                   </h3>
                   
                   {isCopiaCola ? (
@@ -2372,8 +2393,8 @@ export default function GroupDetailsPage() {
                 </h3>
                 <div className="space-y-3.5 text-xs">
                   {/* 5 Points */}
-                  <div className="flex gap-3 items-start p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                    <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-sm">
+                  <div className="flex gap-3 items-start p-2.5 rounded-xl bg-white/[0.02] border border-white/10">
+                    <span className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 text-white font-black border border-white/20 text-sm">
                       5
                     </span>
                     <div className="space-y-0.5">
@@ -2467,18 +2488,18 @@ export default function GroupDetailsPage() {
               </div>
 
               {/* Pontuação do Oráculo Card */}
-              <div className="auth-card p-5 border border-[#ffd700]/25 bg-[#0a0f1e]/40 relative overflow-hidden rounded-3xl shadow-xl">
+              <div className="auth-card p-5 border border-white/10 bg-white/[0.02] relative overflow-hidden rounded-3xl shadow-lg">
                 <div className="absolute top-0 right-0 p-3 opacity-[0.03]">
-                  <Trophy className="w-20 h-20 text-[#ffd700]" />
+                  <Trophy className="w-20 h-20 text-white" />
                 </div>
                 <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
                   ⭐ Pontuação do Oráculo
                 </h3>
                 <div className="space-y-3 text-xs">
                   {/* Posições exatas */}
-                  <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
-                    <p className="font-bold text-white flex items-center gap-1.5">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-[10px]">
+                  <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+                    <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest flex items-center gap-1.5">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-white font-black border border-white/20 text-[10px]">
                         +3
                       </span>
                       Posições Exatas (1º, 2º, 3º e 4º)

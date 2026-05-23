@@ -268,7 +268,7 @@ export default function ConfiguracoesPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[450px] space-y-4">
-        <Loader2 className="w-10 h-10 text-[#ffd700] animate-spin" />
+        <Loader2 className="w-10 h-10 text-white/60 animate-spin" />
         <p className="text-white/60 text-sm tracking-wide">Carregando suas configurações...</p>
       </div>
     );
@@ -277,11 +277,11 @@ export default function ConfiguracoesPage() {
   return (
     <div className="space-y-8 animate-fade-in-up max-w-2xl mx-auto pb-12">
       {/* Title */}
-      <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-r from-[#0d2b1a]/40 to-transparent border border-white/5 shadow-2xl">
-        <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#ffd700]/5 rounded-full blur-3xl" />
+      <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-r from-white/5 via-white/[0.02] to-transparent border border-white/5 shadow-2xl">
+        <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
         <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-          <Sparkles className="w-7 h-7 text-[#ffd700] animate-pulse" />
-          Configurações da <span className="text-[#ffd700] bg-gradient-to-r from-[#ffd700] to-[#f5c800] bg-clip-text text-transparent">Conta</span>
+          <Sparkles className="w-7 h-7 text-white animate-pulse" />
+          Configurações da <span className="text-white bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">Conta</span>
         </h1>
         <p className="text-white/60 text-sm mt-1.5 font-medium">Personalize seu avatar, atualize seus dados e gerencie a segurança de forma simples.</p>
       </div>
@@ -290,25 +290,25 @@ export default function ConfiguracoesPage() {
       <form onSubmit={handleSubmitProfile} className="space-y-6">
         
         {/* Profile Card */}
-        <div className="auth-card p-8 border border-white/10 bg-[#0d2b1a]/20 backdrop-blur-md rounded-2xl space-y-8 shadow-2xl relative">
+        <div className="auth-card p-8 border border-white/10 bg-white/[0.02] backdrop-blur-md rounded-2xl space-y-8 shadow-2xl relative">
           
           {/* Avatar Section */}
           <div className="flex flex-col items-center space-y-5">
             <div className="flex items-center gap-2 self-start border-b border-white/5 pb-2 w-full">
-              <Camera className="w-4 h-4 text-[#ffd700]" />
+              <Camera className="w-4 h-4 text-white" />
               <h3 className="text-xs font-black text-white/70 uppercase tracking-widest">Foto de Perfil</h3>
             </div>
             
             <div className="relative group">
               <div 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-32 h-32 rounded-full border-2 border-white/10 overflow-hidden bg-black/40 flex items-center justify-center cursor-pointer hover:border-[#ffd700]/60 transition-all duration-300 relative group-hover:scale-105 shadow-inner"
+                className="w-32 h-32 rounded-full border-2 border-white/10 overflow-hidden bg-black/40 flex items-center justify-center cursor-pointer hover:border-white/60 transition-all duration-300 relative group-hover:scale-105 shadow-inner"
               >
                 {avatar ? (
                   <img src={avatar} alt="Avatar do usuário" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-[#0d2b1a]/60 flex items-center justify-center">
-                    <User className="w-14 h-14 text-[#ffd700]/70" />
+                  <div className="w-full h-full bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center shadow-inner">
+                    <User className="w-14 h-14 text-white/50" />
                   </div>
                 )}
                 
@@ -334,7 +334,7 @@ export default function ConfiguracoesPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs font-bold text-[#ffd700] hover:text-[#ffd700]/80 cursor-pointer transition-colors"
+                className="text-xs font-bold text-white/70 hover:text-white cursor-pointer transition-colors"
               >
                 Escolher foto
               </button>
@@ -371,7 +371,7 @@ export default function ConfiguracoesPage() {
           {/* Form Fields */}
           <div className="space-y-5">
             <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-              <User className="w-4 h-4 text-[#ffd700]" />
+              <User className="w-4 h-4 text-white" />
               <h3 className="text-xs font-black text-white/70 uppercase tracking-widest">Informações Pessoais</h3>
             </div>
             
@@ -404,7 +404,7 @@ export default function ConfiguracoesPage() {
           {/* Security Card Section */}
           <div className="space-y-5 border-t border-white/10 pt-6">
             <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-              <Lock className="w-4 h-4 text-[#ffd700]" />
+              <Lock className="w-4 h-4 text-white" />
               <h3 className="text-xs font-black text-white/70 uppercase tracking-widest">Segurança</h3>
             </div>
             
@@ -426,9 +426,9 @@ export default function ConfiguracoesPage() {
                   setShowModalConfirmPassword(false);
                   setIsModalOpen(true);
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#ffd700]/30 hover:border-[#ffd700] bg-[#ffd700]/5 hover:bg-[#ffd700]/10 text-[#ffd700] text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#009E4F]/40 hover:border-[#009E4F]/70 bg-white/5 hover:bg-white/10 text-[#009E4F] text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300"
               >
-                <KeyRound className="w-4 h-4" />
+                <KeyRound className="w-4 h-4 text-[#009E4F]" />
                 Alterar Senha
               </button>
             </div>
@@ -467,16 +467,16 @@ export default function ConfiguracoesPage() {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-gradient-to-br from-[#0d2b1a] to-[#04140d] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-[0_0_50px_-12px_rgba(255,215,0,0.15)] z-10 animate-fade-in-up overflow-hidden">
+          <div className="relative bg-gradient-to-br from-[#121212] via-[#0a0a0a] to-[#020202] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-[0_0_50px_-12px_rgba(255,255,255,0.08)] z-10 animate-fade-in-up overflow-hidden">
             {/* Ambient Background Glows */}
-            <div className="absolute -right-16 -top-16 w-36 h-36 bg-[#ffd700]/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -left-16 -bottom-16 w-36 h-36 bg-[#2d8a50]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -right-16 -top-16 w-36 h-36 bg-white/5 rounded-full blur-3xl pointer-events-none pointer-events-none" />
+            <div className="absolute -left-16 -bottom-16 w-36 h-36 bg-white/5 rounded-full blur-3xl pointer-events-none" />
             
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/5 pb-3.5 mb-5 relative">
               <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-b from-[#ffd700]/20 to-transparent p-2.5 rounded-xl border border-[#ffd700]/25 shadow-inner">
-                  <KeyRound className="w-5 h-5 text-[#ffd700]" />
+                <div className="bg-gradient-to-b from-white/10 to-transparent p-2.5 rounded-xl border border-[#009E4F]/40 shadow-inner">
+                  <KeyRound className="w-5 h-5 text-[#009E4F]" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white tracking-wide">Alterar Senha</h3>
@@ -512,11 +512,11 @@ export default function ConfiguracoesPage() {
               
               {/* Nova Senha */}
               <div className="space-y-1.5 group/modal-field">
-                <label htmlFor="newPass" className="text-xs font-bold text-white/50 tracking-wide uppercase group-focus-within/modal-field:text-[#ffd700] transition-colors">
+                <label htmlFor="newPass" className="text-xs font-bold text-white/50 tracking-wide uppercase group-focus-within/modal-field:text-white transition-colors">
                   Nova Senha
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-white/30 group-focus-within/modal-field:text-[#ffd700] transition-colors pointer-events-none">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-white/30 group-focus-within/modal-field:text-white transition-colors pointer-events-none">
                     <Lock className="w-4 h-4" />
                   </span>
                   <input
@@ -525,7 +525,7 @@ export default function ConfiguracoesPage() {
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="copa-input w-full pl-10 pr-10 py-3 text-sm focus:border-[#ffd700]/40 focus:ring-0 focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[0_0_12px_rgba(255,215,0,0.06)]"
+                    className="copa-input w-full pl-10 pr-10 py-3 text-sm focus:border-white/40 focus:ring-0 focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[0_0_12px_rgba(255,255,255,0.06)]"
                     placeholder="Crie uma senha segura"
                   />
                   <button
@@ -542,11 +542,11 @@ export default function ConfiguracoesPage() {
 
               {/* Confirmar Nova Senha */}
               <div className="space-y-1.5 group/modal-field2">
-                <label htmlFor="confirmPass" className="text-xs font-bold text-white/50 tracking-wide uppercase group-focus-within/modal-field2:text-[#ffd700] transition-colors">
+                <label htmlFor="confirmPass" className="text-xs font-bold text-white/50 tracking-wide uppercase group-focus-within/modal-field2:text-white transition-colors">
                   Confirmar Nova Senha
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-white/30 group-focus-within/modal-field2:text-[#ffd700] transition-colors pointer-events-none">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-white/30 group-focus-within/modal-field2:text-white transition-colors pointer-events-none">
                     <Lock className="w-4 h-4" />
                   </span>
                   <input
@@ -555,7 +555,7 @@ export default function ConfiguracoesPage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="copa-input w-full pl-10 pr-10 py-3 text-sm focus:border-[#ffd700]/40 focus:ring-0 focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[0_0_12px_rgba(255,215,0,0.06)]"
+                    className="copa-input w-full pl-10 pr-10 py-3 text-sm focus:border-white/40 focus:ring-0 focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[0_0_12px_rgba(255,255,255,0.06)]"
                     placeholder="Repita a nova senha"
                   />
                   <button
@@ -611,13 +611,13 @@ export default function ConfiguracoesPage() {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-[#0d2b1a] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl z-10 animate-fade-in-up">
+          <div className="relative bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl z-10 animate-fade-in-up">
             
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/5 pb-3.5 mb-5">
               <div className="flex items-center gap-2">
-                <div className="bg-[#ffd700]/10 p-2 rounded-xl border border-[#ffd700]/25">
-                  <Camera className="w-5 h-5 text-[#ffd700]" />
+                <div className="bg-white/5 p-2 rounded-xl border border-[#009E4F]/40">
+                  <Camera className="w-5 h-5 text-[#009E4F]" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Ajustar Foto</h3>
@@ -637,7 +637,7 @@ export default function ConfiguracoesPage() {
               
               {/* Viewport Box */}
               <div 
-                className="w-60 h-60 overflow-hidden rounded-full border-2 border-[#ffd700] relative bg-black/50 cursor-grab active:cursor-grabbing select-none"
+                className="w-60 h-60 overflow-hidden rounded-full border-2 border-white/30 relative bg-black/50 cursor-grab active:cursor-grabbing select-none"
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUpOrLeave}
@@ -661,7 +661,7 @@ export default function ConfiguracoesPage() {
                 />
                 
                 {/* Circular Border Indicator overlay */}
-                <div className="absolute inset-0 rounded-full pointer-events-none ring-offset-4 ring-offset-black/40 ring-2 ring-[#ffd700]/20" />
+                <div className="absolute inset-0 rounded-full pointer-events-none ring-offset-4 ring-offset-black/40 ring-2 ring-white/10" />
               </div>
 
               {/* Instructions */}
@@ -682,7 +682,7 @@ export default function ConfiguracoesPage() {
                   step="0.05"
                   value={cropZoom}
                   onChange={(e) => setCropZoom(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#ffd700] outline-none"
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white outline-none"
                 />
               </div>
 
@@ -751,16 +751,16 @@ export default function ConfiguracoesPage() {
           />
           
           {/* Modal Content */}
-          <div className="relative bg-gradient-to-br from-[#0d2b1a] to-[#04140d] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-[0_0_50px_-12px_rgba(255,215,0,0.15)] z-10 animate-fade-in-up overflow-hidden">
+          <div className="relative bg-gradient-to-br from-[#121212] via-[#0a0a0a] to-[#020202] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-[0_0_50px_-12px_rgba(255,255,255,0.08)] z-10 animate-fade-in-up overflow-hidden">
             {/* Ambient Background Glows */}
-            <div className="absolute -right-16 -top-16 w-36 h-36 bg-[#ffd700]/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -left-16 -bottom-16 w-36 h-36 bg-[#2d8a50]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -right-16 -top-16 w-36 h-36 bg-white/5 rounded-full blur-3xl pointer-events-none pointer-events-none" />
+            <div className="absolute -left-16 -bottom-16 w-36 h-36 bg-white/5 rounded-full blur-3xl pointer-events-none" />
             
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/5 pb-3.5 mb-5 relative">
               <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-b from-[#ffd700]/20 to-transparent p-2.5 rounded-xl border border-[#ffd700]/25 shadow-inner">
-                  <Mail className="w-5 h-5 text-[#ffd700]" />
+                <div className="bg-gradient-to-b from-white/10 to-transparent p-2.5 rounded-xl border border-[#009E4F]/40 shadow-inner">
+                  <Mail className="w-5 h-5 text-[#009E4F]" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white tracking-wide">Alterar E-mail</h3>
@@ -796,11 +796,11 @@ export default function ConfiguracoesPage() {
               
               {/* Novo E-mail */}
               <div className="space-y-1.5 group/modal-field">
-                <label htmlFor="newEmailField" className="text-xs font-bold text-white/50 tracking-wide uppercase group-focus-within/modal-field:text-[#ffd700] transition-colors">
+                <label htmlFor="newEmailField" className="text-xs font-bold text-white/50 tracking-wide uppercase group-focus-within/modal-field:text-white transition-colors">
                   Novo E-mail
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-white/30 group-focus-within/modal-field:text-[#ffd700] transition-colors pointer-events-none">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-white/30 group-focus-within/modal-field:text-white transition-colors pointer-events-none">
                     <Mail className="w-4 h-4" />
                   </span>
                   <input
@@ -809,7 +809,7 @@ export default function ConfiguracoesPage() {
                     required
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="copa-input w-full pl-10 pr-4 py-3 text-sm focus:border-[#ffd700]/40 focus:ring-0 focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[0_0_12px_rgba(255,215,0,0.06)]"
+                    className="copa-input w-full pl-10 pr-4 py-3 text-sm focus:border-white/40 focus:ring-0 focus:outline-none transition-all duration-300 shadow-sm focus:shadow-[0_0_12px_rgba(255,255,255,0.06)]"
                     placeholder="Digite seu novo e-mail"
                   />
                 </div>

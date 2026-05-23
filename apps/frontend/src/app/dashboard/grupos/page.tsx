@@ -59,20 +59,16 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
   return (
     <div 
       onClick={() => router.push(`/dashboard/grupos/${group.id}`)}
-      className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 hover:bg-[#0d2b1a]/15 hover:border-[#ffd700]/25 transition-all hover:scale-102 hover:shadow-xl hover:shadow-[#ffd700]/5 duration-300 group cursor-pointer"
+      className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 hover:bg-white/5 hover:border-white/20 transition-all hover:scale-102 hover:shadow-xl hover:shadow-white/5 duration-300 group cursor-pointer"
     >
       {/* Top row */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md transition-all duration-300 group-hover:scale-105 ${
-            isOwner 
-              ? "bg-gradient-to-br from-[#ffd700]/20 to-[#f5c800]/5 border border-[#ffd700]/25 shadow-[#ffd700]/5" 
-              : "bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/25 shadow-blue-500/5"
-          }`}>
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md transition-all duration-300 group-hover:scale-105 bg-white/5 border border-[#009E4F]/40 text-[#009E4F]">
             {isOwner ? (
-              <Crown className="w-5 h-5 text-[#ffd700] animate-pulse" />
+              <Crown className="w-5 h-5 text-[#009E4F] animate-pulse" />
             ) : (
-              <Users className="w-5 h-5 text-blue-400" />
+              <Users className="w-5 h-5 text-[#009E4F]/70" />
             )}
           </div>
           <div className="min-w-0">
@@ -88,10 +84,10 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
       </div>
 
       {/* Invite code (Dashed Neon Gold Container) */}
-      <div className="flex items-center justify-between p-3 rounded-2xl bg-[#ffd700]/5 border border-dashed border-[#ffd700]/25 mb-4 group-hover:border-[#ffd700]/50 transition-colors shadow-inner">
+      <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-dashed border-white/20 mb-4 group-hover:border-white/40 transition-colors shadow-inner">
         <div>
           <p className="text-[8px] text-white/30 uppercase tracking-widest font-black mb-0.5">Código de Convite</p>
-          <span className="font-mono font-black text-[#ffd700] tracking-widest text-xs">
+          <span className="font-mono font-black text-white tracking-widest text-xs">
             {group.inviteCode}
           </span>
         </div>
@@ -100,7 +96,7 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
           className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md ${
             copiedCode 
               ? "bg-emerald-500 text-white shadow-emerald-500/20" 
-              : "bg-white/10 text-white/70 hover:text-[#0d2b1a] hover:bg-[#ffd700] hover:scale-105 active:scale-95"
+              : "bg-white/10 text-white/70 hover:text-black hover:bg-white hover:scale-105 active:scale-95"
           }`}
         >
           {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -240,8 +236,8 @@ export default function GruposPage() {
         ) : totalGroups === 0 ? (
           /* Empty state */
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
-              <Users className="w-10 h-10 text-white/20" />
+            <div className="w-24 h-24 rounded-full bg-white/5 border border-[#009E4F]/40 flex items-center justify-center mb-6">
+              <Users className="w-10 h-10 text-[#009E4F]/30" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Nenhum grupo ainda</h2>
             <p className="text-white/50 max-w-sm mb-8">
@@ -270,9 +266,9 @@ export default function GruposPage() {
             {ownedGroups.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <Crown className="w-4 h-4 text-[#ffd700]" />
+                  <Crown className="w-4 h-4 text-white" />
                   <h2 className="text-lg font-semibold text-white">Meus Grupos</h2>
-                  <span className="ml-1 text-xs bg-[#ffd700]/15 text-[#ffd700] border border-[#ffd700]/20 px-2 py-0.5 rounded-full font-semibold">
+                  <span className="ml-1 text-xs bg-white/10 text-white border border-white/20 px-2 py-0.5 rounded-full font-semibold">
                     {ownedGroups.length}
                   </span>
                 </div>
@@ -288,9 +284,9 @@ export default function GruposPage() {
             {joinedGroups.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-4 h-4 text-blue-400" />
+                  <Users className="w-4 h-4 text-white/70" />
                   <h2 className="text-lg font-semibold text-white">Grupos que Participo</h2>
-                  <span className="ml-1 text-xs bg-blue-400/15 text-blue-400 border border-blue-400/20 px-2 py-0.5 rounded-full font-semibold">
+                  <span className="ml-1 text-xs bg-white/10 text-white border border-white/20 px-2 py-0.5 rounded-full font-semibold">
                     {joinedGroups.length}
                   </span>
                 </div>

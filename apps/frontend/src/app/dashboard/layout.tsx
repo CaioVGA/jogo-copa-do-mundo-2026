@@ -209,14 +209,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 className={`relative flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-300 group/nav ${
                   active
-                    ? "bg-gradient-to-r from-[#ffd700]/12 to-[#ffd700]/4 text-[#ffd700] border border-[#ffd700]/20 pl-5"
+                    ? "bg-gradient-to-r from-white/12 to-white/4 text-white border border-white/20 pl-5"
                     : "text-white/50 hover:text-white hover:bg-white/5 border border-transparent hover:translate-x-1"
                 }`}
               >
                 {active && (
-                  <div className="absolute left-0 top-3.5 bottom-3.5 w-[3px] bg-gradient-to-b from-[#ffd700] to-[#ffe135] rounded-r-md" />
+                  <div className="absolute left-0 top-3.5 bottom-3.5 w-[3px] bg-gradient-to-b from-white to-gray-400 rounded-r-md" />
                 )}
-                <Icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${active ? "text-[#ffd700]" : "text-white/40 group-hover/nav:text-white"}`} />
+                <Icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${active ? "text-white" : "text-white/40 group-hover/nav:text-white"}`} />
                 <span className="text-sm tracking-wide">{item.label}</span>
               </Link>
             );
@@ -231,21 +231,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/dashboard/configuracoes"
               className="p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3 relative overflow-hidden group/user transition-all duration-300 hover:bg-white/[0.04] cursor-pointer"
             >
-              <div className="absolute -right-8 -bottom-8 w-16 h-16 bg-[#ffd700]/5 rounded-full blur-xl pointer-events-none group-hover/user:bg-[#ffd700]/10 transition-colors" />
+              <div className="absolute -right-8 -bottom-8 w-16 h-16 bg-white/5 rounded-full blur-xl pointer-events-none group-hover/user:bg-white/10 transition-colors" />
               <div className="w-9 h-9 rounded-full border border-white/10 overflow-hidden bg-black/40 shrink-0 relative flex items-center justify-center">
                 {user.avatar ? (
                   <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-black font-black flex items-center justify-center text-xs">
+                  <div className="w-full h-full bg-gradient-to-br from-[#2a2a2a] to-[#0f0f0f] border border-white/10 text-white font-black flex items-center justify-center text-xs shadow-inner">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <p className="text-xs font-bold text-white truncate group-hover/user:text-[#ffd700] transition-colors">{user.name}</p>
+                  <p className="text-xs font-bold text-white truncate group-hover/user:text-white transition-colors">{user.name}</p>
                   {user.role === "ADMIN" && (
-                    <span className="text-[8px] font-black tracking-wide uppercase px-1.5 py-0.5 rounded bg-[#ffd700]/10 border border-[#ffd700]/25 text-[#ffd700] shrink-0">
+                    <span className="text-[8px] font-black tracking-wide uppercase px-1.5 py-0.5 rounded bg-white/10 border border-[#009E4F]/40 text-[#009E4F] shrink-0">
                       Admin
                     </span>
                   )}
@@ -292,7 +292,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
-                  active ? "text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/20" : "text-white/60 hover:text-white"
+                  active ? "text-white bg-white/10 border border-white/20" : "text-white/60 hover:text-white"
                 }`}
               >
                 <Icon className="w-4 h-4" />

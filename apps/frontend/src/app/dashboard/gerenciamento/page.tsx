@@ -260,7 +260,7 @@ export default function GerenciamentoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Total Users */}
             <div className="auth-card p-4 flex items-center gap-4 border border-white/5 bg-slate-950/20 rounded-2xl">
-              <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0 text-teal-400">
+              <div className="w-10 h-10 rounded-xl bg-white/5 border border-[#009E4F]/40 flex items-center justify-center shrink-0 text-[#009E4F]">
                 <Users className="w-5 h-5" />
               </div>
               <div>
@@ -271,7 +271,7 @@ export default function GerenciamentoPage() {
 
             {/* Total Admins */}
             <div className="auth-card p-4 flex items-center gap-4 border border-white/5 bg-slate-950/20 rounded-2xl">
-              <div className="w-10 h-10 rounded-xl bg-[#ffd700]/10 border border-[#ffd700]/20 flex items-center justify-center shrink-0 text-[#ffd700]">
+              <div className="w-10 h-10 rounded-xl bg-white/5 border border-[#009E4F]/40 flex items-center justify-center shrink-0 text-[#009E4F]">
                 <Crown className="w-5 h-5" />
               </div>
               <div>
@@ -284,7 +284,7 @@ export default function GerenciamentoPage() {
 
             {/* Active Accounts */}
             <div className="auth-card p-4 flex items-center gap-4 border border-white/5 bg-slate-950/20 rounded-2xl">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400">
+              <div className="w-10 h-10 rounded-xl bg-white/5 border border-[#009E4F]/40 flex items-center justify-center shrink-0 text-[#009E4F]">
                 <Power className="w-5 h-5" />
               </div>
               <div>
@@ -603,8 +603,8 @@ function UserCard({ user, currentUser, actioningId, onToggleRole, onToggleActive
                 <div
                   className={`w-full h-full font-black flex items-center justify-center text-sm ${
                     user.role === "ADMIN"
-                      ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-black"
-                      : "bg-gradient-to-br from-emerald-500 to-teal-500 text-white"
+                      ? "bg-gradient-to-br from-white to-gray-300 text-black"
+                      : "bg-gradient-to-br from-[#2a2a2a] to-[#0f0f0f] text-white shadow-inner"
                   }`}
                 >
                   {user.name.charAt(0).toUpperCase()}

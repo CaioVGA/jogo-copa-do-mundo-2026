@@ -4,78 +4,78 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ─── Copa 2026 Design Tokens ──────────────────────────────────────────────── */
+/* ─── Copa 2026 Design Tokens (Monocromático Preto & Branco) ───────────────── */
 :root {
-  /* Cores Copa 2026 */
-  --copa-green-900: #0d2b1a;
-  --copa-green-800: #1a472a;
-  --copa-green-700: #1e5c35;
-  --copa-green-600: #236b3d;
-  --copa-green-500: #2d8a50;
-  --copa-green-400: #3da865;
-  --copa-gold-500: #ffd700;
-  --copa-gold-400: #ffe135;
-  --copa-gold-300: #ffec6e;
-  --copa-navy: #0a0f1e;
-  --copa-navy-light: #0f1a2e;
+  /* Cores Copa 2026 mapeadas para escala de cinzas */
+  --copa-green-900: #000000;
+  --copa-green-800: #080808;
+  --copa-green-700: #121212;
+  --copa-green-600: #1a1a1a;
+  --copa-green-500: #262626;
+  --copa-green-400: #404040;
+  --copa-gold-500: #ffffff;
+  --copa-gold-400: #f5f5f5;
+  --copa-gold-300: #e5e5e5;
+  --copa-navy: #000000;
+  --copa-navy-light: #0a0a0a;
 
   /* Sistema de design base */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: oklch(0 0 0); /* Fundo preto absoluto por padrão */
+  --foreground: oklch(1 0 0); /* Texto branco por padrão */
+  --card: oklch(0.08 0 0);    /* Cards em cinza muito escuro */
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.08 0 0);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(1 0 0);     /* Destaque primário em branco */
+  --primary-foreground: oklch(0 0 0); /* Texto no destaque primário em preto */
+  --secondary: oklch(0.15 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.12 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+  --accent: oklch(0.15 0 0);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.6 0.2 25);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(1 0 0);
   --radius: 0.75rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.08 0 0);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0 0 0);
+  --sidebar-accent: oklch(0.15 0 0);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(1 0 0);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0 0 0);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.08 0 0);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.08 0 0);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0 0 0);
+  --secondary: oklch(0.15 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.12 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+  --accent: oklch(0.15 0 0);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.6 0.2 25);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(1 0 0);
+  --sidebar: oklch(0.08 0 0);
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0 0 0);
+  --sidebar-accent: oklch(0.15 0 0);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(1 0 0);
 }
 
 @theme inline {
@@ -134,8 +134,9 @@
 }
 
 /* ─── Copa Auth Background ─────────────────────────────────────────────────── */
+/* ─── Copa Auth Background (Monocromático) ─────────────────────────────────── */
 .copa-auth-bg {
-  background: linear-gradient(135deg, #0a0f1e 0%, #0d2b1a 40%, #1a472a 70%, #0a0f1e 100%);
+  background: linear-gradient(135deg, #000000 0%, #050505 50%, #0c0c0c 100%);
   min-height: 100vh;
   position: relative;
 }
@@ -145,9 +146,9 @@
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(255, 215, 0, 0.04) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(45, 138, 80, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 60% 80%, rgba(26, 71, 42, 0.15) 0%, transparent 60%);
+    radial-gradient(ellipse at 20% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
+    radial-gradient(ellipse at 60% 80%, rgba(120, 120, 120, 0.04) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -158,8 +159,8 @@
   position: fixed;
   inset: 0;
   background-image:
-    radial-gradient(circle, rgba(255, 215, 0, 0.08) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255, 215, 0, 0.04) 1px, transparent 1px);
+    radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 80px 80px, 40px 40px;
   background-position: 0 0, 20px 20px;
   pointer-events: none;
@@ -174,15 +175,15 @@
 
 /* ─── Auth Card (glassmorphism) ────────────────────────────────────────────── */
 .auth-card {
-  background: rgba(9, 15, 27, 0.7);
+  background: rgba(10, 10, 10, 0.7);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 1.75rem;
   box-shadow:
-    0 24px 64px -16px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(255, 215, 0, 0.03) inset,
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    0 24px 64px -16px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
   animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -212,9 +213,9 @@
 }
 
 .copa-input:focus {
-  border-color: rgba(255, 215, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.06);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
 }
 
 .copa-input:hover:not(:focus) {
@@ -227,10 +228,10 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
-/* ─── Copa Button ──────────────────────────────────────────────────────────── */
+/* ─── Copa Button (Monocromático - Branco/Preto) ────────────────────────────── */
 .copa-btn-primary {
-  background: linear-gradient(135deg, #ffd700 0%, #f5c800 100%);
-  color: #05110a;
+  background: linear-gradient(135deg, #ffffff 0%, #e5e5e5 100%);
+  color: #000000;
   font-weight: 800;
   border-radius: 0.75rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -244,7 +245,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -255,12 +256,12 @@
 
 .copa-btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.35);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
 }
 
 .copa-btn-primary:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
 }
 
 .copa-btn-primary:disabled {
@@ -270,17 +271,17 @@
 
 .copa-btn-ghost {
   background: transparent;
-  color: rgba(255, 215, 0, 0.8);
-  border: 1px solid rgba(255, 215, 0, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 0.625rem;
   transition: all 0.2s ease;
   font-weight: 500;
 }
 
 .copa-btn-ghost:hover {
-  background: rgba(255, 215, 0, 0.08);
-  border-color: rgba(255, 215, 0, 0.5);
-  color: #ffd700;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
 }
 
 /* ─── Password Checklist ───────────────────────────────────────────────────── */
@@ -326,30 +327,30 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.75rem;
-  color: #ffd700;
+  color: #ffffff;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
   font-family: "Outfit", monospace;
   letter-spacing: 0;
-  caret-color: #ffd700;
+  caret-color: #ffffff;
 }
 
 .otp-input:focus {
-  border-color: rgba(255, 215, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.08);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
   transform: translateY(-2px);
 }
 
 .otp-input:not(:placeholder-shown) {
-  border-color: rgba(255, 215, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* ─── Copa Logo ─────────────────────────────────────────────────────────────── */
 .copa-logo {
   font-family: "Outfit", sans-serif;
   font-weight: 900;
-  background: linear-gradient(135deg, #ffd700 0%, #ffe135 50%, #ffd700 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #cccccc 50%, #ffffff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -358,9 +359,9 @@
 
 /* ─── Copa Badge ────────────────────────────────────────────────────────────── */
 .copa-badge {
-  background: rgba(255, 215, 0, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  color: #ffd700;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
@@ -383,12 +384,12 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: rgba(255, 215, 0, 0.12);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ─── Link ──────────────────────────────────────────────────────────────────── */
 .copa-link {
-  color: #ffd700;
+  color: #ffffff;
   font-weight: 500;
   text-decoration: none;
   transition: all 0.15s ease;
@@ -402,7 +403,7 @@
   left: 0;
   width: 0;
   height: 1px;
-  background: #ffd700;
+  background: #ffffff;
   transition: width 0.2s ease;
 }
 
@@ -422,9 +423,9 @@
   20%, 40%, 60%, 80% { transform: translateX(4px); }
 }
 
-@keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.3); }
-  50% { box-shadow: 0 0 0 8px rgba(255, 215, 0, 0); }
+@keyframes pulse-white {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
 }
 
 .animate-fade-in-up {
@@ -436,7 +437,7 @@
 }
 
 .animate-pulse-gold {
-  animation: pulse-gold 2s ease-in-out infinite;
+  animation: pulse-white 2s ease-in-out infinite;
 }
 
 /* ─── Stagger delays ────────────────────────────────────────────────────────── */
@@ -446,7 +447,7 @@
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
 
-/* ─── Custom Scrollbar Utility (Copa Green) ────────────────────────────────── */
+/* ─── Custom Scrollbar Utility (Grommet/Gray) ──────────────────────────────── */
 .copa-scrollbar::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -458,19 +459,19 @@
 }
 
 .copa-scrollbar::-webkit-scrollbar-thumb {
-  background: #2d8a50; /* copa-green-500 */
+  background: #404040;
   border-radius: 9999px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .copa-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #3da865; /* copa-green-400 */
+  background: #525252;
 }
 
 /* Suporte para Firefox */
 .copa-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #2d8a50 rgba(0, 0, 0, 0.25);
+  scrollbar-color: #404040 rgba(0, 0, 0, 0.25);
 }
 
 /* Ocultar barra de incremento/decremento (spin buttons) nos inputs numéricos */
@@ -521,19 +522,19 @@ input[type="number"] {
 }
 
 .copa-checkbox-container:hover .copa-checkbox-custom {
-  border-color: rgba(255, 215, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.06);
 }
 
 .copa-checkbox-input:focus-visible ~ .copa-checkbox-custom {
-  outline: 0.125rem solid rgba(255, 215, 0, 0.5);
+  outline: 0.125rem solid rgba(255, 255, 255, 0.5);
   outline-offset: 0.0625rem;
 }
 
 .copa-checkbox-input:checked ~ .copa-checkbox-custom {
-  background: linear-gradient(135deg, #ffd700 0%, #f5c800 100%);
-  border-color: #ffd700;
-  box-shadow: 0 0 0.75rem rgba(255, 215, 0, 0.25);
+  background: linear-gradient(135deg, #ffffff 0%, #cccccc 100%);
+  border-color: #ffffff;
+  box-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.2);
 }
 
 .copa-checkbox-custom::after {
@@ -544,7 +545,7 @@ input[type="number"] {
   top: 0.125rem;
   width: 0.25rem;
   height: 0.5rem;
-  border: solid #05110a;
+  border: solid #000000;
   border-width: 0 0.125rem 0.125rem 0;
   transform: rotate(45deg);
 }
@@ -573,3 +574,93 @@ button:disabled,
 .cursor-not-allowed {
   cursor: not-allowed !important;
 }
+
+/* ─── Sobrescritas de Classes Utilitárias Inline do Tailwind ──────────────── */
+
+/* Sobrescrita de textos dourados (#ffd700) para branco/cinza */
+.text-\[\#ffd700\] { color: #ffffff !important; }
+.text-\[\#ffd700\]\/70 { color: rgba(255, 255, 255, 0.7) !important; }
+.text-\[\#ffd700\]\/80 { color: rgba(255, 255, 255, 0.8) !important; }
+.hover\:text-\[\#ffd700\]:hover { color: #ffffff !important; }
+.hover\:text-\[\#ffd700\]\/80:hover { color: rgba(255, 255, 255, 0.8) !important; }
+.group-hover\/user\:text-\[\#ffd700\]:hover { color: #ffffff !important; }
+.group-focus-within\/modal-field\:text-\[\#ffd700\]:focus-within { color: #ffffff !important; }
+.group-focus-within\/modal-field2\:text-\[\#ffd700\]:focus-within { color: #ffffff !important; }
+.group-focus-within\/modal-field\:text-\[\#ffd700\]:focus-within { color: #ffffff !important; }
+.group-focus-within\/modal-field2\:text-\[\#ffd700\]:focus-within { color: #ffffff !important; }
+
+/* Sobrescrita de backgrounds dourados (#ffd700) para branco/cinza */
+.bg-\[\#ffd700\] { background-color: #ffffff !important; }
+.bg-\[\#ffd700\]\/5 { background-color: rgba(255, 255, 255, 0.05) !important; }
+.bg-\[\#ffd700\]\/8 { background-color: rgba(255, 255, 255, 0.08) !important; }
+.bg-\[\#ffd700\]\/10 { background-color: rgba(255, 255, 255, 0.1) !important; }
+.bg-\[\#ffd700\]\/15 { background-color: rgba(255, 255, 255, 0.15) !important; }
+.bg-\[\#ffd700\]\/20 { background-color: rgba(255, 255, 255, 0.2) !important; }
+.bg-\[\#ffd700\]\/95 { background-color: rgba(255, 255, 255, 0.95) !important; }
+.hover\:bg-\[\#ffd700\]\/10:hover { background-color: rgba(255, 255, 255, 0.1) !important; }
+
+/* Sobrescrita de bordas douradas (#ffd700) para branco/cinza */
+.border-\[\#ffd700\] { border-color: #ffffff !important; }
+.border-\[\#ffd700\]\/20 { border-color: rgba(255, 255, 255, 0.2) !important; }
+.border-\[\#ffd700\]\/25 { border-color: rgba(255, 255, 255, 0.25) !important; }
+.border-\[\#ffd700\]\/30 { border-color: rgba(255, 255, 255, 0.3) !important; }
+.border-\[\#ffd700\]\/40 { border-color: rgba(255, 255, 255, 0.4) !important; }
+.border-\[\#ffd700\]\/60 { border-color: rgba(255, 255, 255, 0.6) !important; }
+.hover\:border-\[\#ffd700\]:hover { border-color: #ffffff !important; }
+.hover\:border-\[\#ffd700\]\/60:hover { border-color: rgba(255, 255, 255, 0.6) !important; }
+.hover\:border-\[\#ffd700\]\/30:hover { border-color: rgba(255, 255, 255, 0.3) !important; }
+
+/* Sobrescrita de gradientes de dourado */
+.from-\[\#ffd700\] {
+  --tw-gradient-from: #ffffff !important;
+  --tw-gradient-to: rgba(255, 255, 255, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.to-\[\#ffd700\] { --tw-gradient-to: #ffffff !important; }
+.to-\[\#f5c800\] { --tw-gradient-to: #d4d4d4 !important; }
+.via-\[\#ffe135\] { --tw-gradient-via: #e5e5e5 !important; }
+
+/* Outros utilitários dourados */
+.accent-\[\#ffd700\] { accent-color: #ffffff !important; }
+.focus\:shadow-\[0_0_12px_rgba\(255\,215\,0\,0\.06\)\]:focus { box-shadow: 0 0 12px rgba(255, 255, 255, 0.08) !important; }
+.shadow-\[\#ffd700\]\/5 { --tw-shadow-color: rgba(255, 255, 255, 0.05) !important; }
+.shadow-\[\#ffd700\]\/10 { --tw-shadow-color: rgba(255, 255, 255, 0.1) !important; }
+.shadow-\[\#ffd700\]\/15 { --tw-shadow-color: rgba(255, 255, 255, 0.15) !important; }
+.ring-\[\#ffd700\]\/20 { --tw-ring-color: rgba(255, 255, 255, 0.2) !important; }
+
+/* Sobrescrita de gradientes de verde da sidebar e header mobile para preto/cinza */
+.from-\[\#0b1c11\] {
+  --tw-gradient-from: #080808 !important;
+  --tw-gradient-to: rgba(8, 8, 8, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.via-\[\#05110a\]\/95 {
+  --tw-gradient-via: rgba(0, 0, 0, 0.95) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important;
+}
+.to-\[\#020704\]\/98 { --tw-gradient-to: rgba(0, 0, 0, 0.98) !important; }
+
+.from-\[\#0d2b1a\]\/95 {
+  --tw-gradient-from: rgba(5, 5, 5, 0.95) !important;
+  --tw-gradient-to: rgba(5, 5, 5, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.via-\[\#081a10\]\/95 {
+  --tw-gradient-via: rgba(0, 0, 0, 0.95) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important;
+}
+.to-\[\#040e09\]\/95 { --tw-gradient-to: rgba(0, 0, 0, 0.95) !important; }
+
+/* Sobrescrita de gradientes secundários de verde */
+.from-\[\#0d2b1a\] {
+  --tw-gradient-from: #080808 !important;
+  --tw-gradient-to: rgba(8, 8, 8, 0) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.to-\[\#0a0f1e\] { --tw-gradient-to: #000000 !important; }
+
+/* Sobrescrita do glow verde e outros elementos secundários de verde */
+.bg-\[\#2d8a50\]\/10 { background-color: rgba(255, 255, 255, 0.05) !important; }
+.border-\[\#2d8a50\]\/25 { border-color: rgba(255, 255, 255, 0.15) !important; }
+.text-emerald-500\/10 { background-color: rgba(255, 255, 255, 0.05) !important; }
+.border-emerald-500\/20 { border-color: rgba(255, 255, 255, 0.12) !important; }

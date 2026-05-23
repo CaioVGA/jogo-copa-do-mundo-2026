@@ -86,8 +86,8 @@ export default function CreateGroupModal({ onClose, onCreated }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#ffd700]/15 border border-[#ffd700]/25 flex items-center justify-center">
-              <Users className="w-5 h-5 text-[#ffd700]" />
+            <div className="w-10 h-10 rounded-xl bg-white/5 border border-[#009E4F]/40 flex items-center justify-center">
+              <Users className="w-5 h-5 text-[#009E4F]" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
@@ -117,8 +117,8 @@ export default function CreateGroupModal({ onClose, onCreated }: Props) {
 
             <div>
               <p className="text-sm text-white/60 mb-2">Código de Convite</p>
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-[#ffd700]/8 border border-[#ffd700]/30">
-                <span className="flex-1 font-mono text-2xl font-bold text-[#ffd700] tracking-[0.25em] text-center">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-[#009E4F]/40">
+                <span className="flex-1 font-mono text-2xl font-bold text-white tracking-[0.25em] text-center">
                   {createdGroup.inviteCode}
                 </span>
                 <button
@@ -219,8 +219,8 @@ export default function CreateGroupModal({ onClose, onCreated }: Props) {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-[#ffd700]/8 border border-[#ffd700]/20">
-              <Users className="w-4 h-4 text-[#ffd700] shrink-0" />
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-[#009E4F]/40">
+              <Users className="w-4 h-4 text-[#009E4F] shrink-0" />
               <p className="text-xs text-white/60">
                 Um código de convite será gerado automaticamente.
                 <strong className="text-white/80"> Máximo 20 participantes</strong>.

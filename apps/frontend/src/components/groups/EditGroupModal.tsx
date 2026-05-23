@@ -91,8 +91,8 @@ export default function EditGroupModal({ group, onClose, onUpdated }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#ffd700]/15 border border-[#ffd700]/25 flex items-center justify-center">
-              <Settings className="w-5 h-5 text-[#ffd700]" />
+            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/20 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Editar Grupo</h2>

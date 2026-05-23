@@ -171,10 +171,10 @@ export default function DashboardPage() {
   const gamesTodayCount = allGames.filter((g) => new Date(g.date).toDateString() === todayStr).length;
 
   const stats = [
-    { title: "Jogos Pendentes", value: String(totalPending), icon: CalendarDays, color: "text-[#ffd700]", bg: "bg-[#ffd700]/10" },
-    { title: "Jogos Encerrados", value: String(totalFinished), icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-400/10" },
-    { title: "Total de Jogos", value: String(allGames.length), icon: Activity, color: "text-blue-400", bg: "bg-blue-400/10" },
-    { title: "Jogos Hoje", value: String(gamesTodayCount), icon: Calendar, color: "text-purple-400", bg: "bg-purple-400/10" },
+    { title: "Jogos Pendentes", value: String(totalPending), icon: CalendarDays, color: "text-white", bg: "bg-white/5" },
+    { title: "Jogos Encerrados", value: String(totalFinished), icon: Trophy, color: "text-white", bg: "bg-white/5" },
+    { title: "Total de Jogos", value: String(allGames.length), icon: Activity, color: "text-white", bg: "bg-white/5" },
+    { title: "Jogos Hoje", value: String(gamesTodayCount), icon: Calendar, color: "text-white", bg: "bg-white/5" },
   ];
 
   if (loading) {
@@ -189,13 +189,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Header */}
-      <div className="relative p-6 md:p-8 rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-r from-[#0d2b1a]/40 via-[#0a0f1e]/40 to-transparent flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
-        <div className="absolute -left-12 -top-12 w-48 h-48 bg-[#2d8a50]/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute right-12 bottom-0 w-32 h-32 bg-[#ffd700]/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="relative p-6 md:p-8 rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-r from-white/5 via-white/[0.02] to-transparent flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+        <div className="absolute -left-12 -top-12 w-48 h-48 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-12 bottom-0 w-32 h-32 bg-white/[0.02] rounded-full blur-2xl pointer-events-none" />
         
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
-            Olá, <span className="text-[#ffd700] bg-gradient-to-r from-[#ffd700] to-[#f5c800] bg-clip-text text-transparent">{userName}</span>! 👋
+            Olá, <span className="text-white bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">{userName}</span>! 👋
           </h1>
           <p className="text-white/60 mt-2 text-sm md:text-base max-w-xl leading-relaxed">
             Bem-vindo ao seu painel de controle da Copa 2026. Acompanhe seus palpites, classificação geral e o calendário do torneio.
@@ -204,7 +204,7 @@ export default function DashboardPage() {
         
         <Link 
           href="/dashboard/jogos"
-          className="copa-btn-primary px-7 py-3.5 text-sm inline-flex items-center gap-2 max-w-fit shadow-xl shadow-[#ffd700]/15 hover:scale-102 transition-all duration-300 relative z-10"
+          className="copa-btn-primary px-7 py-3.5 text-sm inline-flex items-center gap-2 max-w-fit shadow-xl shadow-white/10 hover:scale-102 transition-all duration-300 relative z-10"
         >
           <CalendarDays className="w-4.5 h-4.5" />
           Ver Jogos
@@ -216,10 +216,10 @@ export default function DashboardPage() {
         {stats.map((stat, idx) => {
           const Icon = stat.icon;
           const cardThemes = [
-            "hover:bg-[#ffd700]/5 hover:border-[#ffd700]/30 shadow-[0_4px_24px_-8px_rgba(255,215,0,0.08)]",
-            "hover:bg-blue-500/5 hover:border-blue-500/30 shadow-[0_4px_24px_-8px_rgba(59,130,246,0.08)]",
-            "hover:bg-emerald-500/5 hover:border-emerald-500/30 shadow-[0_4px_24px_-8px_rgba(16,185,129,0.08)]",
-            "hover:bg-purple-500/5 hover:border-purple-500/30 shadow-[0_4px_24px_-8px_rgba(139,92,246,0.08)]",
+            "hover:bg-white/5 hover:border-white/25 shadow-[0_4px_24px_-8px_rgba(255,255,255,0.04)]",
+            "hover:bg-white/5 hover:border-white/25 shadow-[0_4px_24px_-8px_rgba(255,255,255,0.04)]",
+            "hover:bg-white/5 hover:border-white/25 shadow-[0_4px_24px_-8px_rgba(255,255,255,0.04)]",
+            "hover:bg-white/5 hover:border-white/25 shadow-[0_4px_24px_-8px_rgba(255,255,255,0.04)]",
           ];
           
           return (
@@ -232,7 +232,7 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{stat.title}</p>
                 <h3 className="text-3xl font-black text-white tracking-tight">{stat.value}</h3>
               </div>
-              <div className={`p-3 rounded-2xl ${stat.bg} shrink-0 shadow-inner border border-white/5`}>
+              <div className={`p-3 rounded-2xl ${stat.bg} shrink-0 shadow-inner border border-white/20`}>
                 <Icon className={`w-5 h-5 ${stat.color}`} />
               </div>
             </div>
