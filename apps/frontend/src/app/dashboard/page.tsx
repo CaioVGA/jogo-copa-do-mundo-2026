@@ -180,7 +180,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 className="w-10 h-10 text-[#ffd700] animate-spin" />
+        <Loader2 className="w-10 h-10 text-white animate-spin" />
         <p className="text-white/60 text-sm font-semibold">Carregando painel geral...</p>
       </div>
     );
@@ -248,12 +248,12 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div>
               <h2 className="text-xl font-black text-white flex items-center gap-2.5">
-                <Calendar className="w-5 h-5 text-[#ffd700]" />
+                <Calendar className="w-5 h-5 text-white" />
                 Próximos Jogos
               </h2>
               <p className="text-xs text-white/45 mt-1">Os próximos 5 confrontos agendados no torneio</p>
             </div>
-            <Link href="/dashboard/jogos" className="text-xs font-bold text-[#ffd700] hover:underline flex items-center gap-1 group">
+            <Link href="/dashboard/jogos" className="text-xs font-bold text-white/70 hover:text-white hover:underline flex items-center gap-1 group">
               Ver todos <span className="group-hover:translate-x-0.5 transition-transform">→</span>
             </Link>
           </div>
@@ -279,11 +279,11 @@ export default function DashboardPage() {
                 return (
                   <div 
                     key={game.id} 
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4.5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-[#ffd700]/20 transition-all duration-300"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4.5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/15 transition-all duration-300"
                   >
                     <div className="flex flex-col gap-2 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 uppercase tracking-wider">
+                        <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#009E4F] bg-white/5 border border-[#009E4F]/40 uppercase tracking-wider">
                           {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}
                         </span>
                         
@@ -352,7 +352,7 @@ export default function DashboardPage() {
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                               Ao Vivo
                             </p>
-                            <p className="text-sm font-black text-[#ffd700] mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
+                            <p className="text-sm font-black text-emerald-400 animate-pulse mt-0.5">{game.realHomeScore} - {game.realAwayScore}</p>
                           </div>
                         </div>
                       ) : isFinished ? (
@@ -378,8 +378,8 @@ export default function DashboardPage() {
                         </div>
                       ) : hasPredicted ? (
                         <div className="flex flex-col gap-1 text-center shrink-0">
-                          <div className="text-center bg-black/45 border border-[#ffd700]/30 px-3.5 py-1.5 rounded-xl shadow-inner min-w-[95px] flex flex-col items-center">
-                            <p className="text-[8px] font-black text-[#ffd700] uppercase tracking-widest flex items-center justify-center gap-1">
+                          <div className="text-center bg-white/5 border border-[#009E4F]/40 px-3.5 py-1.5 rounded-xl shadow-inner min-w-[95px] flex flex-col items-center">
+                            <p className="text-[8px] font-black text-[#009E4F] uppercase tracking-widest flex items-center justify-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                               Pendente
                             </p>
@@ -387,7 +387,7 @@ export default function DashboardPage() {
                           </div>
                           <Link 
                             href="/dashboard/grupos" 
-                            className="text-[9px] font-black text-[#ffd700] hover:text-white transition-all uppercase tracking-wider text-center"
+                            className="text-[9px] font-black text-[#009E4F] hover:text-[#009E4F]/80 transition-all uppercase tracking-wider text-center"
                           >
                             Alterar
                           </Link>
@@ -414,7 +414,7 @@ export default function DashboardPage() {
         <div className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 space-y-5 self-start w-full">
           <div className="border-b border-white/5 pb-4">
             <h2 className="text-lg font-black text-white flex items-center gap-2.5">
-              <Trophy className="w-5 h-5 text-[#ffd700]" />
+              <Trophy className="w-5 h-5 text-white" />
               Tabela do Grupo
             </h2>
             <p className="text-xs text-white/45 mt-1">Classificação ao vivo das seleções</p>
@@ -430,7 +430,7 @@ export default function DashboardPage() {
                 }
               }}
               disabled={selectedGroup === "Grupo A"}
-              className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-white hover:border-[#ffd700]/30 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/5 transition-all shrink-0 flex items-center justify-center cursor-pointer"
+              className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-white hover:border-white/20 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/5 transition-all shrink-0 flex items-center justify-center cursor-pointer"
               title="Grupo Anterior"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -454,7 +454,7 @@ export default function DashboardPage() {
                   />
                   
                   {/* Floating glass dropdown menu */}
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-[#0d1627]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.7)] shadow-[#ffd700]/5 overflow-hidden z-50 py-1.5 max-h-56 overflow-y-auto copa-scrollbar animate-fade-in-up">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-[#0d1627]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_30px_rgba(0,0,0,0.7)] shadow-white/5 overflow-hidden z-50 py-1.5 max-h-56 overflow-y-auto copa-scrollbar animate-fade-in-up">
                     {GROUPS_LIST.map((g) => (
                       <button
                         key={g}
@@ -464,7 +464,7 @@ export default function DashboardPage() {
                         }}
                         className={`w-full text-center px-4 py-2 text-[11px] font-black uppercase transition-all duration-200 cursor-pointer ${
                           selectedGroup === g
-                            ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] font-black"
+                            ? "bg-gradient-to-r from-white to-gray-300 text-black font-black"
                             : "text-white/70 hover:text-white hover:bg-white/[0.04]"
                         }`}
                       >
@@ -484,7 +484,7 @@ export default function DashboardPage() {
                 }
               }}
               disabled={selectedGroup === "Grupo L"}
-              className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-white hover:border-[#ffd700]/30 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/5 transition-all shrink-0 flex items-center justify-center cursor-pointer"
+              className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-white hover:border-white/20 hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:border-white/5 transition-all shrink-0 flex items-center justify-center cursor-pointer"
               title="Próximo Grupo"
             >
               <ChevronRight className="w-4 h-4" />
@@ -576,7 +576,7 @@ export default function DashboardPage() {
  
                       {/* Points */}
                       <td className="py-3 px-1 text-center shrink-0 w-[12%]">
-                        <span className="font-black text-[#ffd700] text-[10px] sm:text-xs">{team.points}</span>
+                        <span className="font-black text-white text-[10px] sm:text-xs">{team.points}</span>
                       </td>
                     </tr>
                   );
