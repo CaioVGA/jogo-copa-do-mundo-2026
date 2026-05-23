@@ -24,7 +24,7 @@ export class SyncService implements OnApplicationBootstrap {
   startPolling() {
     if (this.isPollingActive) return;
     this.isPollingActive = true;
-    this.logger.log('Iniciando rotina de polling da API-Football (intervalo de 5 minutos)...');
+    this.logger.log('Iniciando rotina de polling da API de Sincronização (intervalo de 5 minutos)...');
     this.poll();
   }
 
@@ -104,7 +104,7 @@ export class SyncService implements OnApplicationBootstrap {
   async mapMatches() {
     const apiKey = this.config.get<string>('API_FOOTBALL_KEY');
     if (!apiKey || apiKey === 'your-api-key-here') {
-      throw new Error('Chave da API-Football não configurada no arquivo .env');
+      throw new Error('Chave da API se sincronização não configurada no arquivo de ambiente');
     }
 
     if (apiKey.toLowerCase().startsWith('mock')) {
@@ -254,7 +254,7 @@ export class SyncService implements OnApplicationBootstrap {
   async syncScores(forceIgnoreWindow = false) {
     const apiKey = this.config.get<string>('API_FOOTBALL_KEY');
     if (!apiKey || apiKey === 'your-api-key-here') {
-      this.logger.warn('Sincronização abortada: chave da API-Football não configurada no arquivo .env');
+      this.logger.warn('Sincronização abortada: chave da API de sincronização não configurada no arquivo de ambiente');
       return { success: false, message: 'Chave da API não configurada', updatedCount: 0 };
     }
 

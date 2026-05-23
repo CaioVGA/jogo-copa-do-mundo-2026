@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, QrCode, Coins, Copy, Check } from "lucide-react";
+import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, QrCode, Coins, Copy, Check, Clock, Lock } from "lucide-react";
 import { groupsApi, teamsApi, predictionsApi } from "@/lib/api";
 import { useToast, useConfirm } from "@/components/ui/toast";
 import type { MatchPredictionData } from "@/lib/api";
@@ -945,7 +945,9 @@ export default function GroupDetailsPage() {
                                       <span className={isLive ? "text-emerald-400 animate-pulse" : "text-white"}>{game.realAwayScore}</span>
                                     </div>
                                   ) : (
-                                    <span className="text-white/40 text-xs uppercase tracking-wider font-semibold">Aguardando</span>
+                                    <div className="flex items-center justify-center p-0.5" title="Aguardando início do jogo">
+                                      <Clock className="w-3.5 h-3.5 text-white/30" />
+                                    </div>
                                   )}
                                 </div>
 
@@ -994,8 +996,8 @@ export default function GroupDetailsPage() {
                                                   )}
                                                 </div>
                                               ) : (
-                                                <span className="text-white/30 flex items-center gap-1 text-[9px] bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-                                                  🔒 Oculto
+                                                <span className="text-white/30 flex items-center justify-center bg-white/5 p-1 rounded border border-white/5" title="Palpite oculto até o início da partida">
+                                                  <Lock className="w-3.5 h-3.5" />
                                                 </span>
                                               )
                                             ) : (
