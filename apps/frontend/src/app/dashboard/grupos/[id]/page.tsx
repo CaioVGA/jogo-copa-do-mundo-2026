@@ -1634,7 +1634,7 @@ export default function GroupDetailsPage() {
                     }`}
                   >
                     <Star className="w-3.5 h-3.5 shrink-0" />
-                    Premiações
+                    Premiações Individuais
                   </button>
                 </div>
 
@@ -2197,14 +2197,14 @@ export default function GroupDetailsPage() {
                   </>
                 ) : (
                   <div className="space-y-5">
-                    {/* Seus Palpites de Premiações Card */}
+                    {/* Seus Palpites das Premiações Individuais Card */}
                     <div className="auth-card border border-white/10 bg-white/[0.02] rounded-3xl overflow-hidden relative z-30">
                       {/* Card Header */}
                       <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/8">
                         <div>
                           <h3 className="text-sm font-black text-white flex items-center gap-2">
                             <Star className="w-4 h-4 text-[#ffd700]" />
-                            Seus Palpites de Premiações
+                            Seus Palpites das Premiações Individuais
                           </h3>
                           <p className="text-[11px] text-white/45 mt-0.5">
                             {isOracleClosed ? "Premiações travadas — veja seus palpites abaixo." : "Escolha seus candidatos aos prêmios individuais da Copa."}
@@ -2337,7 +2337,7 @@ export default function GroupDetailsPage() {
                             {savingAwards ? (
                               <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</>
                             ) : (
-                              <><Check className="w-4 h-4" />Salvar Premiações</>
+                              <><Check className="w-4 h-4" />Salvar Premiações Individuais</>
                             )}
                           </button>
                           {awardsMessage && (
@@ -2353,7 +2353,7 @@ export default function GroupDetailsPage() {
                     <div className="auth-card border border-white/10 bg-white/[0.02] rounded-2xl relative z-0 overflow-hidden">
                       <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/8">
                         <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-[#ffd700]" /> Ranking de Premiações
+                          <TrendingUp className="w-4 h-4 text-[#ffd700]" /> Ranking Palpites das Premiações Individuais
                         </h3>
                         <span className="text-[10px] text-white/35 font-medium">
                           {isOracleClosed ? "Palpites visíveis" : "Seus palpites estão visíveis apenas para você"}
