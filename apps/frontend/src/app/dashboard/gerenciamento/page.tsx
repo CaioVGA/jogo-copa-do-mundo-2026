@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Users, Crown, ShieldAlert, Power, Calendar, Mail, Loader2, UserCheck, UserX, Search, RefreshCw, Link2, CheckCircle2, AlertTriangle, AlertCircle, Database } from "lucide-react";
-import { usersApi, UserProfileResponse, scoreSyncApi, SyncStatusResponse } from "@/lib/api";
+import { ShieldCheck, Users, Crown, ShieldAlert, Power, Calendar, Mail, Loader2, UserCheck, UserX, Search, RefreshCw, Link2, CheckCircle2, AlertTriangle, AlertCircle, Database, Trophy, Award, Target, ChevronRight } from "lucide-react";
+import { usersApi, UserProfileResponse, scoreSyncApi, SyncStatusResponse, adminAwardsApi, GroupAwardResult, playersApi, PlayerData } from "@/lib/api";
 import { useToast, useConfirm } from "@/components/ui/toast";
+import { SearchableDropdown } from "@/components/ui/SearchableDropdown";
 
 export default function GerenciamentoPage() {
   const router = useRouter();
@@ -17,11 +18,20 @@ export default function GerenciamentoPage() {
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<"users" | "sync">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "sync" | "awards">("users");
   const [syncStatus, setSyncStatus] = useState<SyncStatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [mappingLoading, setMappingLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+
+  // Premiações state (global)
+  const [topScorerResult, setTopScorerResult] = useState("");
+  const [assistLeaderResult, setAssistLeaderResult] = useState("");
+  const [bestPlayerResult, setBestPlayerResult] = useState("");
+  const [savingAwards, setSavingAwards] = useState(false);
+  const [computingAll, setComputingAll] = useState(false);
+  const [globalAwardsLoading, setGlobalAwardsLoading] = useState(false);
+  const [playersList, setPlayersList] = useState<PlayerData[]>([]);
 
   async function loadSyncStatus() {
     try {
@@ -38,8 +48,66 @@ export default function GerenciamentoPage() {
   useEffect(() => {
     if (activeTab === "sync") {
       loadSyncStatus();
+    } else if (activeTab === "awards") {
+      loadGlobalAwards();
+      loadPlayers();
     }
   }, [activeTab]);
+
+  async function loadGlobalAwards() {
+    try {
+      setGlobalAwardsLoading(true);
+      const res = await adminAwardsApi.getGlobalAwardResults();
+      setTopScorerResult(res.topScorerResult || "");
+      setAssistLeaderResult(res.assistLeaderResult || "");
+      setBestPlayerResult(res.bestPlayerResult || "");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao carregar premiações.");
+    } finally {
+      setGlobalAwardsLoading(false);
+    }
+  }
+
+  async function loadPlayers() {
+    try {
+      const players = await playersApi.getPlayers();
+      setPlayersList(players);
+    } catch {}
+  }
+
+  async function handleSaveAwardResults() {
+    setSavingAwards(true);
+    try {
+      const res = await adminAwardsApi.setGlobalAwardResults({
+        topScorerResult: topScorerResult || undefined,
+        assistLeaderResult: assistLeaderResult || undefined,
+        bestPlayerResult: bestPlayerResult || undefined,
+      });
+      toast.success(res.message);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar resultados das premiações.");
+    } finally {
+      setSavingAwards(false);
+    }
+  }
+
+  async function handleComputeAllAwards() {
+    const ok = await confirm(
+      "Deseja calcular os pontos de premiações para TODOS os grupos que têm resultados definidos? Isso distribuirá +15 pontos por acerto em cada grupo independentemente.",
+      "Calcular Pontos de Todos os Grupos"
+    );
+    if (!ok) return;
+
+    setComputingAll(true);
+    try {
+      const res = await adminAwardsApi.computeAllAwards();
+      toast.success(res.message);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao calcular pontos de todos os grupos.");
+    } finally {
+      setComputingAll(false);
+    }
+  }
 
   async function handleMapMatches() {
     const ok = await confirm(
@@ -250,6 +318,17 @@ export default function GerenciamentoPage() {
           >
             <RefreshCw className="w-4 h-4" />
             Sincronização da API
+          </button>
+          <button
+            onClick={() => setActiveTab("awards")}
+            className={`px-5 py-2 rounded-xl text-xs font-black tracking-wide uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+              activeTab === "awards"
+                ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
+                : "border border-transparent text-white/55 hover:text-white"
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            Premiações
           </button>
         </div>
       </div>
@@ -552,9 +631,152 @@ export default function GerenciamentoPage() {
                     )}
                   </button>
                 </div>
-
               </div>
             </>
+          )}
+        </div>
+      )}
+
+      {activeTab === "awards" && (
+        <div className="space-y-5 animate-fade-in-up">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-black text-white flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-purple-400" />
+                Premiações Oficiais
+              </h2>
+              <p className="text-xs text-white/50 font-semibold">
+                Defina os vencedores oficiais das premiações individuais. A pontuação é computada automaticamente para todos os grupos ao final do campeonato.
+              </p>
+            </div>
+
+            <button
+              onClick={handleComputeAllAwards}
+              disabled={computingAll || globalAwardsLoading}
+              className="shrink-0 py-2.5 px-5 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
+            >
+              {computingAll ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Calculando...</>
+              ) : (
+                <><Award className="w-4 h-4" /> Calcular Pontos de Todos os Grupos</>
+              )}
+            </button>
+          </div>
+
+          {globalAwardsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Award cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Artilheiro */}
+                <div className="auth-card p-5 border border-[#ffd700]/15 bg-[#0a0f1e]/40 rounded-2xl space-y-3 relative z-30">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-[#ffd700]/15 border border-[#ffd700]/20 flex items-center justify-center text-[#ffd700]">
+                      <Target className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-white/40 tracking-wider">Artilheiro</p>
+                      <p className="text-xs font-bold text-white/70">Chuteira de Ouro</p>
+                    </div>
+                  </div>
+                  <SearchableDropdown
+                    options={playersList}
+                    value={topScorerResult}
+                    onChange={setTopScorerResult}
+                    placeholder="Buscar artilheiro..."
+                    theme="gold"
+                  />
+                  {topScorerResult && (
+                    <p className="text-xs text-[#ffd700] font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {topScorerResult}
+                    </p>
+                  )}
+                </div>
+
+                {/* Líder de Assistências */}
+                <div className="auth-card p-5 border border-teal-500/15 bg-[#0a0f1e]/40 rounded-2xl space-y-3 relative z-20">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/20 flex items-center justify-center text-teal-400">
+                      <Award className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-white/40 tracking-wider">Líder de Assistências</p>
+                      <p className="text-xs font-bold text-white/70">Maior Número de Assists</p>
+                    </div>
+                  </div>
+                  <SearchableDropdown
+                    options={playersList}
+                    value={assistLeaderResult}
+                    onChange={setAssistLeaderResult}
+                    placeholder="Buscar líder de assists..."
+                    theme="teal"
+                  />
+                  {assistLeaderResult && (
+                    <p className="text-xs text-teal-400 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {assistLeaderResult}
+                    </p>
+                  )}
+                </div>
+
+                {/* Melhor Jogador */}
+                <div className="auth-card p-5 border border-purple-500/15 bg-[#0a0f1e]/40 rounded-2xl space-y-3 relative z-10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                      <Trophy className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-white/40 tracking-wider">Melhor Jogador</p>
+                      <p className="text-xs font-bold text-white/70">Bola de Ouro da Copa</p>
+                    </div>
+                  </div>
+                  <SearchableDropdown
+                    options={playersList}
+                    value={bestPlayerResult}
+                    onChange={setBestPlayerResult}
+                    placeholder="Buscar melhor jogador..."
+                    theme="purple"
+                  />
+                  {bestPlayerResult && (
+                    <p className="text-xs text-purple-400 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {bestPlayerResult}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleSaveAwardResults}
+                  disabled={savingAwards}
+                  className="flex-1 py-3 bg-purple-500 hover:bg-purple-600 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:pointer-events-none shadow-lg shadow-purple-500/20"
+                >
+                  {savingAwards ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
+                  ) : (
+                    <><Trophy className="w-4 h-4" /> Salvar Resultados Oficiais</>
+                  )}
+                </button>
+              </div>
+
+              {/* Info box */}
+              <div className="p-4 border border-purple-500/10 bg-purple-500/5 rounded-2xl flex items-start gap-3 text-xs text-purple-300/80 leading-relaxed font-semibold">
+                <AlertCircle className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-black text-white text-xs mb-1">Como funciona a pontuação global</h4>
+                  <p>
+                    Insira os resultados oficiais dos prêmios individuais da Copa do Mundo. Ao encerrar a <strong className="text-white">Final</strong>, o sistema distribuirá automaticamente <strong className="text-white">+15 pontos</strong> por premiação acertada para todos os participantes de todos os grupos. Se você salvar estes resultados após o encerramento da Final, os pontos serão distribuídos instantaneamente no ato do salvamento.
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -25,4 +25,22 @@ export class AppController {
       },
     });
   }
+
+  @Get('players')
+  async getPlayers() {
+    return this.prisma.player.findMany({
+      include: {
+        team: {
+          select: {
+            name: true,
+            code: true,
+            flag: true,
+          },
+        },
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  }
 }

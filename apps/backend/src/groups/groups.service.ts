@@ -364,12 +364,15 @@ export class GroupsService {
         }
 
         const matchPoints = pointsAggregate._sum.points || 0;
+        const awardsPoints = member.awardsPoints || 0;
+        const totalOraclePoints = oraclePoints + awardsPoints;
 
         return {
           ...member,
-          points: matchPoints + oraclePoints,
+          points: matchPoints + totalOraclePoints,
           matchPoints,
-          oraclePoints,
+          oraclePoints: totalOraclePoints,
+          awardsPoints,
         };
       }),
     );
@@ -511,5 +514,61 @@ export class GroupsService {
     await this.redis.del(`group:details:${groupId}`);
 
     return updated;
+  }
+
+  // ─── Salvar palpites de premiações individuais do participante ─────────────
+  async saveIndividualAwards(
+    groupId: string,
+    userId: string,
+    dto: { topScorer?: string; assistLeader?: string; bestPlayer?: string },
+  ) {
+    const firstMatch = await this.prisma.match.findFirst({
+      where: {
+        stage: {
+          startsWith: 'Fase de Grupos',
+        },
+      },
+      orderBy: {
+        date: 'asc',
+      },
+    });
+
+    if (firstMatch && (new Date() >= new Date(firstMatch.date) || firstMatch.status !== 'PENDING')) {
+      throw new BadRequestException(
+        'Os palpites de premiações individuais estão encerrados porque o torneio já iniciou.',
+      );
+    }
+
+    const membership = await this.prisma.groupMember.findUnique({
+      where: {
+        groupId_userId: { groupId, userId },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('Você não faz parte deste grupo de bolão');
+    }
+
+    const updated = await this.prisma.groupMember.update({
+      where: {
+        groupId_userId: { groupId, userId },
+      },
+      data: {
+        topScorer: dto.topScorer || null,
+        assistLeader: dto.assistLeader || null,
+        bestPlayer: dto.bestPlayer || null,
+      },
+    });
+
+    await this.redis.del(`group:details:${groupId}`);
+
+    return {
+      message: 'Premiações individuais salvas com sucesso!',
+      predictions: {
+        topScorer: updated.topScorer,
+        assistLeader: updated.assistLeader,
+        bestPlayer: updated.bestPlayer,
+      },
+    };
   }
 }

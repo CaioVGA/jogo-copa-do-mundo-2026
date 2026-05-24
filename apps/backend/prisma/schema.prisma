@@ -40,6 +40,7 @@ model Team {
   group       String?
   homeMatches Match[]  @relation("HomeTeam")
   awayMatches Match[]  @relation("AwayTeam")
+  players     Player[]
 
   @@map("teams")
 }
@@ -66,31 +67,39 @@ model Match {
 }
 
 model Group {
-  id         String        @id @default(cuid())
-  name       String
-  inviteCode String        @unique
-  maxMembers Int           @default(20)
-  ownerId    String
-  owner      User          @relation("OwnedGroups", fields: [ownerId], references: [id])
-  members    GroupMember[]
-  oraclePredictions OraclePrediction[]
-  matchPredictions  MatchPrediction[]
-  pixKey     String?       @map("pix_key")
-  entryFee   Float?        @map("entry_fee")
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id                 String        @id @default(cuid())
+  name               String
+  inviteCode         String        @unique
+  maxMembers         Int           @default(20)
+  ownerId            String
+  owner              User          @relation("OwnedGroups", fields: [ownerId], references: [id])
+  members            GroupMember[]
+  oraclePredictions  OraclePrediction[]
+  matchPredictions   MatchPrediction[]
+  pixKey             String?       @map("pix_key")
+  entryFee           Float?        @map("entry_fee")
+  topScorerResult    String?       @map("top_scorer_result")
+  assistLeaderResult String?       @map("assist_leader_result")
+  bestPlayerResult   String?       @map("best_player_result")
+  awardsComputed     Boolean       @default(false) @map("awards_computed")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@map("groups")
 }
 
 model GroupMember {
-  id       String   @id @default(cuid())
-  groupId  String
-  userId   String
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  joinedAt DateTime @default(now())
-  paid     Boolean  @default(false)
+  id           String   @id @default(cuid())
+  groupId      String
+  userId       String
+  group        Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt     DateTime @default(now())
+  paid         Boolean  @default(false)
+  topScorer    String?  @map("top_scorer")
+  assistLeader String?  @map("assist_leader")
+  bestPlayer   String?  @map("best_player")
+  awardsPoints Int      @default(0) @map("awards_points")
 
   @@unique([groupId, userId])
   @@map("group_members")
@@ -127,4 +136,14 @@ model MatchPrediction {
 
   @@unique([userId, matchId, groupId])
   @@map("match_predictions")
+}
+
+model Player {
+  id       String @id @default(uuid())
+  teamId   String @map("team_id")
+  team     Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name     String
+  position String
+
+  @@map("players")
 }

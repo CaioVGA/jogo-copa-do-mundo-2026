@@ -232,7 +232,7 @@ export class OracleService {
     if (firstGroupMatch) {
       const now = new Date();
       const firstMatchDate = new Date(firstGroupMatch.date);
-      if (now >= firstMatchDate) {
+      if (now >= firstMatchDate || firstGroupMatch.status !== 'PENDING') {
         throw new ForbiddenException('O Oráculo está fechado. Palpites só podiam ser enviados até o início do primeiro jogo da fase de grupos.');
       }
     }

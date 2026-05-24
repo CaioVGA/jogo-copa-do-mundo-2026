@@ -10,6 +10,7 @@ import { MailModule } from './mail/mail.module';
 import { GroupsModule } from './groups/groups.module';
 import { PredictionsModule } from './predictions/predictions.module';
 import { SyncModule } from './sync/sync.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SyncModule } from './sync/sync.module';
     GroupsModule,
     PredictionsModule,
     SyncModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
