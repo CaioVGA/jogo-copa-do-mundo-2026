@@ -2487,11 +2487,34 @@ export default function GroupDetailsPage() {
                           </thead>
                           <tbody className="divide-y divide-white/5">
                             {[...group.members]
-                              .sort((a, b) => (b.awardsPoints || 0) - (a.awardsPoints || 0))
+                              .sort((a, b) => {
+                                const ptsA = (() => {
+                                  let p = 0;
+                                  if (group.topScorerResult && a.topScorer && a.topScorer.trim().toLowerCase() === group.topScorerResult.trim().toLowerCase()) p += 15;
+                                  if (group.assistLeaderResult && a.assistLeader && a.assistLeader.trim().toLowerCase() === group.assistLeaderResult.trim().toLowerCase()) p += 15;
+                                  if (group.bestPlayerResult && a.bestPlayer && a.bestPlayer.trim().toLowerCase() === group.bestPlayerResult.trim().toLowerCase()) p += 15;
+                                  return p;
+                                })();
+                                const ptsB = (() => {
+                                  let p = 0;
+                                  if (group.topScorerResult && b.topScorer && b.topScorer.trim().toLowerCase() === group.topScorerResult.trim().toLowerCase()) p += 15;
+                                  if (group.assistLeaderResult && b.assistLeader && b.assistLeader.trim().toLowerCase() === group.assistLeaderResult.trim().toLowerCase()) p += 15;
+                                  if (group.bestPlayerResult && b.bestPlayer && b.bestPlayer.trim().toLowerCase() === group.bestPlayerResult.trim().toLowerCase()) p += 15;
+                                  return p;
+                                })();
+                                if (ptsB !== ptsA) return ptsB - ptsA;
+                                return (a.user?.name || "").localeCompare(b.user?.name || "");
+                              })
                               .map((member, rankIndex) => {
                                 const isMe = currentUser && String(member.userId) === String(currentUser.id);
                                 const showPredictions = isOracleClosed || isMe;
-                                const pts = member.awardsPoints || 0;
+                                const pts = (() => {
+                                  let p = 0;
+                                  if (group.topScorerResult && member.topScorer && member.topScorer.trim().toLowerCase() === group.topScorerResult.trim().toLowerCase()) p += 15;
+                                  if (group.assistLeaderResult && member.assistLeader && member.assistLeader.trim().toLowerCase() === group.assistLeaderResult.trim().toLowerCase()) p += 15;
+                                  if (group.bestPlayerResult && member.bestPlayer && member.bestPlayer.trim().toLowerCase() === group.bestPlayerResult.trim().toLowerCase()) p += 15;
+                                  return p;
+                                })();
                                 const podiumColors = [
                                   "text-[#ffd700]",
                                   "text-slate-300",
@@ -3067,30 +3090,57 @@ export default function GroupDetailsPage() {
                 <div className="absolute top-0 right-0 p-3 opacity-[0.03]">
                   <Trophy className="w-20 h-20 text-[#ffd700]" />
                 </div>
-                <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
-                  ⭐ Pontuação do Oráculo
-                </h3>
-                <div className="space-y-3 text-xs">
-                  {/* Posições exatas */}
-                  <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
-                    <p className="font-bold text-white flex items-center gap-1.5">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-[10px]">
-                        +3
-                      </span>
-                      Posições Exatas (1º, 2º, 3º e 4º)
-                    </p>
-                    <p className="text-[11px] text-white/50 leading-normal pl-6">
-                      Você ganha <strong className="text-white font-bold">3 pontos</strong> para cada time que acertar a posição exata (1º, 2º, 3º ou 4º colocado) no grupo. Qualquer erro de colocação resultará em <strong className="text-white font-bold">0 pontos</strong>.
-                    </p>
-                  </div>
-                </div>
-                <div className="border-t border-white/5 mt-4 pt-3 text-[10px] text-white/40 italic leading-normal">
-                  ⚠️ O Oráculo fecha no início da primeira partida e as pontuações só serão calculadas e exibidas na tabela após a finalização completa da Fase de Grupos.
-                </div>
+                {oracleSubTab === "premiacoes" ? (
+                  <>
+                    <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
+                      ⭐ Pontuação das Premiações
+                    </h3>
+                    <div className="space-y-3 text-xs">
+                      {/* Acertos de premiações */}
+                      <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
+                        <p className="font-bold text-white flex items-center gap-1.5">
+                          <span className="inline-flex items-center justify-center w-8 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-[10px]">
+                            +15
+                          </span>
+                          Acerto de Premiação Individual
+                        </p>
+                        <p className="text-[11px] text-white/50 leading-normal pl-9">
+                          Você ganha <strong className="text-white font-bold">15 pontos</strong> para cada acerto correto nas categorias: <strong className="text-white font-bold">Artilheiro</strong>, <strong className="text-white font-bold">Líder de Assistências</strong> ou <strong className="text-white font-bold">Melhor Jogador</strong>.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="border-t border-white/5 mt-4 pt-3 text-[10px] text-white/40 italic leading-normal">
+                      ⚠️ Os palpites fecham no início da primeira partida e a pontuação será computada automaticamente ao final do torneio após a definição oficial dos vencedores.
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-base font-black text-white mb-4 flex items-center gap-2">
+                      ⭐ Pontuação do Oráculo
+                    </h3>
+                    <div className="space-y-3 text-xs">
+                      {/* Posições exatas */}
+                      <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
+                        <p className="font-bold text-white flex items-center gap-1.5">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/25 text-[10px]">
+                            +3
+                          </span>
+                          Posições Exatas (1º, 2º, 3º e 4º)
+                        </p>
+                        <p className="text-[11px] text-white/50 leading-normal pl-6">
+                          Você ganha <strong className="text-white font-bold">3 pontos</strong> para cada time que acertar a posição exata (1º, 2º, 3º ou 4º colocado) no grupo. Qualquer erro de colocação resultará em <strong className="text-white font-bold">0 pontos</strong>.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="border-t border-white/5 mt-4 pt-3 text-[10px] text-white/40 italic leading-normal">
+                      ⚠️ O Oráculo fecha no início da primeira partida e as pontuações só serão calculadas e exibidas na tabela após a finalização completa da Fase de Grupos.
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Regra Card */}
-              {classificationsSubTab !== "matamata" && (
+              {oracleSubTab !== "premiacoes" && classificationsSubTab !== "matamata" && (
                 <div className="auth-card p-5 border border-emerald-500/20 bg-[#0d2b1a]/30 relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-3 opacity-10">
                     <Trophy className="w-16 h-16 text-[#ffd700]" />
@@ -3122,7 +3172,7 @@ export default function GroupDetailsPage() {
               )}
 
               {/* Classificados dynamic list */}
-              {classificationsSubTab !== "matamata" && (
+              {oracleSubTab !== "premiacoes" && classificationsSubTab !== "matamata" && (
                 <div className="auth-card p-5 border border-white/10">
                   <h3 className="text-base font-bold text-white flex items-center gap-2 mb-4">
                     <Sparkles className="w-4 h-4 text-[#ffd700]" /> Previsão de Classificados

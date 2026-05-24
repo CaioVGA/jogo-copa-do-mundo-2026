@@ -364,7 +364,31 @@ export class GroupsService {
         }
 
         const matchPoints = pointsAggregate._sum.points || 0;
-        const awardsPoints = member.awardsPoints || 0;
+        
+        let awardsPoints = 0;
+        const AWARD_POINTS = 15;
+        if (
+          group.topScorerResult &&
+          member.topScorer &&
+          member.topScorer.trim().toLowerCase() === group.topScorerResult.trim().toLowerCase()
+        ) {
+          awardsPoints += AWARD_POINTS;
+        }
+        if (
+          group.assistLeaderResult &&
+          member.assistLeader &&
+          member.assistLeader.trim().toLowerCase() === group.assistLeaderResult.trim().toLowerCase()
+        ) {
+          awardsPoints += AWARD_POINTS;
+        }
+        if (
+          group.bestPlayerResult &&
+          member.bestPlayer &&
+          member.bestPlayer.trim().toLowerCase() === group.bestPlayerResult.trim().toLowerCase()
+        ) {
+          awardsPoints += AWARD_POINTS;
+        }
+
         const totalOraclePoints = oraclePoints + awardsPoints;
 
         return {
