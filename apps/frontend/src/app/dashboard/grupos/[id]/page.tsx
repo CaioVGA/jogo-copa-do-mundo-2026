@@ -394,6 +394,7 @@ export default function GroupDetailsPage() {
   const [topScorer, setTopScorer] = useState("");
   const [assistLeader, setAssistLeader] = useState("");
   const [bestPlayer, setBestPlayer] = useState("");
+  const [openAwardDropdown, setOpenAwardDropdown] = useState<"scorer" | "assist" | "best" | null>(null);
   const [savingAwards, setSavingAwards] = useState(false);
   const [awardsMessage, setAwardsMessage] = useState<string | null>(null);
 
@@ -697,21 +698,8 @@ export default function GroupDetailsPage() {
     }
   };
 
-  const renderSelectedPlayerCard = (player: PlayerData | undefined, typedName: string) => {
-    if (!player) {
-      if (!typedName.trim()) return null;
-      return (
-        <div className="auth-card p-3 border border-white/5 bg-white/[0.01] rounded-2xl flex items-center gap-3 w-full sm:w-[280px] max-w-[280px] shrink-0">
-          <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center font-bold text-white text-xs">
-            ⚽
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-black text-white truncate">{typedName}</p>
-            <p className="text-[10px] text-white/40 mt-0.5">Jogador Customizado</p>
-          </div>
-        </div>
-      );
-    }
+  const renderSelectedPlayerCard = (player: PlayerData | undefined) => {
+    if (!player) return null;
 
     return (
       <div className="auth-card p-3 border border-white/10 bg-white/[0.02] rounded-2xl flex items-center gap-3 w-full sm:w-[280px] max-w-[280px] shrink-0 relative overflow-hidden transition-all duration-300 hover:border-white/20">
@@ -2196,10 +2184,10 @@ export default function GroupDetailsPage() {
                 })()}
                   </>
                 ) : (
-                  <div className="space-y-5">
+                  <div className="space-y-6">
                     {/* Seus Palpites das Premiações Individuais Card */}
-                    <div className="auth-card border border-white/10 bg-white/[0.02] rounded-3xl overflow-hidden relative z-30">
-                      {/* Card Header */}
+                    <div className="auth-card border border-white/10 bg-white/[0.02] rounded-3xl overflow-visible relative z-20 isolate">
+                      <div className="rounded-t-3xl overflow-hidden">
                       <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/8">
                         <div>
                           <h3 className="text-sm font-black text-white flex items-center gap-2">
@@ -2216,10 +2204,11 @@ export default function GroupDetailsPage() {
                           </span>
                         )}
                       </div>
+                      </div>
 
-                      <div className="p-5 space-y-4">
+                      <div className="p-5 space-y-4 overflow-visible">
                         {/* Artilheiro — tema Dourado */}
-                        <div className="border border-[#ffd700]/15 border-l-2 border-l-[#ffd700]/60 rounded-xl bg-[#ffd700]/[0.03] p-4 space-y-2.5 relative z-30">
+                        <div className="border border-[#ffd700]/15 border-l-2 border-l-[#ffd700]/60 rounded-xl bg-[#ffd700]/[0.03] p-4 space-y-2.5 relative z-30 overflow-visible">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="text-base">⚽</span>
@@ -2248,14 +2237,16 @@ export default function GroupDetailsPage() {
                                 placeholder="Buscar jogador..."
                                 disabled={isOracleClosed}
                                 theme="gold"
+                                open={openAwardDropdown === "scorer"}
+                                onOpenChange={(isOpen) => setOpenAwardDropdown(isOpen ? "scorer" : null)}
                               />
                             </div>
-                            {renderSelectedPlayerCard(players.find((p) => p.name === topScorer), topScorer)}
+                            {renderSelectedPlayerCard(players.find((p) => p.name === topScorer))}
                           </div>
                         </div>
 
                         {/* Líder de Assistências — tema Teal */}
-                        <div className="border border-teal-500/15 border-l-2 border-l-teal-500/60 rounded-xl bg-teal-500/[0.03] p-4 space-y-2.5 relative z-20">
+                        <div className="border border-teal-500/15 border-l-2 border-l-teal-500/60 rounded-xl bg-teal-500/[0.03] p-4 space-y-2.5 relative z-20 overflow-visible">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="text-base">🎯</span>
@@ -2284,14 +2275,16 @@ export default function GroupDetailsPage() {
                                 placeholder="Buscar jogador..."
                                 disabled={isOracleClosed}
                                 theme="teal"
+                                open={openAwardDropdown === "assist"}
+                                onOpenChange={(isOpen) => setOpenAwardDropdown(isOpen ? "assist" : null)}
                               />
                             </div>
-                            {renderSelectedPlayerCard(players.find((p) => p.name === assistLeader), assistLeader)}
+                            {renderSelectedPlayerCard(players.find((p) => p.name === assistLeader))}
                           </div>
                         </div>
 
                         {/* Melhor Jogador — tema Roxo */}
-                        <div className="border border-purple-500/15 border-l-2 border-l-purple-500/60 rounded-xl bg-purple-500/[0.03] p-4 space-y-2.5 relative z-10">
+                        <div className="border border-purple-500/15 border-l-2 border-l-purple-500/60 rounded-xl bg-purple-500/[0.03] p-4 space-y-2.5 relative z-10 overflow-visible">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="text-base">⭐</span>
@@ -2320,9 +2313,11 @@ export default function GroupDetailsPage() {
                                 placeholder="Buscar jogador..."
                                 disabled={isOracleClosed}
                                 theme="purple"
+                                open={openAwardDropdown === "best"}
+                                onOpenChange={(isOpen) => setOpenAwardDropdown(isOpen ? "best" : null)}
                               />
                             </div>
-                            {renderSelectedPlayerCard(players.find((p) => p.name === bestPlayer), bestPlayer)}
+                            {renderSelectedPlayerCard(players.find((p) => p.name === bestPlayer))}
                           </div>
                         </div>
                       </div>
@@ -2350,7 +2345,7 @@ export default function GroupDetailsPage() {
                     </div>
 
                     {/* Palpites dos Participantes Card — com ranking visual */}
-                    <div className="auth-card border border-white/10 bg-white/[0.02] rounded-2xl relative z-0 overflow-hidden">
+                    <div className="auth-card border border-white/10 bg-white/[0.02] rounded-2xl relative z-10 overflow-hidden">
                       <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/8">
                         <h3 className="text-sm font-bold text-white flex items-center gap-2">
                           <TrendingUp className="w-4 h-4 text-[#ffd700]" /> Ranking Palpites das Premiações Individuais
