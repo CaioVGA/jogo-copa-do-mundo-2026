@@ -34,7 +34,7 @@ RUN npm ci --workspace=apps/backend
 COPY apps/backend/src ./apps/backend/src
 COPY apps/backend/prisma ./apps/backend/prisma
 COPY apps/backend/scripts ./apps/backend/scripts
-RUN sed -i 's/\r$//' apps/backend/scripts/docker-migrate.sh && chmod +x apps/backend/scripts/docker-migrate.sh
+RUN sed -i 's/\r$//' apps/backend/scripts/*.sh && chmod +x apps/backend/scripts/*.sh
 COPY apps/backend/prisma.config.ts ./apps/backend/
 COPY apps/backend/tsconfig.json ./apps/backend/
 COPY apps/backend/tsconfig.build.json ./apps/backend/
