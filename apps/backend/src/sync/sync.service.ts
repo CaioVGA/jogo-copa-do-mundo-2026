@@ -17,7 +17,13 @@ export class SyncService implements OnApplicationBootstrap {
     private readonly redis: RedisService,
   ) {}
 
-  onApplicationBootstrap() {
+  async onApplicationBootstrap() {
+    try {
+      this.logger.log('Limpando cache de detalhes de grupos para evitar dados obsoletos pós-inicialização...');
+      await this.redis.delByPattern('group:details:*');
+    } catch (err) {
+      this.logger.error('Erro ao limpar cache de grupos na inicialização:', err);
+    }
     this.startPolling();
   }
 
@@ -305,6 +311,12 @@ export class SyncService implements OnApplicationBootstrap {
 
         if (scoreChanged || statusChanged) {
           await this.predictionsService.syncMatchScore(localMatch.id, homeScore, awayScore, newStatus);
+
+          // Se a Final terminou (modo mock), tenta computar pontos de premiações
+          if (newStatus === 'FINISHED' && localMatch.stage === 'Final') {
+            await this.checkAndComputeAwards();
+          }
+
           updatedCount++;
         }
       }
@@ -419,6 +431,12 @@ export class SyncService implements OnApplicationBootstrap {
         this.logger.log(`Atualizando partida local ${localMatch.id} (Fixture ${fixtureId}): status ${localMatch.status} -> ${newStatus}, placar ${localMatch.homeScore}-${localMatch.awayScore} -> ${homeScore}-${awayScore}`);
         
         await this.predictionsService.syncMatchScore(localMatch.id, homeScore, awayScore, newStatus);
+
+        // Se a Final terminou, tenta computar pontos de premiações
+        if (newStatus === 'FINISHED' && localMatch.stage === 'Final') {
+          await this.checkAndComputeAwards();
+        }
+
         updatedCount++;
       }
     }
@@ -428,5 +446,113 @@ export class SyncService implements OnApplicationBootstrap {
       message: `${updatedCount} partidas atualizadas com sucesso.`,
       updatedCount,
     };
+  }
+
+  /**
+   * Verifica grupos que têm resultados de premiações definidos e a Final foi finalizada;
+   * computa os pontos de premiações independentemente por grupo.
+   */
+  private async checkAndComputeAwards() {
+    try {
+      // Verifica se a Final já terminou
+      const finalMatch = await this.prisma.match.findFirst({
+        where: {
+          stage: 'Final',
+          status: 'FINISHED',
+        },
+      });
+
+      if (!finalMatch) {
+        return; // A Final ainda não terminou
+      }
+
+      // Busca todos os grupos que têm pelo menos um resultado definido e não foram computados
+      const groups = await this.prisma.group.findMany({
+        where: {
+          awardsComputed: false,
+          NOT: {
+            AND: [
+              { topScorerResult: null },
+              { assistLeaderResult: null },
+              { bestPlayerResult: null },
+            ],
+          },
+        },
+        include: {
+          members: {
+            select: {
+              id: true,
+              topScorer: true,
+              assistLeader: true,
+              bestPlayer: true,
+              awardsPoints: true,
+            },
+          },
+        },
+      });
+
+      if (groups.length === 0) {
+        return; // Nenhum grupo com resultados pendentes de computação
+      }
+
+      this.logger.log(`Final encerrada. Calculando premiações para ${groups.length} grupos...`);
+
+      const AWARD_POINTS = 15;
+      let totalUpdated = 0;
+
+      for (const group of groups) {
+        let groupUpdated = 0;
+
+        for (const member of group.members) {
+          let points = 0;
+
+          if (
+            group.topScorerResult &&
+            member.topScorer &&
+            member.topScorer.trim().toLowerCase() === group.topScorerResult.trim().toLowerCase()
+          ) {
+            points += AWARD_POINTS;
+          }
+
+          if (
+            group.assistLeaderResult &&
+            member.assistLeader &&
+            member.assistLeader.trim().toLowerCase() === group.assistLeaderResult.trim().toLowerCase()
+          ) {
+            points += AWARD_POINTS;
+          }
+
+          if (
+            group.bestPlayerResult &&
+            member.bestPlayer &&
+            member.bestPlayer.trim().toLowerCase() === group.bestPlayerResult.trim().toLowerCase()
+          ) {
+            points += AWARD_POINTS;
+          }
+
+          if (points !== member.awardsPoints) {
+            await this.prisma.groupMember.update({
+              where: { id: member.id },
+              data: { awardsPoints: points },
+            });
+            groupUpdated++;
+          }
+        }
+
+        await this.prisma.group.update({
+          where: { id: group.id },
+          data: { awardsComputed: true },
+        });
+
+        await this.redis.del(`group:details:${group.id}`);
+
+        totalUpdated += groupUpdated;
+        this.logger.log(`Grupo "${group.name}": ${groupUpdated} membros atualizados.`);
+      }
+
+      this.logger.log(`Premiações calculadas: ${groups.length} grupos, ${totalUpdated} membros atualizados.`);
+    } catch (err) {
+      this.logger.error('Erro ao calcular pontos de premiações:', err);
+    }
   }
 }

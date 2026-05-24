@@ -117,4 +117,14 @@ export class GroupsController {
   ) {
     return this.groupsService.toggleMemberPaid(groupId, memberId, paid, req.user.id);
   }
+
+  // PUT /api/groups/:id/predictions/awards
+  @Put(':id/predictions/awards')
+  saveIndividualAwards(
+    @Param('id') groupId: string,
+    @Body() dto: { topScorer?: string; assistLeader?: string; bestPlayer?: string },
+    @Request() req: any,
+  ) {
+    return this.groupsService.saveIndividualAwards(groupId, req.user.id, dto);
+  }
 }

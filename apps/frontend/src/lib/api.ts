@@ -209,6 +209,17 @@ export const groupsApi = {
 
   toggleMemberPaid: (groupId: string, memberId: string, paid: boolean) =>
     api.patch(`/groups/${groupId}/members/${memberId}/paid`, { paid }).then((r) => r.data),
+
+  saveIndividualAwards: (
+    groupId: string,
+    data: { topScorer?: string; assistLeader?: string; bestPlayer?: string }
+  ) =>
+    api
+      .put<{
+        message: string;
+        predictions: { topScorer: string | null; assistLeader: string | null; bestPlayer: string | null };
+      }>(`/groups/${groupId}/predictions/awards`, data)
+      .then((r) => r.data),
 };
 
 // ─── Teams endpoints ───────────────────────────────────────────────────────
@@ -223,6 +234,25 @@ export interface TeamData {
 export const teamsApi = {
   getTeams: () =>
     api.get<TeamData[]>("/teams").then((r) => r.data),
+};
+
+// ─── Players endpoints ──────────────────────────────────────────────────────
+
+export interface PlayerData {
+  id: string;
+  name: string;
+  position: string;
+  teamId: string;
+  team: {
+    name: string;
+    code: string;
+    flag: string | null;
+  };
+}
+
+export const playersApi = {
+  getPlayers: () =>
+    api.get<PlayerData[]>("/players").then((r) => r.data),
 };
 
 // ─── Predictions endpoints ──────────────────────────────────────────────────
@@ -329,5 +359,56 @@ export const scoreSyncApi = {
   syncScores: () =>
     api.post<{ success: boolean; message: string; updatedCount: number }>("/admin/sync/scores").then((r) => r.data),
 };
+
+// ─── Admin Awards endpoints (per-group) ────────────────────────────────────
+
+export interface GroupAwardResult {
+  id: string;
+  name: string;
+  topScorerResult: string | null;
+  assistLeaderResult: string | null;
+  bestPlayerResult: string | null;
+  awardsComputed: boolean;
+  updatedAt: string | null;
+  _count?: { members: number };
+}
+
+export interface GlobalAwardsResponse {
+  topScorerResult: string | null;
+  assistLeaderResult: string | null;
+  bestPlayerResult: string | null;
+}
+
+export interface SetGlobalAwardsResponse {
+  message: string;
+  results: GlobalAwardsResponse;
+  autoComputed: boolean;
+  computedCount: number;
+}
+
+export const adminAwardsApi = {
+  // Obtém os resultados globais das premiações
+  getGlobalAwardResults: () =>
+    api.get<GlobalAwardsResponse>("/admin/awards").then((r) => r.data),
+
+  // Salva os resultados globais oficiais
+  setGlobalAwardResults: (data: {
+    topScorerResult?: string;
+    assistLeaderResult?: string;
+    bestPlayerResult?: string;
+  }) =>
+    api
+      .put<SetGlobalAwardsResponse>("/admin/awards", data)
+      .then((r) => r.data),
+
+  // Calcula pontos de todos os grupos
+  computeAllAwards: () =>
+    api
+      .post<{ message: string; groupsComputed: number; totalUpdated: number }>("/admin/awards/compute")
+      .then((r) => r.data),
+};
+
+// Keep GlobalAwardResult as alias for backward compatibility
+export type GlobalAwardResult = GroupAwardResult;
 
 export default api;
