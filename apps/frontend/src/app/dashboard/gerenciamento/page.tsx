@@ -328,7 +328,7 @@ export default function GerenciamentoPage() {
             }`}
           >
             <Trophy className="w-4 h-4" />
-            Premiações
+            Premiações Individuais
           </button>
         </div>
       </div>
@@ -644,7 +644,7 @@ export default function GerenciamentoPage() {
             <div className="space-y-1">
               <h2 className="text-xl font-black text-white flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-purple-400" />
-                Premiações Oficiais
+                Premiações Individuais Oficiais
               </h2>
               <p className="text-xs text-white/50 font-semibold">
                 Defina os vencedores oficiais das premiações individuais. A pontuação é computada automaticamente para todos os grupos ao final do campeonato.

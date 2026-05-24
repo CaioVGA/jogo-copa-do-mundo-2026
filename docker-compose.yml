@@ -28,11 +28,7 @@ services:
       dockerfile: apps/backend/Dockerfile
       target: builder
     container_name: copa2026_migrate
-    command: >
-      sh -c "cd /app/apps/backend &&
-             npx prisma migrate deploy &&
-             npx prisma db seed &&
-             echo 'Migrations e seed concluídos!'"
+    command: ["sh", "/app/apps/backend/scripts/docker-migrate.sh"]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-copa2026}:${POSTGRES_PASSWORD:-copa2026_secret}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-copa2026}
     depends_on:
@@ -101,6 +97,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
 
   # ─── Frontend Next.js ──────────────────────────────────────────────────────
   frontend:
