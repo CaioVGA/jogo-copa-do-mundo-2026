@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-      target: builder
+      target: migrate
     container_name: copa2026_migrate
     command: ["sh", "/app/apps/backend/scripts/docker-migrate.sh"]
     environment:
