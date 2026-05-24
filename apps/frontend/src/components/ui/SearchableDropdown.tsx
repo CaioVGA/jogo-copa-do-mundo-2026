@@ -10,6 +10,9 @@ interface SearchableDropdownProps {
   disabled?: boolean;
   options: any[]; // Supports string[] or objects with a 'name' field
   theme?: "gold" | "emerald" | "teal" | "purple";
+  menuPlacement?: "top" | "bottom";
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function SearchableDropdown({
@@ -18,29 +21,49 @@ export function SearchableDropdown({
   placeholder,
   disabled,
   options,
-  theme = "gold"
+  theme = "gold",
+  menuPlacement = "bottom",
+  open,
+  onOpenChange,
 }: SearchableDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
   const [search, setSearch] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
+  const valueRef = useRef(value);
 
   useEffect(() => {
+    valueRef.current = value;
     setSearch(value || "");
   }, [value]);
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(next);
+    }
+    onOpenChange?.(next);
+  };
+
+  const selectOption = (displayVal: string) => {
+    valueRef.current = displayVal;
+    setSearch(displayVal);
+    onChange(displayVal);
+    setOpen(false);
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        // Save the typed search string if the user clicked outside
-        onChange(search);
+        setOpen(false);
+        setSearch(valueRef.current || "");
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [search, onChange]);
+  }, [isControlled, onOpenChange]);
 
   const filteredOptions = options.filter((opt) => {
     const text = typeof opt === "string" ? opt : opt.name || "";
@@ -50,23 +73,31 @@ export function SearchableDropdown({
   const themeClasses = {
     gold: {
       focusBorder: "focus:border-[#ffd700]/40 focus:shadow-[0_0_12px_rgba(255,215,0,0.06)]",
-      hoverBg: "hover:bg-[#ffd700]/10",
-      activeText: "text-[#ffd700] bg-[#ffd700]/5",
+      menuPanel: "bg-[#0f1628] border border-[#ffd700]/25 shadow-[0_16px_40px_rgba(0,0,0,0.55)]",
+      optionBase: "bg-[#131d32] hover:bg-[#1a2740] hover:text-white",
+      activeText: "text-[#ffd700] bg-[#2a2410] font-bold",
+      emptyBg: "bg-[#131d32]",
     },
     emerald: {
       focusBorder: "focus:border-[#009E4F] focus:shadow-[0_0_12px_rgba(0,158,79,0.15)]",
-      hoverBg: "hover:bg-[#009E4F]/10",
-      activeText: "text-[#009E4F] bg-[#009E4F]/5",
+      menuPanel: "bg-[#0a0f1e] border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.55)]",
+      optionBase: "bg-[#111827] hover:bg-[#1a2332] hover:text-white",
+      activeText: "text-[#009E4F] bg-[#0f2a1c] font-bold",
+      emptyBg: "bg-[#111827]",
     },
     teal: {
       focusBorder: "focus:border-teal-500/40 focus:shadow-[0_0_12px_rgba(20,184,166,0.06)]",
-      hoverBg: "hover:bg-teal-500/10",
-      activeText: "text-teal-400 bg-teal-500/5",
+      menuPanel: "bg-[#0c1520] border border-teal-500/25 shadow-[0_16px_40px_rgba(0,0,0,0.55)]",
+      optionBase: "bg-[#101f28] hover:bg-[#152a35] hover:text-white",
+      activeText: "text-teal-300 bg-[#0f2a2a] font-bold",
+      emptyBg: "bg-[#101f28]",
     },
     purple: {
       focusBorder: "focus:border-purple-500/40 focus:shadow-[0_0_12px_rgba(168,85,247,0.06)]",
-      hoverBg: "hover:bg-purple-500/10",
-      activeText: "text-purple-400 bg-purple-500/5",
+      menuPanel: "bg-[#12101f] border border-purple-500/25 shadow-[0_16px_40px_rgba(0,0,0,0.55)]",
+      optionBase: "bg-[#1a1530] hover:bg-[#241e42] hover:text-white",
+      activeText: "text-purple-300 bg-[#221a3d] font-bold",
+      emptyBg: "bg-[#1a1530]",
     },
   };
 
@@ -81,11 +112,10 @@ export function SearchableDropdown({
           disabled={disabled}
           onChange={(e) => {
             setSearch(e.target.value);
-            onChange(e.target.value);
-            setIsOpen(true);
+            setOpen(true);
           }}
           onFocus={() => {
-            if (!disabled) setIsOpen(true);
+            if (!disabled) setOpen(true);
           }}
           placeholder={placeholder}
           className={`copa-input w-full pl-4 pr-16 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:ring-0 focus:outline-none ${currentTheme.focusBorder}`}
@@ -95,9 +125,10 @@ export function SearchableDropdown({
             <button
               type="button"
               onClick={() => {
+                valueRef.current = "";
                 setSearch("");
                 onChange("");
-                setIsOpen(false);
+                setOpen(false);
               }}
               className="text-white/40 hover:text-white transition-colors p-1"
               title="Limpar seleção"
@@ -109,7 +140,7 @@ export function SearchableDropdown({
             type="button"
             disabled={disabled}
             onClick={() => {
-              if (!disabled) setIsOpen((prev) => !prev);
+              if (!disabled) setOpen(!isOpen);
             }}
             className="text-white/40 hover:text-white transition-colors"
           >
@@ -119,7 +150,11 @@ export function SearchableDropdown({
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1.5 max-h-60 overflow-y-auto bg-[#0a0f1e] border border-white/10 rounded-xl shadow-2xl backdrop-blur-md copa-scrollbar">
+        <div
+          className={`absolute z-50 w-full max-h-60 overflow-y-auto rounded-xl copa-scrollbar ${
+            menuPlacement === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
+          } ${currentTheme.menuPanel}`}
+        >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((opt) => {
               const displayVal = typeof opt === "string" ? opt : opt.name || "";
@@ -127,13 +162,13 @@ export function SearchableDropdown({
                 <button
                   key={typeof opt === "string" ? opt : opt.id || displayVal}
                   type="button"
-                  onClick={() => {
-                    setSearch(displayVal);
-                    onChange(displayVal);
-                    setIsOpen(false);
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectOption(displayVal);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-xs transition-colors border-b border-white/5 last:border-0 hover:text-white ${currentTheme.hoverBg} ${
-                    value === displayVal ? `${currentTheme.activeText} font-bold` : "text-white/70"
+                  className={`w-full text-left px-4 py-2.5 text-xs transition-colors border-b border-white/8 last:border-0 ${currentTheme.optionBase} ${
+                    value === displayVal ? currentTheme.activeText : "text-white/85"
                   }`}
                 >
                   {displayVal}
@@ -141,9 +176,8 @@ export function SearchableDropdown({
               );
             })
           ) : (
-            <div className="px-4 py-3 text-xs text-white/40 italic flex flex-col gap-1">
-              <span>Nenhum jogador encontrado na lista.</span>
-              <span className="text-[10px] text-white/30">Clique fora do campo para usar "{search}"</span>
+            <div className={`px-4 py-3 text-xs text-white/50 ${currentTheme.emptyBg}`}>
+              Nenhum jogador encontrado na lista.
             </div>
           )}
         </div>
