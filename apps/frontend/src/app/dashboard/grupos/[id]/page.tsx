@@ -796,6 +796,111 @@ export default function GroupDetailsPage() {
   // Ordenação dos participantes do grupo pelos pontos reais acumulados
   const rankedMembers = [...group.members].sort((a, b) => (b.points || 0) - (a.points || 0));
 
+  // Tabela real da fase de grupos (mesmos critérios da Visão Geral) para repescagem dos 3ºs
+  const realStandingsByGroup = (() => {
+    const result: Record<string, Record<string, { points: number; gd: number; gf: number; ga: number; name: string }>> = {};
+    const groupMatches = games.filter((g) => g.stage?.startsWith("Fase de Grupos"));
+
+    groupMatches.forEach((match) => {
+      const groupLetter = match.homeTeam?.group;
+      if (!groupLetter || !match.homeTeam || !match.awayTeam) return;
+
+      if (!result[groupLetter]) result[groupLetter] = {};
+
+      const ensureTeam = (code: string, name: string) => {
+        if (!result[groupLetter][code]) {
+          result[groupLetter][code] = { points: 0, gd: 0, gf: 0, ga: 0, name };
+        }
+      };
+
+      ensureTeam(match.homeTeam.code, match.homeTeam.name);
+      ensureTeam(match.awayTeam.code, match.awayTeam.name);
+
+      const hScore = match.realHomeScore;
+      const aScore = match.realAwayScore;
+      if (hScore === null || aScore === null) return;
+
+      const home = result[groupLetter][match.homeTeam.code];
+      const away = result[groupLetter][match.awayTeam.code];
+
+      home.gf += hScore;
+      home.ga += aScore;
+      away.gf += aScore;
+      away.ga += hScore;
+
+      if (hScore > aScore) {
+        home.points += 3;
+      } else if (hScore < aScore) {
+        away.points += 3;
+      } else {
+        home.points += 1;
+        away.points += 1;
+      }
+    });
+
+    Object.values(result).forEach((groupTable) => {
+      Object.values(groupTable).forEach((team) => {
+        team.gd = team.gf - team.ga;
+      });
+    });
+
+    return result;
+  })();
+
+  const hasGroupStandingData = games.some(
+    (g) =>
+      g.stage?.startsWith("Fase de Grupos") &&
+      g.realHomeScore !== null &&
+      g.realAwayScore !== null,
+  );
+
+  const { bestThirdTeamCodes, rankedBestThirds, allThirdCandidates } = (() => {
+    type ThirdCandidate = {
+      code: string;
+      name: string;
+      flag: string | null;
+      groupName: string;
+      points: number;
+      gd: number;
+      gf: number;
+    };
+
+    const thirdCandidates: ThirdCandidate[] = [];
+
+    Object.keys(oracleGroups)
+      .sort()
+      .forEach((groupName) => {
+        const third = oracleGroups[groupName]?.[2];
+        if (!third) return;
+
+        const stats = realStandingsByGroup[groupName]?.[third.code];
+        thirdCandidates.push({
+          code: third.code,
+          name: third.name,
+          flag: third.flag ?? null,
+          groupName,
+          points: stats?.points ?? 0,
+          gd: stats?.gd ?? 0,
+          gf: stats?.gf ?? 0,
+        });
+      });
+
+    thirdCandidates.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.gd !== a.gd) return b.gd - a.gd;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.name.localeCompare(b.name);
+    });
+
+    const best = thirdCandidates.slice(0, 8);
+
+    return {
+      bestThirdTeamCodes: new Set(best.map((t) => t.code)),
+      rankedBestThirds: best,
+      allThirdCandidates: thirdCandidates,
+    };
+  })();
+
   const isCopiaCola = group.pixKey?.trim().startsWith("000201");
 
   return (
@@ -1676,7 +1781,6 @@ export default function GroupDetailsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {Object.keys(oracleGroups).sort().map((groupName) => {
                         const teamsInGroup = oracleGroups[groupName] || [];
-                        const qualifyCount = 2; // top-2 se classificam
                         return (
                         <div key={groupName} className="auth-card border border-white/5 relative overflow-hidden bg-[#0d2b1a]/40 flex flex-col">
                           {/* Card Header */}
@@ -1696,10 +1800,15 @@ export default function GroupDetailsPage() {
                           </div>
 
                           {/* Separator legend */}
-                          <div className="mx-4 mt-2 flex items-center gap-2">
+                          <div className="mx-4 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
                             <div className="flex items-center gap-1">
                               <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                               <span className="text-[9px] text-white/30 font-medium">Classificado</span>
+                            </div>
+                            <div className="w-px h-3 bg-white/10" />
+                            <div className="flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+                              <span className="text-[9px] text-white/30 font-medium">Repescagem</span>
                             </div>
                             <div className="w-px h-3 bg-white/10" />
                             <div className="flex items-center gap-1">
@@ -1710,8 +1819,13 @@ export default function GroupDetailsPage() {
 
                           <div className="p-3 space-y-1.5">
                             {teamsInGroup.map((team, index) => {
-                              const isClassified = index < qualifyCount;
-                              const isLastClassified = index === qualifyCount - 1;
+                              const isDirectClassified = index < 2;
+                              const isThirdPlace = index === 2;
+                              const isThirdQualified =
+                                isThirdPlace &&
+                                (!hasGroupStandingData || bestThirdTeamCodes.has(team.code));
+                              const isRepescagem = isThirdPlace && isThirdQualified;
+                              const isLastBeforeElimination = index === 2;
                               return (
                                 <>
                                   <div
@@ -1735,20 +1849,25 @@ export default function GroupDetailsPage() {
                                     }}
                                     className={`flex items-center gap-2 p-2 rounded-lg border-l-2 border border-r border-t border-b transition-all ${
                                       isOracleClosed
-                                        ? isClassified
+                                        ? isDirectClassified
                                           ? "bg-emerald-500/5 border-l-emerald-500/60 border-r-white/5 border-t-white/5 border-b-white/5 cursor-default"
-                                          : "bg-black/10 border-l-white/10 border-r-white/5 border-t-white/5 border-b-white/5 cursor-default"
+                                          : isRepescagem
+                                            ? "bg-blue-500/5 border-l-blue-500/60 border-r-white/5 border-t-white/5 border-b-white/5 cursor-default"
+                                            : "bg-black/10 border-l-white/10 border-r-white/5 border-t-white/5 border-b-white/5 cursor-default"
                                         : draggedItem && draggedItem.groupName === groupName && draggedItem.index === index
                                           ? "bg-white/5 border-l-[#ffd700] border-r-[#ffd700]/30 border-t-[#ffd700]/30 border-b-[#ffd700]/30 opacity-50 cursor-grab"
-                                          : isClassified
+                                          : isDirectClassified
                                             ? "bg-emerald-500/5 border-l-emerald-500/40 border-r-white/5 border-t-white/5 border-b-white/5 hover:border-l-emerald-500/70 hover:bg-emerald-500/8 cursor-grab active:cursor-grabbing"
-                                            : "bg-black/15 border-l-white/8 border-r-white/5 border-t-white/5 border-b-white/5 hover:border-l-white/20 hover:bg-white/3 cursor-grab active:cursor-grabbing"
+                                            : isRepescagem
+                                              ? "bg-blue-500/5 border-l-blue-500/40 border-r-white/5 border-t-white/5 border-b-white/5 hover:border-l-blue-500/70 hover:bg-blue-500/8 cursor-grab active:cursor-grabbing"
+                                              : "bg-black/15 border-l-white/8 border-r-white/5 border-t-white/5 border-b-white/5 hover:border-l-white/20 hover:bg-white/3 cursor-grab active:cursor-grabbing"
                                     }`}
                                   >
                                     {/* Position rank */}
                                     <span className={`w-5 text-center font-black text-xs shrink-0 ${
                                       index === 0 ? "text-[#ffd700]" :
                                       index === 1 ? "text-slate-300" :
+                                      isRepescagem ? "text-blue-400" :
                                       "text-white/25"
                                     }`}>
                                       {index + 1}º
@@ -1756,7 +1875,9 @@ export default function GroupDetailsPage() {
 
                                     {/* Flag */}
                                     <div className={`w-7 h-7 rounded-full overflow-hidden shrink-0 border bg-white/5 flex items-center justify-center font-bold text-[10px] ${
-                                      isClassified ? "border-emerald-500/30" : "border-white/15"
+                                      isDirectClassified ? "border-emerald-500/30" :
+                                      isRepescagem ? "border-blue-500/30" :
+                                      "border-white/15"
                                     }`}>
                                       {team.flag ? (
                                         <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
@@ -1767,15 +1888,20 @@ export default function GroupDetailsPage() {
 
                                     {/* Team Name */}
                                     <span className={`flex-1 text-xs font-semibold truncate ${
-                                      isClassified ? "text-white/90" : "text-white/50"
+                                      isDirectClassified || isRepescagem ? "text-white/90" : "text-white/50"
                                     }`}>
                                       {team.name}
                                     </span>
 
-                                    {/* Classified badge */}
-                                    {isClassified && !isGroupStageFinished && (
+                                    {/* Classification badge */}
+                                    {!isGroupStageFinished && isDirectClassified && (
                                       <span className="text-[8px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded shrink-0">
                                         AVANÇA
+                                      </span>
+                                    )}
+                                    {!isGroupStageFinished && isRepescagem && (
+                                      <span className="text-[8px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded shrink-0">
+                                        REPESCAGEM
                                       </span>
                                     )}
 
@@ -1825,14 +1951,6 @@ export default function GroupDetailsPage() {
                                       </div>
                                     )}
                                   </div>
-                                  {/* Separator line between classified/eliminated */}
-                                  {isLastClassified && (
-                                    <div className="flex items-center gap-2 py-0.5">
-                                      <div className="flex-1 h-px bg-white/10" />
-                                      <span className="text-[8px] text-white/20 font-bold uppercase tracking-widest">Eliminação</span>
-                                      <div className="flex-1 h-px bg-white/10" />
-                                    </div>
-                                  )}
                                 </>
                               );
                             })}
@@ -3043,14 +3161,10 @@ export default function GroupDetailsPage() {
                     <div className="border-t border-white/10 pt-3">
                       <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-blue-400" />
-                        Terceiros (Repescagem 2026)
+                        {hasGroupStandingData ? "8 Melhores Terceiros" : "Terceiros (Repescagem 2026)"}
                       </h4>
                       <div className="grid grid-cols-2 gap-1.5 max-h-[120px] overflow-y-auto pr-1 copa-scrollbar">
-                        {Object.keys(oracleGroups).sort().map((groupName) => {
-                          const groupTeams = oracleGroups[groupName] || [];
-                          const third = groupTeams[2];
-                          if (!third) return null;
-                          return (
+                        {(hasGroupStandingData ? rankedBestThirds : allThirdCandidates).map((third) => (
                             <div key={third.code} className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/5 border border-blue-500/10 text-xs">
                               <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
                                 {third.flag ? (
@@ -3060,10 +3174,12 @@ export default function GroupDetailsPage() {
                                 )}
                               </div>
                               <span className="font-semibold text-white/90 truncate flex-1">{third.name}</span>
-                              <span className="text-[9px] font-bold text-white/40 bg-white/5 px-1 rounded uppercase shrink-0">{groupName}</span>
+                              {hasGroupStandingData && (
+                                <span className="text-[9px] font-bold text-[#ffd700] shrink-0">{third.points} pts</span>
+                              )}
+                              <span className="text-[9px] font-bold text-white/40 bg-white/5 px-1 rounded uppercase shrink-0">{third.groupName}</span>
                             </div>
-                          );
-                        })}
+                        ))}
                       </div>
                     </div>
                   </div>
