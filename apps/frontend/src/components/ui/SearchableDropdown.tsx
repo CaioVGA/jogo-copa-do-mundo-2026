@@ -156,25 +156,32 @@ export function SearchableDropdown({
           } ${currentTheme.menuPanel}`}
         >
           {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt) => {
-              const displayVal = typeof opt === "string" ? opt : opt.name || "";
-              return (
-                <button
-                  key={typeof opt === "string" ? opt : opt.id || displayVal}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    selectOption(displayVal);
-                  }}
-                  className={`w-full text-left px-4 py-2.5 text-xs transition-colors border-b border-white/8 last:border-0 ${currentTheme.optionBase} ${
-                    value === displayVal ? currentTheme.activeText : "text-white/85"
-                  }`}
-                >
-                  {displayVal}
-                </button>
-              );
-            })
+            <>
+              {filteredOptions.slice(0, 50).map((opt) => {
+                const displayVal = typeof opt === "string" ? opt : opt.name || "";
+                return (
+                  <button
+                    key={typeof opt === "string" ? opt : opt.id || displayVal}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      selectOption(displayVal);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors border-b border-white/8 last:border-0 ${currentTheme.optionBase} ${
+                      value === displayVal ? currentTheme.activeText : "text-white/85"
+                    }`}
+                  >
+                    {displayVal}
+                  </button>
+                );
+              })}
+              {filteredOptions.length > 50 && (
+                <div className="px-4 py-3 text-[10px] text-center text-white/40 italic bg-black/20 border-t border-white/5">
+                  Mostrando 50 de {filteredOptions.length} resultados. Continue digitando para filtrar...
+                </div>
+              )}
+            </>
           ) : (
             <div className={`px-4 py-3 text-xs text-white/50 ${currentTheme.emptyBg}`}>
               Nenhum jogador encontrado na lista.
