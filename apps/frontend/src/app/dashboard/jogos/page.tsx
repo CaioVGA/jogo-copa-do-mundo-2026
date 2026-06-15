@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, ShieldAlert, ChevronLeft, ChevronRight, Activity } from "lucide-react";
 import { predictionsApi, matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
@@ -51,19 +51,22 @@ export default function CopaGamesPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [userPaginating, setUserPaginating] = useState(false);
+
+
 
   const handlePrevSub = () => {
     if (activeCategory === "GRUPOS") {
       const idx = GRUPOS_SUB.indexOf(selectedGroup);
       if (idx > 0) {
         setSelectedGroup(GRUPOS_SUB[idx - 1]);
-        setCurrentPage(1);
+        setUserPaginating(false);
       }
     } else {
       const idx = MATA_MATA_SUB.indexOf(selectedGroup);
       if (idx > 0) {
         setSelectedGroup(MATA_MATA_SUB[idx - 1]);
-        setCurrentPage(1);
+        setUserPaginating(false);
       }
     }
   };
@@ -73,13 +76,13 @@ export default function CopaGamesPage() {
       const idx = GRUPOS_SUB.indexOf(selectedGroup);
       if (idx !== -1 && idx < GRUPOS_SUB.length - 1) {
         setSelectedGroup(GRUPOS_SUB[idx + 1]);
-        setCurrentPage(1);
+        setUserPaginating(false);
       }
     } else {
       const idx = MATA_MATA_SUB.indexOf(selectedGroup);
       if (idx !== -1 && idx < MATA_MATA_SUB.length - 1) {
         setSelectedGroup(MATA_MATA_SUB[idx + 1]);
-        setCurrentPage(1);
+        setUserPaginating(false);
       }
     }
   };
@@ -122,8 +125,8 @@ export default function CopaGamesPage() {
 
   // Reset pagination when selected group filter changes
   useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedGroup]);
+    setUserPaginating(false);
+  }, [selectedGroup, activeCategory]);
 
   function startEditing(game: MatchPredictionData) {
     setEditingMatchId(game.id);
@@ -154,6 +157,63 @@ export default function CopaGamesPage() {
     }
   }
 
+
+
+  // Ordenação garantindo que a Fase Final fique por último
+  const sortedGroupKeys = Object.keys(grouped).sort((a, b) => {
+    const idxA = ALL_GROUPS.indexOf(a);
+    const idxB = ALL_GROUPS.indexOf(b);
+    const valA = idxA === -1 ? 999 : idxA;
+    const valB = idxB === -1 ? 999 : idxB;
+    return valA - valB;
+  });
+
+  const filteredGroups = useMemo(() => {
+    if (activeCategory === "GRUPOS") {
+      if (selectedGroup === "ALL_GRUPOS" || !selectedGroup.startsWith("Grupo")) {
+        return sortedGroupKeys.filter((k) => k.startsWith("Grupo"));
+      }
+      return [selectedGroup];
+    } else {
+      if (selectedGroup === "ALL_MATA_MATA" || selectedGroup.startsWith("Grupo")) {
+        return sortedGroupKeys.filter((k) => !k.startsWith("Grupo"));
+      }
+      return [selectedGroup];
+    }
+  }, [activeCategory, selectedGroup, sortedGroupKeys]);
+
+  // Aplanar todos os confrontos dos grupos selecionados em uma única lista cronológica
+  const allFilteredMatches = useMemo(() => {
+    const matches: { groupName: string; match: MatchPredictionData }[] = [];
+    filteredGroups.forEach((gName) => {
+      const gMatches = grouped[gName] || [];
+      gMatches.forEach((m) => {
+        matches.push({ groupName: gName, match: m });
+      });
+    });
+    // Ordenação estritamente crescente por data e horário
+    matches.sort((a, b) => new Date(a.match.date).getTime() - new Date(b.match.date).getTime());
+    return matches;
+  }, [filteredGroups, grouped]);
+
+  useEffect(() => {
+    if (!userPaginating && allFilteredMatches.length > 0) {
+      const index = allFilteredMatches.findIndex((m) => m.match.status !== "FINISHED");
+      if (index !== -1) {
+        setCurrentPage(Math.floor(index / ITEMS_PER_PAGE) + 1);
+      } else {
+        const lastPage = Math.ceil(allFilteredMatches.length / ITEMS_PER_PAGE) || 1;
+        setCurrentPage(lastPage);
+      }
+    }
+  }, [allFilteredMatches, userPaginating]);
+
+  // Lógica de Paginação
+  const totalItems = allFilteredMatches.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedMatches = allFilteredMatches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-white/50">
@@ -180,47 +240,6 @@ export default function CopaGamesPage() {
       </div>
     );
   }
-
-  // Ordenação garantindo que a Fase Final fique por último
-  const sortedGroupKeys = Object.keys(grouped).sort((a, b) => {
-    const idxA = ALL_GROUPS.indexOf(a);
-    const idxB = ALL_GROUPS.indexOf(b);
-    const valA = idxA === -1 ? 999 : idxA;
-    const valB = idxB === -1 ? 999 : idxB;
-    return valA - valB;
-  });
-
-  const filteredGroups = (() => {
-    if (activeCategory === "GRUPOS") {
-      if (selectedGroup === "ALL_GRUPOS" || !selectedGroup.startsWith("Grupo")) {
-        return sortedGroupKeys.filter((k) => k.startsWith("Grupo"));
-      }
-      return [selectedGroup];
-    } else {
-      if (selectedGroup === "ALL_MATA_MATA" || selectedGroup.startsWith("Grupo")) {
-        return sortedGroupKeys.filter((k) => !k.startsWith("Grupo"));
-      }
-      return [selectedGroup];
-    }
-  })();
-
-  // Aplanar todos os confrontos dos grupos selecionados em uma única lista cronológica
-  const allFilteredMatches: { groupName: string; match: MatchPredictionData }[] = [];
-  filteredGroups.forEach((gName) => {
-    const matches = grouped[gName] || [];
-    matches.forEach((m) => {
-      allFilteredMatches.push({ groupName: gName, match: m });
-    });
-  });
-
-  // Ordenação estritamente crescente por data e horário
-  allFilteredMatches.sort((a, b) => new Date(a.match.date).getTime() - new Date(b.match.date).getTime());
-
-  // Lógica de Paginação
-  const totalItems = allFilteredMatches.length;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedMatches = allFilteredMatches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-8 animate-fade-in-up pb-12">
@@ -260,7 +279,7 @@ export default function CopaGamesPage() {
             onClick={() => {
               setActiveCategory("GRUPOS");
               setSelectedGroup("ALL_GRUPOS");
-              setCurrentPage(1);
+              setUserPaginating(false);
             }}
             className={`px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer ${
               activeCategory === "GRUPOS"
@@ -275,7 +294,7 @@ export default function CopaGamesPage() {
             onClick={() => {
               setActiveCategory("MATA_MATA");
               setSelectedGroup("ALL_MATA_MATA");
-              setCurrentPage(1);
+              setUserPaginating(false);
             }}
             className={`px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer ${
               activeCategory === "MATA_MATA"
@@ -309,7 +328,7 @@ export default function CopaGamesPage() {
               <button
                 onClick={() => {
                   setSelectedGroup("ALL_GRUPOS");
-                  setCurrentPage(1);
+                  setUserPaginating(false);
                 }}
                 data-active={selectedGroup === "ALL_GRUPOS"}
                 className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
@@ -325,7 +344,7 @@ export default function CopaGamesPage() {
                   key={gKey}
                   onClick={() => {
                     setSelectedGroup(gKey);
-                    setCurrentPage(1);
+                    setUserPaginating(false);
                   }}
                   data-active={selectedGroup === gKey}
                   className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-wider transition-all duration-300 shrink-0 cursor-pointer min-w-[50px] text-center whitespace-nowrap ${
@@ -346,7 +365,7 @@ export default function CopaGamesPage() {
               <button
                 onClick={() => {
                   setSelectedGroup("ALL_MATA_MATA");
-                  setCurrentPage(1);
+                  setUserPaginating(false);
                 }}
                 data-active={selectedGroup === "ALL_MATA_MATA"}
                 className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
@@ -362,7 +381,7 @@ export default function CopaGamesPage() {
                   key={gKey}
                   onClick={() => {
                     setSelectedGroup(gKey);
-                    setCurrentPage(1);
+                    setUserPaginating(false);
                   }}
                   data-active={selectedGroup === gKey}
                   className={`px-4 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all duration-300 shrink-0 cursor-pointer whitespace-nowrap ${
@@ -601,7 +620,10 @@ export default function CopaGamesPage() {
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/5 pt-6 mt-6">
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() => {
+                    setCurrentPage((prev) => Math.max(prev - 1, 1));
+                    setUserPaginating(true);
+                  }}
                   disabled={currentPage === 1}
                   className="px-4 py-2.5 rounded-xl text-xs font-bold border border-white/5 bg-white/[0.02] text-white/70 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-white/[0.02] disabled:hover:text-white/70 transition-all cursor-pointer disabled:cursor-not-allowed shrink-0"
                 >
@@ -632,7 +654,10 @@ export default function CopaGamesPage() {
                         return (
                           <button
                             key={page}
-                            onClick={() => setCurrentPage(page as number)}
+                            onClick={() => {
+                              setCurrentPage(page as number);
+                              setUserPaginating(true);
+                            }}
                             className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
                               isSelected
                                 ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
@@ -651,7 +676,10 @@ export default function CopaGamesPage() {
                 </div>
 
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  onClick={() => {
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                    setUserPaginating(true);
+                  }}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2.5 rounded-xl text-xs font-bold border border-white/5 bg-white/[0.02] text-white/70 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-white/[0.02] disabled:hover:text-white/70 transition-all cursor-pointer disabled:cursor-not-allowed shrink-0"
                 >

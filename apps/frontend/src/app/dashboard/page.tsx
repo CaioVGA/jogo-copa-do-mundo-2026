@@ -52,7 +52,7 @@ export default function DashboardPage() {
 
         // Jogos que não foram finalizados
         const upcoming = allMatches.filter((m) => m.status !== "FINISHED");
-        setUpcomingGames(upcoming.length > 0 ? upcoming.slice(0, 5) : allMatches.slice(0, 5));
+        setUpcomingGames(upcoming.length > 0 ? upcoming.slice(0, 5) : [...allMatches].reverse().slice(0, 5));
       } catch (err) {
         console.error("Erro ao carregar confrontos para o dashboard:", err);
       } finally {
