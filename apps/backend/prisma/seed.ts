@@ -76,7 +76,7 @@ async function main() {
     { name: 'Espanha', code: 'ESP', iso2: 'es', group: 'H' },
     { name: 'Cabo Verde', code: 'CPV', iso2: 'cv', group: 'H' },
     { name: 'Arábia Saudita', code: 'KSA', iso2: 'sa', group: 'H' },
-    { name: 'Uruguai', code: 'URU', iso2: 'uy', group: 'H' },
+    { name: 'Uruguai', code: 'URY', iso2: 'uy', group: 'H' },
     // Grupo I
     { name: 'França', code: 'FRA', iso2: 'fr', group: 'I' },
     { name: 'Senegal', code: 'SEN', iso2: 'sn', group: 'I' },

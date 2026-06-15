@@ -228,7 +228,7 @@ export class SyncService implements OnApplicationBootstrap {
           const fixtureTime = new Date(f.utcDate).getTime();
           const diffHours = Math.abs(matchTime - fixtureTime) / (1000 * 60 * 60);
 
-          return diffHours < 24; // Diferença menor que 24 horas
+          return diffHours <= 48; // Diferença menor ou igual a 48 horas (flexibilidade para mudanças)
         }
 
         return true;
