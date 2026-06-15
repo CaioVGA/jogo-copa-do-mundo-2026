@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Trophy, Users, ArrowLeft, Loader2, Sparkles, Target, Activity, CalendarDays, Medal, Crown, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, QrCode, Coins, Copy, Check, Clock, Lock, Award, LayoutGrid, Star, GripVertical, Zap, ShieldCheck, TrendingUp } from "lucide-react";
 import { groupsApi, teamsApi, predictionsApi, playersApi } from "@/lib/api";
@@ -406,7 +406,21 @@ export default function GroupDetailsPage() {
 
   // Paginação dos palpites na aba Geral
   const [currentPage, setCurrentPage] = useState(1);
+  const [userPaginatingGeral, setUserPaginatingGeral] = useState(false);
   const ITEMS_PER_PAGE = 6;
+
+  useEffect(() => {
+    if (!userPaginatingGeral && games.length > 0) {
+      const index = games.findIndex((m) => m.status !== "FINISHED");
+      if (index !== -1) {
+        setCurrentPage(Math.floor(index / ITEMS_PER_PAGE) + 1);
+      } else {
+        const lastPage = Math.ceil(games.length / ITEMS_PER_PAGE) || 1;
+        setCurrentPage(lastPage);
+      }
+    }
+  }, [games, userPaginatingGeral]);
+
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedGames = games.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   const totalPages = Math.ceil(games.length / ITEMS_PER_PAGE) || 1;
@@ -418,6 +432,7 @@ export default function GroupDetailsPage() {
 
   // Paginação dos palpites na aba Bolão
   const [bolaoPage, setBolaoPage] = useState(1);
+  const [userPaginatingBolao, setUserPaginatingBolao] = useState(false);
 
   // Auto-scroll the active filter tab in Bolão into view
   useEffect(() => {
@@ -435,7 +450,7 @@ export default function GroupDetailsPage() {
 
   // Reset pagination when selected group filter changes
   useEffect(() => {
-    setBolaoPage(1);
+    setUserPaginatingBolao(false);
   }, [bolaoSelectedGroup, bolaoCategory]);
 
   // Derivação dos jogos do bolão com agrupamento e filtragem
@@ -446,24 +461,24 @@ export default function GroupDetailsPage() {
     return game.stage || 'Fase Final';
   };
 
-  const groupedGames = games.reduce<Record<string, MatchPredictionData[]>>((acc, game) => {
+  const groupedGames = useMemo(() => games.reduce<Record<string, MatchPredictionData[]>>((acc, game) => {
     const groupName = getGroupName(game);
     if (!acc[groupName]) {
       acc[groupName] = [];
     }
     acc[groupName].push(game);
     return acc;
-  }, {});
+  }, {}), [games]);
 
-  const sortedGroupKeys = Object.keys(groupedGames).sort((a, b) => {
+  const sortedGroupKeys = useMemo(() => Object.keys(groupedGames).sort((a, b) => {
     const idxA = ALL_GROUPS.indexOf(a);
     const idxB = ALL_GROUPS.indexOf(b);
     const valA = idxA === -1 ? 999 : idxA;
     const valB = idxB === -1 ? 999 : idxB;
     return valA - valB;
-  });
+  }), [groupedGames]);
 
-  const filteredBolaoGroups = (() => {
+  const filteredBolaoGroups = useMemo(() => {
     if (bolaoCategory === "GRUPOS") {
       if (bolaoSelectedGroup === "ALL_GRUPOS" || !bolaoSelectedGroup.startsWith("Grupo")) {
         return sortedGroupKeys.filter((k) => k.startsWith("Grupo"));
@@ -475,16 +490,30 @@ export default function GroupDetailsPage() {
       }
       return [bolaoSelectedGroup];
     }
-  })();
+  }, [bolaoCategory, bolaoSelectedGroup, sortedGroupKeys]);
 
-  const allFilteredBolaoMatches: MatchPredictionData[] = [];
-  filteredBolaoGroups.forEach((gName) => {
-    const matches = groupedGames[gName] || [];
-    allFilteredBolaoMatches.push(...matches);
-  });
+  const allFilteredBolaoMatches = useMemo(() => {
+    const matches: MatchPredictionData[] = [];
+    filteredBolaoGroups.forEach((gName) => {
+      const gMatches = groupedGames[gName] || [];
+      matches.push(...gMatches);
+    });
+    // Sort filtered matches strictly by date
+    matches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return matches;
+  }, [filteredBolaoGroups, groupedGames]);
 
-  // Sort filtered matches strictly by date
-  allFilteredBolaoMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  useEffect(() => {
+    if (!userPaginatingBolao && allFilteredBolaoMatches.length > 0) {
+      const index = allFilteredBolaoMatches.findIndex((m) => m.status !== "FINISHED");
+      if (index !== -1) {
+        setBolaoPage(Math.floor(index / ITEMS_PER_PAGE) + 1);
+      } else {
+        const lastPage = Math.ceil(allFilteredBolaoMatches.length / ITEMS_PER_PAGE) || 1;
+        setBolaoPage(lastPage);
+      }
+    }
+  }, [allFilteredBolaoMatches, userPaginatingBolao]);
 
   const bolaoStartIndex = (bolaoPage - 1) * ITEMS_PER_PAGE;
   const paginatedBolaoGames = allFilteredBolaoMatches.slice(bolaoStartIndex, bolaoStartIndex + ITEMS_PER_PAGE);
@@ -1208,7 +1237,10 @@ export default function GroupDetailsPage() {
                       {games.length > ITEMS_PER_PAGE && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4 mt-2">
                           <button
-                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            onClick={() => {
+                              setCurrentPage((prev) => Math.max(prev - 1, 1));
+                              setUserPaginatingGeral(true);
+                            }}
                             disabled={currentPage === 1}
                             className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                           >
@@ -1238,7 +1270,10 @@ export default function GroupDetailsPage() {
                                 return (
                                   <button
                                     key={page}
-                                    onClick={() => setCurrentPage(page as number)}
+                                    onClick={() => {
+                                      setCurrentPage(page as number);
+                                      setUserPaginatingGeral(true);
+                                    }}
                                     className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
                                       isSelected
                                         ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
@@ -1253,7 +1288,10 @@ export default function GroupDetailsPage() {
                           </div>
 
                           <button
-                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                            onClick={() => {
+                              setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                              setUserPaginatingGeral(true);
+                            }}
                             disabled={currentPage === totalPages}
                             className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                           >
@@ -1609,7 +1647,10 @@ export default function GroupDetailsPage() {
                       {allFilteredBolaoMatches.length > ITEMS_PER_PAGE && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-4 mt-4">
                           <button
-                            onClick={() => setBolaoPage((prev) => Math.max(prev - 1, 1))}
+                            onClick={() => {
+                              setBolaoPage((prev) => Math.max(prev - 1, 1));
+                              setUserPaginatingBolao(true);
+                            }}
                             disabled={bolaoPage === 1}
                             className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                           >
@@ -1639,7 +1680,10 @@ export default function GroupDetailsPage() {
                                 return (
                                   <button
                                     key={page}
-                                    onClick={() => setBolaoPage(page as number)}
+                                    onClick={() => {
+                                      setBolaoPage(page as number);
+                                      setUserPaginatingBolao(true);
+                                    }}
                                     className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center border ${
                                       isSelected
                                         ? "bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-[#0d2b1a] border-[#ffd700] shadow-md shadow-[#ffd700]/15"
@@ -1654,7 +1698,10 @@ export default function GroupDetailsPage() {
                           </div>
 
                           <button
-                            onClick={() => setBolaoPage((prev) => Math.min(prev + 1, bolaoTotalPages))}
+                            onClick={() => {
+                              setBolaoPage((prev) => Math.min(prev + 1, bolaoTotalPages));
+                              setUserPaginatingBolao(true);
+                            }}
                             disabled={bolaoPage === bolaoTotalPages}
                             className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 disabled:hover:text-white/70 transition-all shrink-0 cursor-pointer disabled:cursor-not-allowed"
                           >
