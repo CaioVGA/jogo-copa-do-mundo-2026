@@ -2675,9 +2675,12 @@ export default function GroupDetailsPage() {
                   <div className="divide-y divide-white/5">
                     {[...(group?.members || [])]
                       .sort((a: any, b: any) => {
-                        const timeA = a.joinedAt ? new Date(a.joinedAt).getTime() : 0;
-                        const timeB = b.joinedAt ? new Date(b.joinedAt).getTime() : 0;
-                        return timeA - timeB;
+                        const pointsA = a.points || 0;
+                        const pointsB = b.points || 0;
+                        if (pointsB !== pointsA) {
+                          return pointsB - pointsA;
+                        }
+                        return a.user.name.localeCompare(b.user.name);
                       })
                       .map((member: any) => {
                         const isOwner = member.userId === group.ownerId;
