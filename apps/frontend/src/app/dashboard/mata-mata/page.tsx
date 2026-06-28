@@ -141,8 +141,8 @@ export default function MataMataPage() {
   const r4 = matches.filter(m => m.stage === "Semifinais" || m.stage === "Semifinal");
   const r2 = matches.filter(m => m.stage === "Final" || m.stage === "Terceiro Lugar" || m.stage === "Disputa do 3º Lugar");
 
-  const leftR32Order = [73, 76, 75, 78, 74, 77, 79, 80];
-  const rightR32Order = [81, 82, 83, 84, 85, 86, 87, 88];
+  const leftR32Order = [75, 78, 73, 76, 84, 83, 82, 81];
+  const rightR32Order = [74, 77, 79, 80, 87, 86, 85, 88];
   const leftR16Order = [89, 90, 91, 92];
   const rightR16Order = [93, 94, 95, 96];
   const leftR8Order = [97, 98];
