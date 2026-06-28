@@ -193,15 +193,17 @@ export const groupsApi = {
 
   getOraclePredictions: (groupId: string) =>
     api
-      .get<{ groups: Record<string, any[]>; hasPredictions: boolean; isGroupStageFinished: boolean }>(`/groups/${groupId}/oracle`)
+      .get<{ groups: Record<string, any[]>; hasPredictions: boolean; isGroupStageFinished: boolean; knockoutPredictions: Record<string, string>; knockoutDeadlines: Record<string, string> }>(`/groups/${groupId}/oracle`)
       .then((r) => r.data),
 
   saveOraclePredictions: (
     groupId: string,
-    predictions: { groupName: string; teamOrder: string[] }[]
+    predictions: { groupName: string; teamOrder: string[] }[],
+    knockoutPredictions?: { matchId: string; predictedWinner: string }[],
+    resetKnockout?: boolean
   ) =>
     api
-      .post<{ message: string }>(`/groups/${groupId}/oracle`, { groupPredictions: predictions })
+      .post<{ message: string }>(`/groups/${groupId}/oracle`, { groupPredictions: predictions, knockoutPredictions, resetKnockout })
       .then((r) => r.data),
 
   removeMember: (groupId: string, memberId: string) =>
@@ -266,9 +268,14 @@ export interface MatchPredictionData {
   status: string;
   realHomeScore: number | null;
   realAwayScore: number | null;
+  homePenalties?: number | null;
+  awayPenalties?: number | null;
   predictedHomeScore: number | null;
   predictedAwayScore: number | null;
   pointsEarned: number;
+  matchNumber?: number;
+  homeTeamFallback?: string | null;
+  awayTeamFallback?: string | null;
   homeTeam: {
     name: string;
     code: string;
@@ -299,8 +306,8 @@ export const predictionsApi = {
   savePredictions: (groupId: string, predictions: { matchId: string; homeScore: number; awayScore: number }[]) =>
     api.post<{ success: boolean; message: string }>(`/groups/${groupId}/predictions`, { groupId, predictions }).then((r) => r.data),
 
-  updateMatchScore: (matchId: string, homeScore: number, awayScore: number) =>
-    api.post<{ success: boolean; message: string }>(`/predictions/matches/${matchId}/score`, { homeScore, awayScore }).then((r) => r.data),
+  updateMatchScore: (matchId: string, homeScore: number, awayScore: number, homePenalties?: number, awayPenalties?: number) =>
+    api.post<{ success: boolean; message: string }>(`/predictions/matches/${matchId}/score`, { homeScore, awayScore, homePenalties, awayPenalties }).then((r) => r.data),
 };
 
 // ─── Users endpoints ───────────────────────────────────────────────────────

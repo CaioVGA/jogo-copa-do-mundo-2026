@@ -365,6 +365,12 @@ export class GroupsService {
 
         const matchPoints = pointsAggregate._sum.points || 0;
         
+        const knockoutPointsAggregate = await this.prisma.oracleKnockoutPrediction.aggregate({
+          where: { userId: member.userId, groupId },
+          _sum: { points: true },
+        });
+        const knockoutPoints = knockoutPointsAggregate._sum.points || 0;
+
         let awardsPoints = 0;
         const AWARD_POINTS = 15;
         if (
@@ -389,7 +395,7 @@ export class GroupsService {
           awardsPoints += AWARD_POINTS;
         }
 
-        const totalOraclePoints = oraclePoints + awardsPoints;
+        const totalOraclePoints = oraclePoints + knockoutPoints + awardsPoints;
 
         return {
           ...member,

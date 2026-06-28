@@ -227,70 +227,140 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
 interface OracleBracketCircleMatchProps {
   game: MatchPredictionData;
   savingMatchId: string | null;
-  handleSavePredictionDirect: (matchId: string, homeScore: number, awayScore: number) => Promise<void>;
+  handleSavePredictionDirect?: (matchId: string, homeScore: number, awayScore: number) => Promise<void>;
+  isOracleMode?: boolean;
+  oracleWinner?: string;
+  onOracleSelect?: (matchId: string, teamCode: string) => void;
+  oracleHomeTeam?: { code: string; name: string; flag: string | null } | null;
+  oracleAwayTeam?: { code: string; name: string; flag: string | null } | null;
+  isLocked?: boolean;
 }
 
-function OracleBracketCircleMatch({ game, savingMatchId, handleSavePredictionDirect }: OracleBracketCircleMatchProps) {
+function OracleBracketCircleMatch({ 
+  game, 
+  savingMatchId, 
+  handleSavePredictionDirect,
+  isOracleMode,
+  oracleWinner,
+  onOracleSelect,
+  oracleHomeTeam,
+  oracleAwayTeam,
+  isLocked
+}: OracleBracketCircleMatchProps) {
   const isFinished = game.status === "FINISHED";
   const isLive = game.status === "LIVE";
-  const isClosed = new Date(game.date).getTime() < Date.now();
+  const isClosed = !isOracleMode && new Date(game.date).getTime() < Date.now();
   const saving = savingMatchId === game.id;
 
   const homePredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null && game.predictedHomeScore > game.predictedAwayScore;
   const awayPredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null && game.predictedHomeScore < game.predictedAwayScore;
 
-  const homeWon = isFinished && game.realHomeScore !== null && game.realAwayScore !== null && game.realHomeScore > game.realAwayScore;
-  const awayWon = isFinished && game.realHomeScore !== null && game.realAwayScore !== null && game.realHomeScore < game.realAwayScore;
+  const homeWon = isFinished && game.realHomeScore !== null && game.realAwayScore !== null && (
+    game.realHomeScore > game.realAwayScore ||
+    (game.realHomeScore === game.realAwayScore && (game.homePenalties || 0) > (game.awayPenalties || 0))
+  );
+
+  const awayWon = isFinished && game.realHomeScore !== null && game.realAwayScore !== null && (
+    game.realHomeScore < game.realAwayScore ||
+    (game.realHomeScore === game.realAwayScore && (game.homePenalties || 0) < (game.awayPenalties || 0))
+  );
+
+  const bothTeamsDefined = (() => {
+    const home = oracleHomeTeam || game.homeTeam;
+    const away = oracleAwayTeam || game.awayTeam;
+    const isUndecided = (t: any) => !t || !t.code || t.name?.startsWith("Vencedor") || t.name?.startsWith("Perdedor");
+    return !isUndecided(home) && !isUndecided(away);
+  })();
 
   const handleSelectTeam = async (isHome: boolean) => {
-    if (isClosed || saving) return;
+    if (saving) return;
+    
+    if (isOracleMode && onOracleSelect) {
+      if (!bothTeamsDefined) return;
+      const team = isHome ? (oracleHomeTeam || game.homeTeam) : (oracleAwayTeam || game.awayTeam);
+      if (team) {
+        const identifier = team.code === "TBD" ? `TBD_${game.id}_${isHome ? 'HOME' : 'AWAY'}` : team.code;
+        if (identifier) onOracleSelect(game.id, identifier);
+      }
+      return;
+    }
+
+    if (isClosed || !handleSavePredictionDirect) return;
     const homeScore = isHome ? 1 : 0;
     const awayScore = isHome ? 0 : 1;
     await handleSavePredictionDirect(game.id, homeScore, awayScore);
   };
 
   const renderTeamCircle = (isHome: boolean) => {
-    const team = isHome ? game.homeTeam : game.awayTeam;
-    const teamName = isHome ? game.homeTeam?.name : game.awayTeam?.name;
-    const isSelected = isHome ? homePredicted : awayPredicted;
-    const isWinner = isHome ? homeWon : awayWon;
+    const originalTeam = isHome ? game.homeTeam : game.awayTeam;
+    const dynamicTeam = isHome ? oracleHomeTeam : oracleAwayTeam;
+    const team = (isOracleMode && dynamicTeam) ? dynamicTeam : originalTeam;
+    const teamName = team?.name;
+    const teamIdentifier = team?.code === "TBD" ? `TBD_${game.id}_${isHome ? 'HOME' : 'AWAY'}` : team?.code;
+    const isSelected = isOracleMode ? (team && oracleWinner === teamIdentifier) : (isHome ? homePredicted : awayPredicted);
+    const hasAnySelection = isOracleMode ? (!!oracleWinner && oracleWinner !== "TBD") : (homePredicted || awayPredicted);
+    const isLoser = hasAnySelection && !isSelected;
+    const isWinner = isOracleMode ? false : (isHome ? homeWon : awayWon);
     const isUndecided = !team || !team.code || teamName?.startsWith("Vencedor") || teamName?.startsWith("Perdedor");
 
     if (isUndecided) {
       return (
         <div className="flex flex-col items-center gap-1 group relative">
           <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/20 bg-white/5 flex items-center justify-center text-white/30 text-xs font-black select-none">
+            {isLocked && !isSelected && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <Lock className="w-4 h-4 text-white/40" />
+              </div>
+            )}
             ?
           </div>
-          <span className="text-[8px] font-bold text-white/30 uppercase tracking-wide truncate max-w-[50px]">
+          <span className={`text-[8px] font-bold uppercase tracking-wide truncate max-w-[50px] ${
+            isLocked && !isSelected ? "text-white/20" :
+            isSelected ? "text-[#ffd700]" : 
+            isWinner ? "text-emerald-400" : 
+            isLoser ? "text-white/20 line-through" : 
+            "text-white/60 group-hover:text-white"
+          }`}>
             {teamName?.replace("Vencedor", "Venc.").replace("Perdedor", "Perd.") || "A definir"}
           </span>
         </div>
       );
     }
 
+    const disabledInteraction = (isClosed && !isOracleMode) || saving || (isOracleMode && (!bothTeamsDefined || isLocked));
+
     return (
       <button
         type="button"
-        disabled={isClosed || saving}
+        disabled={disabledInteraction}
         onClick={() => handleSelectTeam(isHome)}
-        className={`flex flex-col items-center gap-1 group relative transition-all duration-300 focus:outline-none ${
-          isClosed ? "cursor-default" : "cursor-pointer hover:scale-105 active:scale-95"
+        className={`flex flex-col items-center gap-1 group relative hover:z-50 transition-all duration-300 focus:outline-none ${
+          disabledInteraction ? "cursor-default" : "cursor-pointer hover:scale-105 active:scale-95"
         }`}
       >
         <div
           className={`w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 relative transition-all duration-300 bg-[#0d2b1a] flex items-center justify-center ${
-            isSelected
+            isLocked && !isSelected
+              ? "border-white/5 opacity-50 grayscale"
+              : isSelected
               ? "border-[#ffd700] ring-4 ring-[#ffd700]/30 shadow-lg shadow-[#ffd700]/20 scale-105"
               : isWinner
               ? "border-emerald-400 ring-2 ring-emerald-500/20"
+              : isLoser
+              ? "border-transparent"
+              : disabledInteraction
+              ? "border-white/5"
               : "border-white/10 group-hover:border-white/30"
           }`}
         >
           {team.flag ? (
-            <img src={team.flag} alt={team.code} className="w-full h-full object-cover animate-fade-in" />
+            <img 
+              src={team.flag} 
+              alt={team.code} 
+              className={`w-full h-full object-cover animate-fade-in transition-all duration-300 ${isLoser ? "brightness-50 grayscale group-hover:brightness-90 group-hover:grayscale-0" : ""}`} 
+            />
           ) : (
-            <span className="text-white font-black text-[10px]">{team.code}</span>
+            <span className={`text-white font-black text-[10px] transition-all duration-300 ${isLoser ? "opacity-40" : ""}`}>{team.code}</span>
           )}
 
           {isSelected && (
@@ -326,23 +396,37 @@ function OracleBracketCircleMatch({ game, savingMatchId, handleSavePredictionDir
     );
   };
 
-  const correctPrediction = (homePredicted && homeWon) || (awayPredicted && awayWon);
+  const correctPrediction = isOracleMode
+    ? (isFinished && !!oracleWinner && oracleWinner !== "TBD" && ((homeWon && oracleWinner === (oracleHomeTeam?.code || game.homeTeam?.code)) || (awayWon && oracleWinner === (oracleAwayTeam?.code || game.awayTeam?.code))))
+    : ((homePredicted && homeWon) || (awayPredicted && awayWon));
 
   return (
     <div className="flex flex-col items-center bg-black/25 border border-white/5 rounded-2xl p-2 px-3.5 hover:border-[#ffd700]/10 transition-all duration-300 w-20 shrink-0 relative select-none">
+      {isFinished && isOracleMode && oracleWinner && oracleWinner !== "TBD" && (
+        <div className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg border absolute -top-2 -right-2 shadow-lg z-30 ${
+          correctPrediction
+            ? "text-emerald-900 border-emerald-500 bg-emerald-400"
+            : "text-red-100 border-red-500/50 bg-red-500/80"
+        }`}>
+          {correctPrediction ? "+5" : "0"}
+        </div>
+      )}
+
       {renderTeamCircle(true)}
 
       <div className="my-1.5 flex flex-col items-center relative z-10">
         <div className="w-0.5 h-3 bg-white/10" />
         {isFinished || isLive ? (
-          <div className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border leading-none -my-1 whitespace-nowrap bg-black z-20 ${
-            isLive
-              ? "text-emerald-400 border-emerald-500/30 animate-pulse shadow-sm shadow-emerald-500/10"
-              : correctPrediction
-              ? "text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
-              : "text-red-400 border-red-500/30"
-          }`}>
-            {game.realHomeScore}-{game.realAwayScore}
+          <div className="flex flex-col items-center relative z-20">
+            <div className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border leading-none -my-1 whitespace-nowrap bg-black relative z-10 ${
+              isLive
+                ? "text-emerald-400 border-emerald-500/30 animate-pulse shadow-sm shadow-emerald-500/10"
+                : correctPrediction
+                ? "text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
+                : "text-red-400 border-red-500/30 bg-red-500/10"
+            }`}>
+              {game.homePenalties != null ? `(${game.homePenalties}) ` : ""}{game.realHomeScore}-{game.realAwayScore}{game.awayPenalties != null ? ` (${game.awayPenalties})` : ""}
+            </div>
           </div>
         ) : (
           <div className="text-[7px] font-black text-white/30 tracking-widest uppercase bg-black px-1 rounded-full border border-white/5 -my-1 z-20">
@@ -351,7 +435,7 @@ function OracleBracketCircleMatch({ game, savingMatchId, handleSavePredictionDir
         )}
         <div className="w-0.5 h-3 bg-white/10" />
 
-        {isFinished && game.predictedHomeScore !== null && (
+        {isFinished && !isOracleMode && game.predictedHomeScore !== null && (
           <div className="absolute -right-12 top-1/2 -translate-y-1/2 z-20 animate-bounce">
             <span className={`text-[8px] px-1 py-0.5 rounded font-black border leading-none ${
               correctPrediction
@@ -386,10 +470,21 @@ export default function GroupDetailsPage() {
   const [savingOracle, setSavingOracle] = useState(false);
   const [oracleMessage, setOracleMessage] = useState<string | null>(null);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
+  const [nextMatchIsKnockout, setNextMatchIsKnockout] = useState(false);
   const [draggedItem, setDraggedItem] = useState<{ groupName: string; index: number } | null>(null);
   const [oracleSubTab, setOracleSubTab] = useState<"classificacoes" | "premiacoes">("classificacoes");
   const [classificationsSubTab, setClassificationsSubTab] = useState<"grupos" | "matamata">("grupos");
+  const [oracleKnockout, setOracleKnockout] = useState<Record<string, string>>({});
+  const [knockoutDeadlines, setKnockoutDeadlines] = useState<Record<string, string>>({});
   const [bracketRound, setBracketRound] = useState<"all" | "r32" | "r16" | "r8" | "r4" | "r2">("all");
+
+  useEffect(() => {
+    if (isGroupStageFinished || nextMatchIsKnockout) {
+      setBolaoCategory("MATA_MATA");
+      setBolaoSelectedGroup("ALL_MATA_MATA");
+      setClassificationsSubTab("matamata");
+    }
+  }, [isGroupStageFinished, nextMatchIsKnockout]);
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [topScorer, setTopScorer] = useState("");
   const [assistLeader, setAssistLeader] = useState("");
@@ -447,6 +542,152 @@ export default function GroupDetailsPage() {
       }
     }
   }, [bolaoSelectedGroup, bolaoCategory, activeTab]);
+
+  const getStageLevel = (stage: string) => {
+    if (!stage) return 0;
+    if (stage === "Dezesseisavos de Final") return 1;
+    if (stage === "Oitavas de Final") return 2;
+    if (stage === "Quartas de Final") return 3;
+    if (stage === "Semifinais" || stage.startsWith("Semifinal")) return 4;
+    if (stage === "Final" || stage.startsWith("Terceiro") || stage.startsWith("Disputa")) return 5;
+    return 0;
+  };
+
+  const handleOracleKnockoutSelect = async (matchId: string, teamCode: string) => {
+    const oldTeamCode = oracleKnockout[matchId];
+    let newKnockout = { ...oracleKnockout };
+
+    // Se houver substituição de time, devemos atualizar as escolhas futuras (propagação)
+    if (oldTeamCode && oldTeamCode !== teamCode) {
+      const changedGame = games.find(g => g.id === matchId);
+      const matchLevel = getStageLevel(changedGame?.stage || "");
+
+      Object.keys(newKnockout).forEach(k => {
+        if (k !== matchId) {
+          const gameK = games.find(g => g.id === k);
+          const kLevel = getStageLevel(gameK?.stage || "");
+          
+          // Somente propagar para fases futuras para evitar reverter fases passadas
+          if (kLevel > matchLevel) {
+            if (newKnockout[k] === oldTeamCode) {
+              newKnockout[k] = teamCode;
+            }
+          }
+        }
+      });
+    }
+
+    newKnockout[matchId] = teamCode;
+    setOracleKnockout(newKnockout);
+
+    setSavingMatchId(matchId);
+    try {
+      const payload = Object.keys(oracleGroups).map((gName) => ({
+        groupName: gName,
+        teamOrder: oracleGroups[gName].map((t) => t.code),
+      }));
+      const knockoutPayload = Object.keys(newKnockout).map((mId) => ({
+        matchId: mId,
+        predictedWinner: newKnockout[mId],
+      }));
+      await groupsApi.saveOraclePredictions(groupId, payload, knockoutPayload);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar palpite");
+    } finally {
+      setSavingMatchId(null);
+    }
+  };
+
+  const getOracleTeamForSlot = (
+    gameId: string, 
+    isHome: boolean, 
+    roundGames: MatchPredictionData[], 
+    parentRoundGames: MatchPredictionData[]
+  ) => {
+    const game = games.find(g => g.id === gameId);
+    if (!game) return null;
+    
+    let parentGameId = null;
+    const fallback = isHome ? game.homeTeamFallback : game.awayTeamFallback;
+    if (fallback) {
+      const match = fallback.match(/^(Vencedor|Perdedor) do jogo (\d+)$/);
+      if (match) {
+        const matchNumber = parseInt(match[2], 10);
+        const parentMatch = games.find(g => g.matchNumber === matchNumber);
+        if (parentMatch) {
+          parentGameId = parentMatch.id;
+        }
+      }
+    }
+
+    if (!parentGameId) {
+      const index = roundGames.findIndex(g => g.id === gameId);
+      if (index !== -1) {
+        const parentGame = parentRoundGames[index * 2 + (isHome ? 0 : 1)];
+        if (parentGame) parentGameId = parentGame.id;
+      }
+    }
+
+    if (!parentGameId) return null;
+
+    const winnerCode = oracleKnockout[parentGameId];
+    if (!winnerCode) return null;
+
+    for (const g of games) {
+      if (g.homeTeam?.code === winnerCode || g.homeTeam?.name === winnerCode || `TBD_${g.id}_HOME` === winnerCode) {
+        return { ...g.homeTeam, code: winnerCode };
+      }
+      if (g.awayTeam?.code === winnerCode || g.awayTeam?.name === winnerCode || `TBD_${g.id}_AWAY` === winnerCode) {
+        return { ...g.awayTeam, code: winnerCode };
+      }
+    }
+    return { code: winnerCode, name: winnerCode, flag: teams[winnerCode] || null };
+  };
+
+  const getOracleLoserForSlot = (
+    gameId: string, 
+    isHome: boolean, 
+    roundGames: MatchPredictionData[], 
+    parentRoundGames: MatchPredictionData[],
+    grandparentRoundGames: MatchPredictionData[]
+  ) => {
+    const game = games.find(g => g.id === gameId);
+    if (!game) return null;
+
+    let parentGameId = null;
+    const fallback = isHome ? game.homeTeamFallback : game.awayTeamFallback;
+    if (fallback) {
+      const match = fallback.match(/^(Vencedor|Perdedor) do jogo (\d+)$/);
+      if (match) {
+        const matchNumber = parseInt(match[2], 10);
+        const parentMatch = games.find(g => g.matchNumber === matchNumber);
+        if (parentMatch) {
+          parentGameId = parentMatch.id;
+        }
+      }
+    }
+
+    if (!parentGameId) {
+      const index = roundGames.findIndex(g => g.id === gameId);
+      if (index !== -1) {
+        const parentGame = parentRoundGames[index * 2 + (isHome ? 0 : 1)];
+        if (parentGame) parentGameId = parentGame.id;
+      }
+    }
+
+    if (!parentGameId) return null;
+
+    const winnerCode = oracleKnockout[parentGameId];
+    if (!winnerCode) return null;
+
+    const homeTeamOfParent = getOracleTeamForSlot(parentGameId, true, parentRoundGames, grandparentRoundGames);
+    const awayTeamOfParent = getOracleTeamForSlot(parentGameId, false, parentRoundGames, grandparentRoundGames);
+
+    if (homeTeamOfParent?.code === winnerCode) return awayTeamOfParent;
+    if (awayTeamOfParent?.code === winnerCode) return homeTeamOfParent;
+
+    return null;
+  };
 
   // Reset pagination when selected group filter changes
   useEffect(() => {
@@ -588,7 +829,9 @@ export default function GroupDetailsPage() {
       try {
         const data = await groupsApi.getOraclePredictions(groupId);
         setOracleGroups(data.groups);
+        setOracleKnockout(data.knockoutPredictions || {});
         setIsGroupStageFinished(data.isGroupStageFinished || false);
+        setKnockoutDeadlines(data.knockoutDeadlines || {});
       } catch (err) {
         console.error("Erro ao carregar oráculo:", err);
       }
@@ -603,6 +846,9 @@ export default function GroupDetailsPage() {
         // Ordena de forma estritamente crescente em relação a data e horário
         allMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setGames(allMatches);
+
+        const nextMatch = allMatches.find(m => m.status !== "FINISHED");
+        setNextMatchIsKnockout(Boolean(nextMatch && !nextMatch.stage.startsWith("Grupo")));
 
         const initialScores: Record<string, { home: string; away: string }> = {};
         allMatches.forEach((m) => {
@@ -787,26 +1033,31 @@ export default function GroupDetailsPage() {
     return sorted[0];
   })();
 
-  const isOracleClosed = firstGroupMatch
-    ? (new Date() >= new Date(firstGroupMatch.date) || firstGroupMatch.status !== "PENDING")
-    : false;
+  // Prazos distintos para o Oráculo
+  const oracleGroupsDeadline = new Date("2026-06-11T16:00:00-03:00");
+  const oracleKnockoutDeadline = new Date("2026-06-28T16:00:00-03:00");
+  
+  const isOracleGroupsClosed = new Date() >= oracleGroupsDeadline;
+  const isOracleKnockoutClosed = new Date() >= oracleKnockoutDeadline;
 
-  const firstGroupMatchDate = firstGroupMatch ? new Date(firstGroupMatch.date) : null;
+  // O fechamento geral do Oráculo depende da aba selecionada
+  const isOracleClosed = classificationsSubTab === "grupos" 
+    ? isOracleGroupsClosed 
+    : isOracleKnockoutClosed;
 
-  const formattedFirstMatchDate = firstGroupMatchDate 
-    ? firstGroupMatchDate.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
-    : "";
+  const activeDeadlineDate = classificationsSubTab === "grupos"
+    ? oracleGroupsDeadline
+    : oracleKnockoutDeadline;
+
+  const formattedFirstMatchDate = activeDeadlineDate.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
   // Flag informando quantos dias restam ou se já encerrou para palpitar no Oráculo
   const oracleDeadlineText = (() => {
     if (isOracleClosed) {
       return { text: "Encerrado", color: "text-red-400 bg-red-500/10 border-red-500/20" };
     }
-    if (!firstGroupMatchDate) {
-      return { text: "Aberto", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
-    }
     const now = new Date();
-    const diffMs = firstGroupMatchDate.getTime() - now.getTime();
+    const diffMs = activeDeadlineDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     
     if (diffDays > 1) {
@@ -824,6 +1075,8 @@ export default function GroupDetailsPage() {
 
   // Ordenação dos participantes do grupo pelos pontos reais acumulados
   const rankedMembers = [...group.members].sort((a, b) => (b.points || 0) - (a.points || 0));
+  const rankedMembersBolao = [...group.members].sort((a, b) => (b.matchPoints || 0) - (a.matchPoints || 0));
+  const rankedMembersOracle = [...group.members].sort((a, b) => (b.oraclePoints || 0) - (a.oraclePoints || 0));
 
   // Tabela real da fase de grupos (mesmos critérios da Visão Geral) para repescagem dos 3ºs
   const realStandingsByGroup = (() => {
@@ -930,7 +1183,94 @@ export default function GroupDetailsPage() {
     };
   })();
 
+  const realGroupsData = (() => {
+    const data: Record<string, any[]> = {};
+    Object.keys(realStandingsByGroup).forEach(groupName => {
+      const teams = Object.values(realStandingsByGroup[groupName]);
+      teams.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.gd !== a.gd) return b.gd - a.gd;
+        if (b.gf !== a.gf) return b.gf - a.gf;
+        return a.name.localeCompare(b.name);
+      });
+      data[groupName] = teams.map(t => {
+        const code = Object.keys(realStandingsByGroup[groupName]).find(k => realStandingsByGroup[groupName][k].name === t.name);
+        const flag = games.find(g => g.homeTeam?.code === code)?.homeTeam?.flag || games.find(g => g.awayTeam?.code === code)?.awayTeam?.flag || null;
+        return { code, name: t.name, flag }; 
+      });
+    });
+    return data;
+  })();
+
+  const realBest8Thirds = (() => {
+    if (Object.keys(realStandingsByGroup).length === 0) return { rankedBestThirds: [] };
+    const thirdCandidates: any[] = [];
+    Object.keys(realGroupsData).forEach(groupName => {
+      const third = realGroupsData[groupName]?.[2];
+      if (third) {
+        const stats = realStandingsByGroup[groupName]?.[third.code];
+        thirdCandidates.push({
+          ...third,
+          groupName,
+          points: stats?.points || 0,
+          gd: stats?.gd || 0,
+          gf: stats?.gf || 0,
+        });
+      }
+    });
+    thirdCandidates.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.gd !== a.gd) return b.gd - a.gd;
+      if (b.gf !== a.gf) return b.gf - a.gf;
+      return a.name.localeCompare(b.name);
+    });
+    return { rankedBestThirds: thirdCandidates.slice(0, 8) };
+  })();
+
   const isCopiaCola = group.pixKey?.trim().startsWith("000201");
+
+  const resolvedGames = (() => {
+    if (!realBest8Thirds.rankedBestThirds.length || Object.keys(realGroupsData).length === 0) return games;
+    
+    // Copy the set so we don't mutate the memoized one
+    const availableThirds = new Set(realBest8Thirds.rankedBestThirds.map((t: any) => t.groupName));
+    
+    const resolveRealRoundOf32Team = (teamName: string) => {
+      if (!teamName || !realGroupsData) return null;
+      const match = teamName.match(/([1-3])º Grupo ([A-L](?:\/[A-L])*)/);
+      if (!match) return null;
+      const position = parseInt(match[1]);
+      const groupsString = match[2];
+      if (groupsString.includes('/')) {
+        const groupLetters = groupsString.split('/');
+        for (const letter of groupLetters) {
+          if (availableThirds.has(letter)) {
+            availableThirds.delete(letter);
+            const team = realGroupsData[letter]?.[position - 1];
+            return team ? { ...team, name: `${team.name} (3º Grp ${letter})` } : null;
+          }
+        }
+        return null;
+      } else {
+        return realGroupsData[groupsString]?.[position - 1] || null;
+      }
+    };
+    
+    return games.map(game => {
+      if (game.stage === "Dezesseisavos de Final") {
+        const resolvedHome = resolveRealRoundOf32Team(game.homeTeam?.name || "");
+        const resolvedAway = resolveRealRoundOf32Team(game.awayTeam?.name || "");
+        return {
+          ...game,
+          _originalHomeTeamName: game.homeTeam?.name,
+          _originalAwayTeamName: game.awayTeam?.name,
+          homeTeam: resolvedHome || game.homeTeam,
+          awayTeam: resolvedAway || game.awayTeam
+        };
+      }
+      return game;
+    });
+  })();
 
   return (
     <>
@@ -990,7 +1330,8 @@ export default function GroupDetailsPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="grid grid-cols-4 p-1 bg-black/20 rounded-xl backdrop-blur-md border border-white/5 max-w-xl mx-auto md:mx-0 relative">
+      <div className="w-full overflow-x-auto copa-scrollbar pb-2 mb-4 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 md:mb-0 md:overflow-visible">
+        <div className="grid grid-cols-4 min-w-[500px] md:min-w-0 p-1 bg-black/20 rounded-xl backdrop-blur-md border border-white/5 max-w-xl mx-auto md:mx-0 relative">
         <button
           onClick={() => setActiveTab("geral")}
           className={`flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all relative z-10 ${
@@ -1039,6 +1380,7 @@ export default function GroupDetailsPage() {
                  : "calc(75% + 0.25rem)" 
           }}
         />
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -1082,7 +1424,8 @@ export default function GroupDetailsPage() {
                   ) : (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {paginatedGames.map((game) => {
+                        {paginatedGames.map((g) => {
+                          const game = resolvedGames.find(rg => rg.id === g.id) || g;
                           const isFinished = game.status === "FINISHED";
                           const isLive = game.status === "LIVE";
                           const gameDate = new Date(game.date);
@@ -1157,10 +1500,17 @@ export default function GroupDetailsPage() {
 
                                 <div className="flex items-center gap-2 px-2.5 py-1 bg-black/40 rounded-lg border border-white/5 font-extrabold text-xs shrink-0">
                                   {isFinished || isLive ? (
-                                    <div className="flex items-center gap-2">
-                                      <span className={isLive ? "text-emerald-400 animate-pulse" : "text-white"}>{game.realHomeScore}</span>
-                                      <span className="text-white/30 text-xs">x</span>
-                                      <span className={isLive ? "text-emerald-400 animate-pulse" : "text-white"}>{game.realAwayScore}</span>
+                                    <div className="flex flex-col items-center gap-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className={isLive ? "text-emerald-400 animate-pulse" : "text-white"}>{game.realHomeScore}</span>
+                                        <span className="text-white/30 text-xs">x</span>
+                                        <span className={isLive ? "text-emerald-400 animate-pulse" : "text-white"}>{game.realAwayScore}</span>
+                                      </div>
+                                      {game.homePenalties != null && game.awayPenalties != null && (
+                                        <span className="text-[8px] font-bold text-white/50 tracking-wider">
+                                          (Pên: {game.homePenalties} - {game.awayPenalties})
+                                        </span>
+                                      )}
                                     </div>
                                   ) : (
                                     <div className="flex items-center justify-center p-0.5" title="Aguardando início do jogo">
@@ -1454,7 +1804,8 @@ export default function GroupDetailsPage() {
                   ) : (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {paginatedBolaoGames.map((game) => {
+                        {paginatedBolaoGames.map((g) => {
+                          const game = resolvedGames.find(rg => rg.id === g.id) || g;
                           const isFinished = game.status === "FINISHED";
                           const isLive = game.status === "LIVE";
                           const gameDate = new Date(game.date);
@@ -1547,6 +1898,11 @@ export default function GroupDetailsPage() {
                                           <span className="text-[10px] text-white/35 italic">Sem palpite</span>
                                         )}
                                       </div>
+                                      {(isFinished || isLive) && game.homePenalties != null && game.awayPenalties != null && (
+                                        <span className="text-[9px] font-bold text-white/50 tracking-wider -mt-1 mb-1">
+                                          (Pên: {game.homePenalties} - {game.awayPenalties})
+                                        </span>
+                                      )}
                                       {(isFinished || isLive) && game.predictedHomeScore !== null && (
                                         <div className="flex flex-col items-center gap-1 mt-1">
                                           <span className="text-[8px] text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 px-1.5 py-0.5 rounded font-semibold">
@@ -1793,7 +2149,6 @@ export default function GroupDetailsPage() {
                         Fase de Grupos
                       </button>
                       <div className="relative group">
-                        {isGroupStageFinished ? (
                           <button
                             onClick={() => setClassificationsSubTab("matamata")}
                             className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -1804,22 +2159,6 @@ export default function GroupDetailsPage() {
                           >
                             Mata-Mata
                           </button>
-                        ) : (
-                          <>
-                            <button
-                              disabled
-                              type="button"
-                              className="px-4 py-1.5 rounded-lg text-xs font-bold text-white/35 cursor-not-allowed select-none transition-all"
-                            >
-                              Mata-Mata
-                            </button>
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 scale-95 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 bg-[#0a0a0a] border border-white/15 text-white text-[11px] font-medium p-2.5 rounded-xl shadow-2xl text-center z-50 backdrop-blur-md">
-                              O mata-mata estará habilitado quando a fase de grupos for encerrada.
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#0a0a0a]" />
-                            </div>
-                          </>
-                        )}
                       </div>
                     </div>
 
@@ -2044,7 +2383,11 @@ export default function GroupDetailsPage() {
                                   groupName: gName,
                                   teamOrder: oracleGroups[gName].map((t) => t.code),
                                 }));
-                                await groupsApi.saveOraclePredictions(groupId, payload);
+                                const knockoutPayload = Object.keys(oracleKnockout).map((matchId) => ({
+                                  matchId,
+                                  predictedWinner: oracleKnockout[matchId],
+                                }));
+                                await groupsApi.saveOraclePredictions(groupId, payload, knockoutPayload);
                                 setOracleMessage("Palpites salvos com sucesso!");
                                 setTimeout(() => setOracleMessage(null), 5000);
                               } catch (err: any) {
@@ -2073,7 +2416,48 @@ export default function GroupDetailsPage() {
                     )}
                   </>
                     ) : (() => {
-                  const knockoutMatches = games.filter((g) => !g.stage.startsWith("Fase de Grupos"));
+                  const resolveRoundOf32Team = (teamName: string, availableThirds: Set<string>) => {
+                    if (!teamName || !oracleGroups) return null;
+                    const match = teamName.match(/([1-3])º Grupo ([A-L](?:\/[A-L])*)/);
+                    if (!match) return null;
+                    const position = parseInt(match[1]);
+                    const groupsString = match[2];
+                    if (groupsString.includes('/')) {
+                      const groupLetters = groupsString.split('/');
+                      for (const letter of groupLetters) {
+                        if (availableThirds.has(letter)) {
+                          availableThirds.delete(letter);
+                          const team = oracleGroups[letter]?.[position - 1];
+                          return team ? { ...team, name: `${team.name} (3º Grp ${letter})` } : null;
+                        }
+                      }
+                      const fallbackLetter = Array.from(availableThirds)[0];
+                      if (fallbackLetter) {
+                        availableThirds.delete(fallbackLetter);
+                        const team = oracleGroups[fallbackLetter]?.[position - 1];
+                        return team ? { ...team, name: `${team.name} (3º Grp ${fallbackLetter})` } : null;
+                      }
+                      return null;
+                    } else {
+                      return oracleGroups[groupsString]?.[position - 1] || null;
+                    }
+                  };
+
+                  const r32Mappings = (() => {
+                    const mappings: Record<string, { home: any, away: any }> = {};
+                    if (!oracleGroups || Object.keys(oracleGroups).length === 0) return mappings;
+                    const availableThirds = new Set(rankedBestThirds.map(t => t.groupName));
+                    const r32Matches = resolvedGames.filter((m) => m.stage === "Dezesseisavos de Final");
+                    r32Matches.forEach(game => {
+                      mappings[game.id] = {
+                        home: resolveRoundOf32Team((game as any)._originalHomeTeamName || game.homeTeam?.name || "", availableThirds),
+                        away: resolveRoundOf32Team((game as any)._originalAwayTeamName || game.awayTeam?.name || "", availableThirds)
+                      };
+                    });
+                    return mappings;
+                  })();
+
+                  const knockoutMatches = resolvedGames.filter((g) => !g.stage.startsWith("Fase de Grupos"));
                   const r32 = knockoutMatches.filter((m) => m.stage === "Dezesseisavos de Final");
                   const r16 = knockoutMatches.filter((m) => m.stage === "Oitavas de Final");
                   const r8 = knockoutMatches.filter((m) => m.stage === "Quartas de Final");
@@ -2092,22 +2476,124 @@ export default function GroupDetailsPage() {
                   const selectedMatches = getSelectedMatches();
 
                   // Divisão em dois lados para visualização simétrica (Árvore de Copa do Mundo)
-                  const r32Left = r32.slice(0, 8);
-                  const r32Right = r32.slice(8, 16);
-                  const r16Left = r16.slice(0, 4);
-                  const r16Right = r16.slice(4, 8);
-                  const r8Left = r8.slice(0, 2);
-                  const r8Right = r8.slice(2, 4);
-                  const r4Left = r4.slice(0, 1);
-                  const r4Right = r4.slice(1, 2);
+                  const leftR32Order = [73, 76, 75, 78, 74, 77, 79, 80];
+                  const rightR32Order = [81, 82, 83, 84, 85, 86, 87, 88];
+                  const leftR16Order = [89, 90, 91, 92];
+                  const rightR16Order = [93, 94, 95, 96];
+                  const leftR8Order = [97, 98];
+                  const rightR8Order = [99, 100];
+                  const leftR4Order = [101];
+                  const rightR4Order = [102];
+
+                  const getMatchesByOrder = (pool: any[], order: number[]) => {
+                    return order.map(num => pool.find(m => m.matchNumber === num)).filter(Boolean) as MatchPredictionData[];
+                  };
+
+                  const r32Left = getMatchesByOrder(r32, leftR32Order);
+                  const r32Right = getMatchesByOrder(r32, rightR32Order);
+                  const r16Left = getMatchesByOrder(r16, leftR16Order);
+                  const r16Right = getMatchesByOrder(r16, rightR16Order);
+                  const r8Left = getMatchesByOrder(r8, leftR8Order);
+                  const r8Right = getMatchesByOrder(r8, rightR8Order);
+                  const r4Left = getMatchesByOrder(r4, leftR4Order);
+                  const r4Right = getMatchesByOrder(r4, rightR4Order);
                   const finalMatch = r2.find(m => m.stage === "Final");
                   const thirdMatch = r2.find(m => m.stage === "Terceiro Lugar" || m.stage === "Disputa do 3º Lugar");
 
+                  const handleResetKnockout = async () => {
+                    if (isOracleClosed) return;
+                    
+                    const newOracleKnockout: Record<string, string> = {};
+                    
+                    // Manter os jogos que já foram encerrados ou cuja fase está bloqueada
+                    const knockoutMatchesList = resolvedGames.filter((g) => !g.stage.startsWith("Fase de Grupos"));
+                    
+                    Object.keys(oracleKnockout).forEach((matchId) => {
+                      const matchInfo = knockoutMatchesList.find(m => m.id === matchId);
+                      if (matchInfo) {
+                        const deadlineDate = knockoutDeadlines[matchInfo.stage] ? new Date(knockoutDeadlines[matchInfo.stage]) : null;
+                        const isLocked = deadlineDate ? deadlineDate.getTime() <= Date.now() : false;
+                        const isFinished = matchInfo.status === "FINISHED";
+                        
+                        if (isLocked || isFinished) {
+                          newOracleKnockout[matchId] = oracleKnockout[matchId];
+                        }
+                      }
+                    });
+
+                    setOracleKnockout(newOracleKnockout);
+
+                    try {
+                      const payload = Object.keys(oracleGroups).map((gName) => ({
+                        groupName: gName,
+                        teamOrder: oracleGroups[gName].map((t) => t.code),
+                      }));
+                      await groupsApi.saveOraclePredictions(groupId, payload, [], true);
+                      toast.success("Árvore limpa com sucesso!");
+                    } catch (err: any) {
+                      toast.error(err.message || "Erro ao resetar palpites");
+                    }
+                  };
+
                   return (
                     <div className="space-y-4 animate-fade-in-up">
+                      {/* Prazos do Mata-Mata */}
+                      <div className="bg-[#0a0f1e]/80 border border-[#ffd700]/20 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                          <Clock className="w-24 h-24 text-[#ffd700]" />
+                        </div>
+                        <h3 className="text-[#ffd700] font-bold flex items-center gap-2 mb-2 text-sm sm:text-base">
+                          <Trophy className="w-4 h-4" /> Regras e Prazos do Mata-Mata
+                        </h3>
+                        <p className="text-white/70 text-xs mb-4">
+                          Você ganha <strong className="text-emerald-400">5 pontos</strong> por cada seleção que acertar que avançará de fase! 
+                          O Oráculo do mata-mata é bloqueado <strong>por fase</strong>. Assim que a primeira partida de uma fase começar, os palpites para todos os jogos dela são encerrados.
+                        </p>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                          {[
+                            { id: "Dezesseisavos de Final", label: "1/16 Final" },
+                            { id: "Oitavas de Final", label: "Oitavas" },
+                            { id: "Quartas de Final", label: "Quartas" },
+                            { id: "Semifinais", label: "Semifinais" },
+                            { id: "Terceiro Lugar", label: "3º Lugar" },
+                            { id: "Final", label: "Final" }
+                          ].map(stage => {
+                            const deadlineDate = knockoutDeadlines[stage.id] ? new Date(knockoutDeadlines[stage.id]) : null;
+                            const isLocked = deadlineDate ? deadlineDate.getTime() <= Date.now() : false;
+                            
+                            return (
+                              <div key={stage.id} className={`p-2 rounded-xl border flex flex-col items-center justify-center text-center gap-1 ${
+                                isLocked ? "bg-red-500/10 border-red-500/20" : "bg-emerald-500/10 border-emerald-500/20"
+                              }`}>
+                                <span className={`text-[10px] font-bold uppercase ${isLocked ? "text-red-400" : "text-emerald-400"}`}>
+                                  {stage.label}
+                                </span>
+                                {isLocked ? (
+                                  <span className="flex items-center gap-1 text-[9px] text-red-400/80">
+                                    <Lock className="w-3 h-3" /> Bloqueado
+                                  </span>
+                                ) : deadlineDate ? (
+                                  <div className="flex flex-col items-center">
+                                    <span className="flex items-center gap-1 text-[9px] text-emerald-400/80">
+                                      <Clock className="w-3 h-3" /> Aberto até
+                                    </span>
+                                    <span className="text-[9px] text-white/60 font-medium">
+                                      {deadlineDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às {deadlineDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-[9px] text-white/40">Indefinida</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       {/* Navegação entre as fases do chaveamento */}
                       <div className="flex flex-col sm:flex-row gap-3 bg-black/20 p-3 rounded-2xl border border-white/5 items-center justify-between">
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex overflow-x-auto whitespace-nowrap copa-scrollbar gap-1.5 w-full sm:w-auto pb-1 sm:pb-0">
                           <button
                             onClick={() => setBracketRound("all")}
                             className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
@@ -2156,16 +2642,24 @@ export default function GroupDetailsPage() {
                           >
                             Finais
                           </button>
+                          <button
+                            onClick={handleResetKnockout}
+                            disabled={isOracleClosed}
+                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ml-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed`}
+                            title="Limpar todos os palpites do mata-mata"
+                          >
+                            Resetar
+                          </button>
                         </div>
                         <span className="text-[10px] text-white/40 italic flex items-center gap-1">
-                          ✨ Selecione clicando na bandeira do time que vai avançar
+                        Selecione clicando na bandeira da seleção que vai avançar
                         </span>
                       </div>
 
                       {/* Exibição da Árvore Symmetrical ou Grade Focada */}
                       {bracketRound === "all" ? (
-                        <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 justify-start lg:justify-center items-stretch scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent min-w-full">
-                          <div className="flex gap-4 md:gap-6 items-stretch py-2 min-w-[1300px] justify-center mx-auto">
+                        <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 justify-start lg:justify-center items-stretch copa-scrollbar w-full">
+                          <div className="flex gap-4 md:gap-6 items-stretch py-2 min-w-[1200px] md:min-w-[1300px] justify-center mx-auto px-4 md:px-0">
                             {/* COLUNA 1: Dezesseisavos (Lado Esquerdo) */}
                             <div className="flex flex-col gap-2 w-20">
                               <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
@@ -2175,7 +2669,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={r32Mappings[game.id]?.home}
+                                    oracleAwayTeam={r32Mappings[game.id]?.away}
+                                    isLocked={knockoutDeadlines["Dezesseisavos de Final"] ? new Date(knockoutDeadlines["Dezesseisavos de Final"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2190,7 +2689,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={getOracleTeamForSlot(game.id, true, r16Left, r32Left)}
+                                    oracleAwayTeam={getOracleTeamForSlot(game.id, false, r16Left, r32Left)}
+                                    isLocked={knockoutDeadlines["Oitavas de Final"] ? new Date(knockoutDeadlines["Oitavas de Final"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2205,7 +2709,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={getOracleTeamForSlot(game.id, true, r8Left, r16Left)}
+                                    oracleAwayTeam={getOracleTeamForSlot(game.id, false, r8Left, r16Left)}
+                                    isLocked={knockoutDeadlines["Quartas de Final"] ? new Date(knockoutDeadlines["Quartas de Final"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2220,7 +2729,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={getOracleTeamForSlot(game.id, true, r4Left, r8Left)}
+                                    oracleAwayTeam={getOracleTeamForSlot(game.id, false, r4Left, r8Left)}
+                                    isLocked={knockoutDeadlines["Semifinais"] ? new Date(knockoutDeadlines["Semifinais"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2230,16 +2744,21 @@ export default function GroupDetailsPage() {
                             <div className="flex flex-col gap-4 justify-center items-center px-4 min-w-[210px] bg-black/10 border border-white/5 rounded-3xl relative overflow-hidden py-6">
                               <div className="absolute inset-0 bg-gradient-to-b from-[#ffd700]/5 to-transparent pointer-events-none" />
                               
-                              {/* Campeão / Grande Final */}
+                              {/* Campeão / Final */}
                               <div className="flex flex-col items-center gap-2">
                                 <span className="text-[9px] font-black uppercase text-[#ffd700] tracking-widest bg-[#ffd700]/10 border border-[#ffd700]/25 px-2.5 py-1 rounded-full shadow-sm">
-                                  🏆 Grande Final
+                                  🏆 Final
                                 </span>
                                 {finalMatch ? (
                                   <OracleBracketCircleMatch
                                     game={finalMatch}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[finalMatch.id]}
+                                    oracleHomeTeam={getOracleTeamForSlot(finalMatch.id, true, [finalMatch], [...r4Left, ...r4Right])}
+                                    oracleAwayTeam={getOracleTeamForSlot(finalMatch.id, false, [finalMatch], [...r4Left, ...r4Right])}
+                                    isLocked={knockoutDeadlines["Final"] ? new Date(knockoutDeadlines["Final"]).getTime() <= Date.now() : false}
                                   />
                                 ) : (
                                   <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
@@ -2257,7 +2776,12 @@ export default function GroupDetailsPage() {
                                   <OracleBracketCircleMatch
                                     game={thirdMatch}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[thirdMatch.id]}
+                                    oracleHomeTeam={getOracleLoserForSlot(thirdMatch.id, true, [thirdMatch], [...r4Left, ...r4Right], [...r8Left, ...r8Right])}
+                                    oracleAwayTeam={getOracleLoserForSlot(thirdMatch.id, false, [thirdMatch], [...r4Left, ...r4Right], [...r8Left, ...r8Right])}
+                                    isLocked={knockoutDeadlines["Terceiro Lugar"] ? new Date(knockoutDeadlines["Terceiro Lugar"]).getTime() <= Date.now() : false}
                                   />
                                 ) : (
                                   <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
@@ -2276,7 +2800,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={getOracleTeamForSlot(game.id, true, r4Right, r8Right)}
+                                    oracleAwayTeam={getOracleTeamForSlot(game.id, false, r4Right, r8Right)}
+                                    isLocked={knockoutDeadlines["Semifinais"] ? new Date(knockoutDeadlines["Semifinais"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2291,7 +2820,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={getOracleTeamForSlot(game.id, true, r8Right, r16Right)}
+                                    oracleAwayTeam={getOracleTeamForSlot(game.id, false, r8Right, r16Right)}
+                                    isLocked={knockoutDeadlines["Quartas de Final"] ? new Date(knockoutDeadlines["Quartas de Final"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2306,7 +2840,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={getOracleTeamForSlot(game.id, true, r16Right, r32Right)}
+                                    oracleAwayTeam={getOracleTeamForSlot(game.id, false, r16Right, r32Right)}
+                                    isLocked={knockoutDeadlines["Oitavas de Final"] ? new Date(knockoutDeadlines["Oitavas de Final"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2321,7 +2860,12 @@ export default function GroupDetailsPage() {
                                     key={game.id}
                                     game={game}
                                     savingMatchId={savingMatchId}
-                                    handleSavePredictionDirect={handleSavePredictionDirect}
+                                    isOracleMode={true}
+                                    onOracleSelect={handleOracleKnockoutSelect}
+                                    oracleWinner={oracleKnockout[game.id]}
+                                    oracleHomeTeam={r32Mappings[game.id]?.home}
+                                    oracleAwayTeam={r32Mappings[game.id]?.away}
+                                    isLocked={knockoutDeadlines["Dezesseisavos de Final"] ? new Date(knockoutDeadlines["Dezesseisavos de Final"]).getTime() <= Date.now() : false}
                                   />
                                 ))}
                               </div>
@@ -2330,18 +2874,53 @@ export default function GroupDetailsPage() {
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 justify-items-center pt-2">
-                          {selectedMatches.map((game) => (
-                            <div key={game.id} className="flex flex-col items-center gap-1.5 p-2 bg-black/10 border border-white/5 rounded-2xl">
-                              <span className="text-[8px] font-black text-white/30 uppercase truncate max-w-[80px]">
-                                {game.stage?.replace("Dezesseisavos", "1/16").replace(" de Final", "")}
-                              </span>
-                              <OracleBracketCircleMatch
-                                game={game}
-                                savingMatchId={savingMatchId}
-                                handleSavePredictionDirect={handleSavePredictionDirect}
-                              />
-                            </div>
-                          ))}
+                          {selectedMatches.map((game) => {
+                            const resolveOracleTeamForGame = (g: MatchPredictionData, isHome: boolean) => {
+                              if (g.stage === "Dezesseisavos de Final") {
+                                return isHome ? r32Mappings[g.id]?.home : r32Mappings[g.id]?.away;
+                              }
+                              if (g.stage === "Oitavas de Final") {
+                                return r16Left.find(m => m.id === g.id) 
+                                  ? getOracleTeamForSlot(g.id, isHome, r16Left, r32Left) 
+                                  : getOracleTeamForSlot(g.id, isHome, r16Right, r32Right);
+                              }
+                              if (g.stage === "Quartas de Final") {
+                                return r8Left.find(m => m.id === g.id) 
+                                  ? getOracleTeamForSlot(g.id, isHome, r8Left, r16Left) 
+                                  : getOracleTeamForSlot(g.id, isHome, r8Right, r16Right);
+                              }
+                              if (g.stage === "Semifinais" || g.stage === "Semifinal") {
+                                return r4Left.find(m => m.id === g.id) 
+                                  ? getOracleTeamForSlot(g.id, isHome, r4Left, r8Left) 
+                                  : getOracleTeamForSlot(g.id, isHome, r4Right, r8Right);
+                              }
+                              if (g.stage === "Final") {
+                                return getOracleTeamForSlot(g.id, isHome, [finalMatch!], [...r4Left, ...r4Right]);
+                              }
+                              if (g.stage === "Terceiro Lugar" || g.stage === "Disputa do 3º Lugar") {
+                                return getOracleLoserForSlot(g.id, isHome, [thirdMatch!], [...r4Left, ...r4Right], [...r8Left, ...r8Right]);
+                              }
+                              return null;
+                            };
+
+                            return (
+                              <div key={game.id} className="flex flex-col items-center gap-1.5 p-2 bg-black/10 border border-white/5 rounded-2xl">
+                                <span className="text-[8px] font-black text-white/30 uppercase truncate max-w-[80px]">
+                                  {game.stage?.replace("Dezesseisavos", "1/16").replace(" de Final", "")}
+                                </span>
+                                <OracleBracketCircleMatch
+                                  game={game}
+                                  savingMatchId={savingMatchId}
+                                  isOracleMode={true}
+                                  onOracleSelect={handleOracleKnockoutSelect}
+                                  oracleWinner={oracleKnockout[game.id]}
+                                  oracleHomeTeam={resolveOracleTeamForGame(game, true)}
+                                  oracleAwayTeam={resolveOracleTeamForGame(game, false)}
+                                  isLocked={knockoutDeadlines[game.stage] ? new Date(knockoutDeadlines[game.stage]).getTime() <= Date.now() : false}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -2675,12 +3254,9 @@ export default function GroupDetailsPage() {
                   <div className="divide-y divide-white/5">
                     {[...(group?.members || [])]
                       .sort((a: any, b: any) => {
-                        const pointsA = a.points || 0;
-                        const pointsB = b.points || 0;
-                        if (pointsB !== pointsA) {
-                          return pointsB - pointsA;
-                        }
-                        return a.user.name.localeCompare(b.user.name);
+                        const dateA = new Date(a.joinedAt || 0).getTime();
+                        const dateB = new Date(b.joinedAt || 0).getTime();
+                        return dateA - dateB;
                       })
                       .map((member: any) => {
                         const isOwner = member.userId === group.ownerId;
@@ -2867,75 +3443,139 @@ export default function GroupDetailsPage() {
                 </div>
               </div>
 
-              {/* Classificação do Grupo / Leaderboard */}
-              <div className="auth-card p-5 border border-white/5 relative overflow-hidden bg-gradient-to-br from-[#0d2b1a]/40 via-black/20 to-black/30 animate-fade-in-up rounded-3xl shadow-xl shadow-black/10">
-                <div className="absolute top-0 right-0 p-4 opacity-5">
-                  <Trophy className="w-24 h-24 text-[#ffd700]" />
-                </div>
+              {/* Classificações do Grupo / Leaderboards (Bolão e Oráculo) */}
+              <div className="flex flex-col gap-4 lg:gap-6 w-full animate-fade-in-up">
                 
-                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-                  <div>
-                    <h3 className="text-sm font-black text-[#ffd700] flex items-center gap-2">
-                      <Medal className="w-4 h-4" /> Classificação do Grupo
-                    </h3>
-                    <p className="text-[10px] text-white/40 font-semibold mt-0.5">Membros classificados de acordo com os acertos</p>
+                {/* Ranking do Bolão */}
+                <div className="auth-card p-5 border border-white/5 relative overflow-hidden bg-gradient-to-br from-[#0d2b1a]/40 via-black/20 to-black/30 rounded-3xl shadow-xl shadow-black/10">
+                  <div className="absolute top-0 right-0 p-4 opacity-5">
+                    <Trophy className="w-24 h-24 text-[#ffd700]" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
+                    <div>
+                      <h3 className="text-sm font-black text-[#ffd700] flex items-center gap-2">
+                        <Medal className="w-4 h-4" /> Ranking Bolão
+                      </h3>
+                      <p className="text-[10px] text-white/40 font-semibold mt-0.5">Pontos dos jogos da Fase de Grupos</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 copa-scrollbar">
+                    {rankedMembersBolao.map((member, index) => {
+                      return (
+                        <div 
+                          key={`bolao-${member.id}`} 
+                          className={`flex items-center justify-between gap-2.5 p-2 px-3 rounded-xl transition-all ${
+                            index === 0 
+                              ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 border border-[#ffd700]/30 shadow-sm shadow-[#ffd700]/5" 
+                              : "hover:bg-white/5 bg-white/[0.02] border border-white/5"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {/* Position Badge */}
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 shadow-sm ${
+                              index === 0 ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_0_8px_rgba(255,215,0,0.3)]" : 
+                              index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-[#0d2b1a] shadow-[0_0_8px_rgba(200,200,200,0.3)]" : 
+                              index === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-[0_0_8px_rgba(180,83,9,0.3)]" : 
+                              "bg-white/5 text-white/50 border border-white/10"
+                            }`}>
+                              {index + 1}º
+                            </div>
+
+                            {/* Initials Avatar */}
+                            <div className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+                              {member.user.avatar ? (
+                                <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-[9px] font-black text-white">
+                                  {member.user.name.charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-black text-white truncate flex items-center gap-1">
+                                {member.user.name}
+                                {index === 0 && <Crown className="w-3.5 h-3.5 text-[#ffd700] animate-pulse" />}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0 flex items-center gap-1">
+                            <span className="text-xs font-black text-[#ffd700]">{member.matchPoints || 0}</span>
+                            <span className="text-[8px] text-white/40 uppercase font-black">pts</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 copa-scrollbar">
-                  {rankedMembers.map((member, index) => {
-                    const isOwner = member.userId === group.ownerId;
-                    return (
-                      <div 
-                        key={member.id} 
-                        className={`flex items-center justify-between gap-2.5 p-2 px-3 rounded-xl transition-all ${
-                          index === 0 
-                            ? "bg-gradient-to-r from-[#ffd700]/15 to-[#ffd700]/5 border border-[#ffd700]/30 shadow-sm shadow-[#ffd700]/5" 
-                            : "hover:bg-white/5 bg-white/[0.02] border border-white/5"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {/* Position Badge */}
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 shadow-sm ${
-                            index === 0 ? "bg-gradient-to-r from-[#ffd700] to-[#f5c800] text-[#0d2b1a] shadow-[0_0_8px_rgba(255,215,0,0.3)]" : 
-                            index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-[#0d2b1a] shadow-[0_0_8px_rgba(200,200,200,0.3)]" : 
-                            index === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-[0_0_8px_rgba(180,83,9,0.3)]" : 
-                            "bg-white/5 text-white/50 border border-white/10"
-                          }`}>
-                            {index + 1}º
+                {/* Ranking do Oráculo */}
+                <div className="auth-card p-5 border border-purple-500/10 relative overflow-hidden bg-gradient-to-br from-purple-900/20 via-black/20 to-black/30 rounded-3xl shadow-xl shadow-black/10">
+                  <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
+                    <Sparkles className="w-24 h-24 text-purple-400" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-4 border-b border-purple-500/10 pb-2">
+                    <div>
+                      <h3 className="text-sm font-black text-purple-400 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4" /> Ranking Oráculo
+                      </h3>
+                      <p className="text-[10px] text-white/40 font-semibold mt-0.5">Pontos do Mata-Mata e Premiações</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 copa-scrollbar">
+                    {rankedMembersOracle.map((member, index) => {
+                      return (
+                        <div 
+                          key={`oracle-${member.id}`} 
+                          className={`flex items-center justify-between gap-2.5 p-2 px-3 rounded-xl transition-all ${
+                            index === 0 
+                              ? "bg-gradient-to-r from-purple-500/15 to-purple-500/5 border border-purple-500/30 shadow-sm shadow-purple-500/5" 
+                              : "hover:bg-white/5 bg-white/[0.02] border border-white/5"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {/* Position Badge */}
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 shadow-sm ${
+                              index === 0 ? "bg-gradient-to-r from-purple-400 to-purple-600 text-white shadow-[0_0_8px_rgba(168,85,247,0.3)]" : 
+                              index === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-[#0d2b1a] shadow-[0_0_8px_rgba(200,200,200,0.3)]" : 
+                              index === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-[0_0_8px_rgba(180,83,9,0.3)]" : 
+                              "bg-white/5 text-white/50 border border-white/10"
+                            }`}>
+                              {index + 1}º
+                            </div>
+
+                            {/* Initials Avatar */}
+                            <div className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0 overflow-hidden">
+                              {member.user.avatar ? (
+                                <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-[9px] font-black text-white">
+                                  {member.user.name.charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-black text-white truncate flex items-center gap-1">
+                                {member.user.name}
+                                {index === 0 && <Crown className="w-3.5 h-3.5 text-purple-400 animate-pulse" />}
+                              </p>
+                            </div>
                           </div>
 
-                          {/* Initials Avatar */}
-                          <div className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0 overflow-hidden">
-                            {member.user.avatar ? (
-                              <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-[9px] font-black text-white">
-                                {member.user.name.charAt(0).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-black text-white truncate flex items-center gap-1">
-                              {member.user.name}
-                              {index === 0 && <Crown className="w-3.5 h-3.5 text-[#ffd700] animate-pulse" />}
-                            </p>
-                            <p className="text-[9px] text-white/40 mt-0.5">
-                              Bolão: <span className="text-white/60 font-bold">{member.matchPoints || 0} pts</span>
-                              {" • "}
-                              Oráculo: <span className="text-purple-400 font-bold">{member.oraclePoints || 0} pts</span>
-                            </p>
+                          <div className="text-right shrink-0 flex items-center gap-1">
+                            <span className="text-xs font-black text-purple-400">{member.oraclePoints || 0}</span>
+                            <span className="text-[8px] text-white/40 uppercase font-black">pts</span>
                           </div>
                         </div>
-
-                        <div className="text-right shrink-0 flex items-center gap-1">
-                          <span className="text-xs font-black text-[#ffd700]">{member.points || 0}</span>
-                          <span className="text-[8px] text-white/40 uppercase font-black">pts</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -3178,7 +3818,7 @@ export default function GroupDetailsPage() {
                           Posições Exatas (1º, 2º, 3º e 4º)
                         </p>
                         <p className="text-[11px] text-white/50 leading-normal pl-6">
-                          Você ganha <strong className="text-white font-bold">3 pontos</strong> para cada time que acertar a posição exata (1º, 2º, 3º ou 4º colocado) no grupo. Qualquer erro de colocação resultará em <strong className="text-white font-bold">0 pontos</strong>.
+                          Você ganha <strong className="text-white font-bold">3 pontos</strong> para cada time que acertar a posição exata (1º, 2º, 3º ou 4º colocado) no grupo.
                         </p>
                       </div>
                     </div>
@@ -3187,7 +3827,7 @@ export default function GroupDetailsPage() {
                     </div>
                   </>
                 )}
-              </div>
+                </div>
 
               {/* Regra Card */}
               {oracleSubTab !== "premiacoes" && classificationsSubTab !== "matamata" && (

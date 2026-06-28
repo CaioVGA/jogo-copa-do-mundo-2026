@@ -10,9 +10,7 @@ export class OracleService {
     private readonly redis: RedisService,
   ) {}
 
-  // ─── Buscar palpites e times agrupados ────────────────────────────────────
   async getOracleData(groupId: string, userId: string) {
-    // 1. Validar se o grupo existe e o usuário participa dele
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
       include: {
@@ -30,12 +28,12 @@ export class OracleService {
       throw new ForbiddenException('Você não faz parte deste grupo de bolão');
     }
 
-    // 2. Buscar todos os times que estão em grupos (A, B, C...)
     const teams = await this.prisma.team.findMany({
       where: {
         group: { not: null },
       },
       select: {
+        id: true,
         code: true,
         name: true,
         flag: true,
@@ -43,8 +41,14 @@ export class OracleService {
       },
     });
 
-    // 3. Buscar previsões já salvas pelo usuário neste grupo de bolão
     const savedPredictions = await this.prisma.oraclePrediction.findMany({
+      where: {
+        userId,
+        groupId,
+      },
+    });
+
+    const knockoutPredictionsRaw = await this.prisma.oracleKnockoutPrediction.findMany({
       where: {
         userId,
         groupId,
@@ -56,7 +60,11 @@ export class OracleService {
       predictionMap.set(p.groupName, p.teamOrder.split(','));
     });
 
-    // 4. Agrupar os times por grupo e aplicar a ordenação
+    const knockoutPredictions: Record<string, string> = {};
+    knockoutPredictionsRaw.forEach((kp) => {
+      knockoutPredictions[kp.matchId] = kp.predictedWinner;
+    });
+
     const grouped: Record<string, any[]> = {};
 
     teams.forEach((t) => {
@@ -67,26 +75,25 @@ export class OracleService {
       grouped[gName].push(t);
     });
 
-    // Ordenar cada grupo com base no palpite salvo, ou manter a ordem padrão se não houver palpite
     Object.keys(grouped).forEach((gName) => {
       const savedOrder = predictionMap.get(gName);
       if (savedOrder && savedOrder.length > 0) {
-        // Ordenar os times baseando-se no índice que ocupam na string de palpites
         grouped[gName].sort((a, b) => {
-          const indexA = savedOrder.indexOf(a.code);
-          const indexB = savedOrder.indexOf(b.code);
-          // Se algum time não estiver no palpite por segurança, vai pro fim
+          let indexA = savedOrder.indexOf(a.code);
+          if (indexA === -1) indexA = savedOrder.indexOf(a.id);
+          
+          let indexB = savedOrder.indexOf(b.code);
+          if (indexB === -1) indexB = savedOrder.indexOf(b.id);
+          
           const finalIndexA = indexA === -1 ? 99 : indexA;
           const finalIndexB = indexB === -1 ? 99 : indexB;
           return finalIndexA - finalIndexB;
         });
       } else {
-        // Sem palpites salvos: ordenar alfabeticamente
         grouped[gName].sort((a, b) => a.name.localeCompare(b.name));
       }
     });
 
-    // 5. Verificar se a fase de grupos terminou e calcular a classificação real
     const pendingGroupMatches = await this.prisma.match.count({
       where: {
         stage: { startsWith: 'Fase de Grupos' },
@@ -177,7 +184,6 @@ export class OracleService {
       });
     }
 
-    // 6. Enriquecer os times ordenados com as informações de pontuação real do Oráculo
     const enrichedGrouped: Record<string, any[]> = {};
     Object.keys(grouped).forEach((gName) => {
       const teamsList = grouped[gName];
@@ -203,16 +209,39 @@ export class OracleService {
       });
     });
 
+    const knockoutStages = [
+      'Dezesseisavos de Final',
+      'Oitavas de Final',
+      'Quartas de Final',
+      'Semifinais',
+      'Terceiro Lugar',
+      'Final'
+    ];
+    
+    const knockoutDeadlines: Record<string, string> = {};
+    const knockoutMatches = await this.prisma.match.findMany({
+      where: { stage: { in: knockoutStages } },
+      select: { stage: true, date: true },
+      orderBy: { date: 'asc' }
+    });
+
+    for (const stage of knockoutStages) {
+      const match = knockoutMatches.find(m => m.stage === stage);
+      if (match) {
+        knockoutDeadlines[stage] = match.date.toISOString();
+      }
+    }
+
     return {
       groups: enrichedGrouped,
-      hasPredictions: savedPredictions.length > 0,
+      hasPredictions: savedPredictions.length > 0 || knockoutPredictionsRaw.length > 0,
       isGroupStageFinished,
+      knockoutPredictions,
+      knockoutDeadlines,
     };
   }
 
-  // ─── Salvar palpites do Oráculo ──────────────────────────────────────────
   async saveOracleData(groupId: string, userId: string, dto: SaveOracleDto) {
-    // 1. Validar se o usuário é membro do grupo
     const membership = await this.prisma.groupMember.findUnique({
       where: {
         groupId_userId: { groupId, userId },
@@ -223,43 +252,138 @@ export class OracleService {
       throw new ForbiddenException('Você não faz parte deste grupo de bolão');
     }
 
-    // 1.5. Validar prazo de envio do Oráculo (até o início do primeiro jogo da fase de grupos)
+    const now = new Date();
+
+    // Buscando o primeiro jogo da fase de grupos
     const firstGroupMatch = await this.prisma.match.findFirst({
       where: { stage: { startsWith: 'Fase de Grupos' } },
       orderBy: { date: 'asc' },
     });
+    const oracleGroupsDeadline = firstGroupMatch ? new Date(firstGroupMatch.date) : new Date('2026-06-11T16:00:00-03:00');
 
-    if (firstGroupMatch) {
-      const now = new Date();
-      const firstMatchDate = new Date(firstGroupMatch.date);
-      if (now >= firstMatchDate || firstGroupMatch.status !== 'PENDING') {
-        throw new ForbiddenException('O Oráculo está fechado. Palpites só podiam ser enviados até o início do primeiro jogo da fase de grupos.');
+    // Buscando os deadlines de cada fase para validação granular
+    const knockoutStages = [
+      'Dezesseisavos de Final',
+      'Oitavas de Final',
+      'Quartas de Final',
+      'Semifinais',
+      'Terceiro Lugar',
+      'Final'
+    ];
+    
+    const knockoutDeadlines: Record<string, Date> = {};
+    const knockoutMatchesList = await this.prisma.match.findMany({
+      where: { stage: { in: knockoutStages } },
+      select: { stage: true, date: true },
+      orderBy: { date: 'asc' }
+    });
+
+    for (const stage of knockoutStages) {
+      const match = knockoutMatchesList.find(m => m.stage === stage);
+      if (match) {
+        knockoutDeadlines[stage] = new Date(match.date);
       }
     }
 
-    // 2. Gravar os palpites para cada grupo
-    for (const pred of dto.groupPredictions) {
-      if (!pred.groupName || !pred.teamOrder || pred.teamOrder.length === 0) {
-        continue;
-      }
+    const isGroupsClosed = now >= oracleGroupsDeadline;
 
-      await this.prisma.oraclePrediction.upsert({
-        where: {
-          userId_groupId_groupName: {
+    // Removemos o throw global de isKnockoutClosed para que seja validado por fase
+    // if (isGroupsClosed && isKnockoutClosed) {
+    //   throw new ForbiddenException('O Oráculo está totalmente fechado.');
+    // }
+
+    // 2. Gravar os palpites para cada grupo (apenas se o prazo de grupos estiver aberto)
+    if (!isGroupsClosed && dto.groupPredictions) {
+      for (const pred of dto.groupPredictions) {
+        if (!pred.groupName || !pred.teamOrder || pred.teamOrder.length === 0) {
+          continue;
+        }
+
+        await this.prisma.oraclePrediction.upsert({
+          where: {
+            userId_groupId_groupName: {
+              userId,
+              groupId,
+              groupName: pred.groupName,
+            },
+          },
+          update: {
+            teamOrder: pred.teamOrder.join(','),
+          },
+          create: {
             userId,
             groupId,
             groupName: pred.groupName,
+            teamOrder: pred.teamOrder.join(','),
           },
-        },
-        update: {
-          teamOrder: pred.teamOrder.join(','),
-        },
-        create: {
+        });
+      }
+    }
+
+    // 3. Gravar os palpites do mata-mata (validando fase a fase)
+    if (dto.knockoutPredictions) {
+      // Buscar o stage (fase) de cada matchId enviado para poder validar a deadline correta
+      const matchIds = dto.knockoutPredictions.map(p => p.matchId);
+      const matchesInfo = await this.prisma.match.findMany({
+        where: { id: { in: matchIds } },
+        select: { id: true, stage: true }
+      });
+      
+      const matchStageMap = new Map<string, string>();
+      matchesInfo.forEach(m => matchStageMap.set(m.id, m.stage));
+
+      for (const pred of dto.knockoutPredictions) {
+        if (!pred.matchId || !pred.predictedWinner) continue;
+        
+        const stage = matchStageMap.get(pred.matchId);
+        if (!stage) continue;
+        
+        const stageDeadline = knockoutDeadlines[stage];
+        // Se a data atual for maior ou igual ao deadline daquela fase, a previsão é ignorada silenciosamente (proteção backend)
+        if (stageDeadline && now >= stageDeadline) {
+          continue; 
+        }
+
+        await this.prisma.oracleKnockoutPrediction.upsert({
+          where: {
+            userId_groupId_matchId: {
+              userId,
+              groupId,
+              matchId: pred.matchId,
+            },
+          },
+          update: {
+            predictedWinner: pred.predictedWinner,
+          },
+          create: {
+            userId,
+            groupId,
+            matchId: pred.matchId,
+            predictedWinner: pred.predictedWinner,
+          },
+        });
+      }
+    }
+
+    if (dto.resetKnockout) {
+      const lockedStages = Object.keys(knockoutDeadlines).filter(
+        stage => now >= knockoutDeadlines[stage]
+      );
+      
+      const lockedMatches = await this.prisma.match.findMany({
+        where: { stage: { in: lockedStages } },
+        select: { id: true }
+      });
+      const lockedMatchIds = lockedMatches.map(m => m.id);
+
+      await this.prisma.oracleKnockoutPrediction.deleteMany({
+        where: {
           userId,
           groupId,
-          groupName: pred.groupName,
-          teamOrder: pred.teamOrder.join(','),
-        },
+          matchId: {
+            notIn: lockedMatchIds
+          }
+        }
       });
     }
 
