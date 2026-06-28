@@ -1,4 +1,4 @@
-import { IsString, IsInt, Min, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsInt, Min, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SinglePredictionDto {
@@ -32,4 +32,14 @@ export class UpdateMatchScoreDto {
   @IsInt()
   @Min(0)
   awayScore: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  homePenalties?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  awayPenalties?: number;
 }

@@ -27,6 +27,7 @@ model User {
   ownedGroups     Group[]       @relation("OwnedGroups")
   groupMembers    GroupMember[]
   oraclePredictions OraclePrediction[]
+  oracleKnockoutPredictions OracleKnockoutPrediction[]
   matchPredictions MatchPrediction[]
 
   @@map("users")
@@ -61,6 +62,8 @@ model Match {
   status       String   @default("PENDING")
   homeScore    Int?
   awayScore    Int?
+  homePenalties Int?
+  awayPenalties Int?
   predictions  MatchPrediction[]
 
   @@map("matches")
@@ -75,6 +78,7 @@ model Group {
   owner              User          @relation("OwnedGroups", fields: [ownerId], references: [id])
   members            GroupMember[]
   oraclePredictions  OraclePrediction[]
+  oracleKnockoutPredictions OracleKnockoutPrediction[]
   matchPredictions   MatchPrediction[]
   pixKey             String?       @map("pix_key")
   entryFee           Float?        @map("entry_fee")
@@ -118,6 +122,22 @@ model OraclePrediction {
 
   @@unique([userId, groupId, groupName])
   @@map("oracle_predictions")
+}
+
+model OracleKnockoutPrediction {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupId         String
+  group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  matchId         String   @map("match_id")
+  predictedWinner String   @map("predicted_winner")
+  points          Int      @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, groupId, matchId])
+  @@map("oracle_knockout_predictions")
 }
 
 model MatchPrediction {

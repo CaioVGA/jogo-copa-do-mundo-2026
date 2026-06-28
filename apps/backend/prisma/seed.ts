@@ -244,7 +244,7 @@ async function main() {
     },
     {
       homeTeamId: teams.find((t) => t.code === 'KSA')?.id,
-      awayTeamId: teams.find((t) => t.code === 'URU')?.id,
+      awayTeamId: teams.find((t) => t.code === 'URY')?.id,
       date: new Date('2026-06-15T19:00:00-03:00'),
       stadium: 'Hard Rock Stadium',
       city: 'Miami',
@@ -443,7 +443,7 @@ async function main() {
       stage: 'Fase de Grupos - Rodada 2',
     },
     {
-      homeTeamId: teams.find((t) => t.code === 'URU')?.id,
+      homeTeamId: teams.find((t) => t.code === 'URY')?.id,
       awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
       date: new Date('2026-06-21T19:00:00-03:00'),
       stadium: 'Hard Rock Stadium',
@@ -650,7 +650,7 @@ async function main() {
       stage: 'Fase de Grupos - Rodada 3',
     },
     {
-      homeTeamId: teams.find((t) => t.code === 'URU')?.id,
+      homeTeamId: teams.find((t) => t.code === 'URY')?.id,
       awayTeamId: teams.find((t) => t.code === 'ESP')?.id,
       date: new Date('2026-06-26T21:00:00-03:00'),
       stadium: 'Estádio de Guadalajara',
@@ -725,154 +725,164 @@ async function main() {
     },
 
     // 🔥 DEZESSEISAVOS DE FINAL (Fase de 32)
-    // 28 de junho
+    // Jogo 1
     {
-      homeTeamName: '2º Grupo A',
-      awayTeamName: '2º Grupo B',
+      homeTeamId: teams.find((t) => t.code === 'RSA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CAN')?.id,
       date: new Date('2026-06-28T16:00:00-03:00'),
-      stadium: 'SoFi Stadium',
+      stadium: 'Los Angeles Stadium',
       city: 'Los Angeles',
       stage: 'Dezesseisavos de Final',
     },
-    // 29 de junho
+    // Jogo 2
     {
-      homeTeamName: '1º Grupo E',
-      awayTeamName: '3º Grupo A/B/C/D/F',
-      date: new Date('2026-06-29T15:00:00-03:00'),
-      stadium: 'Gillette Stadium',
-      city: 'Boston',
-      stage: 'Dezesseisavos de Final',
-    },
-    {
-      homeTeamName: '1º Grupo F',
-      awayTeamName: '2º Grupo C',
-      date: new Date('2026-06-29T19:00:00-03:00'),
-      stadium: 'Estádio BBVA',
+      homeTeamId: teams.find((t) => t.code === 'NED')?.id,
+      awayTeamId: teams.find((t) => t.code === 'MAR')?.id,
+      date: new Date('2026-06-29T22:00:00-03:00'),
+      stadium: 'Estadio Monterrey',
       city: 'Monterrey',
       stage: 'Dezesseisavos de Final',
     },
+    // Jogo 3
     {
-      homeTeamName: '1º Grupo C',
-      awayTeamName: '2º Grupo F',
-      date: new Date('2026-06-29T22:30:00-03:00'),
-      stadium: 'NRG Stadium',
+      homeTeamId: teams.find((t) => t.code === 'GER')?.id,
+      awayTeamId: teams.find((t) => t.code === 'PAR')?.id,
+      date: new Date('2026-06-29T17:30:00-03:00'),
+      stadium: 'Boston Stadium',
+      city: 'Boston',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 4
+    {
+      homeTeamId: teams.find((t) => t.code === 'FRA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SWE')?.id,
+      date: new Date('2026-06-30T18:00:00-03:00'),
+      stadium: 'New York New Jersey Stadium',
+      city: 'East Rutherford',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 5
+    {
+      homeTeamId: teams.find((t) => t.code === 'BRA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'JPN')?.id,
+      date: new Date('2026-06-29T14:00:00-03:00'),
+      stadium: 'Houston Stadium',
       city: 'Houston',
       stage: 'Dezesseisavos de Final',
     },
-    // 30 de junho
+    // Jogo 6
     {
-      homeTeamName: '1º Grupo I',
-      awayTeamName: '3º Grupo C/D/F/G/H',
+      homeTeamId: teams.find((t) => t.code === 'CIV')?.id,
+      awayTeamId: teams.find((t) => t.code === 'NOR')?.id,
       date: new Date('2026-06-30T14:00:00-03:00'),
-      stadium: 'MetLife Stadium',
-      city: 'Nova York/Nova Jersey',
+      stadium: 'Dallas Stadium',
+      city: 'Arlington',
       stage: 'Dezesseisavos de Final',
     },
+    // Jogo 7
     {
-      homeTeamName: '2º Grupo E',
-      awayTeamName: '2º Grupo I',
-      date: new Date('2026-06-30T18:00:00-03:00'),
-      stadium: 'AT&T Stadium',
-      city: 'Dallas',
-      stage: 'Dezesseisavos de Final',
-    },
-    {
-      homeTeamName: '1º Grupo A',
-      awayTeamName: '3º Grupo C/E/F/H/I',
+      homeTeamId: teams.find((t) => t.code === 'MEX')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ECU')?.id,
       date: new Date('2026-06-30T22:00:00-03:00'),
-      stadium: 'Estádio Azteca',
+      stadium: 'Mexico City Stadium',
       city: 'Cidade do México',
       stage: 'Dezesseisavos de Final',
     },
-    // 1 de julho
+    // Jogo 8
     {
-      homeTeamName: '1º Grupo L',
-      awayTeamName: '3º Grupo E/H/I/J/K',
+      homeTeamId: teams.find((t) => t.code === 'ENG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'COD')?.id,
       date: new Date('2026-07-01T13:00:00-03:00'),
-      stadium: 'Mercedes-Benz Stadium',
+      stadium: 'Atlanta Stadium',
       city: 'Atlanta',
       stage: 'Dezesseisavos de Final',
     },
+    // Jogo 9
     {
-      homeTeamName: '1º Grupo D',
-      awayTeamName: '3º Grupo B/E/F/I/J',
+      homeTeamId: teams.find((t) => t.code === 'BEL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SEN')?.id,
       date: new Date('2026-07-01T17:00:00-03:00'),
-      stadium: 'Levi Stadium',
-      city: 'Santa Clara',
-      stage: 'Dezesseisavos de Final',
-    },
-    {
-      homeTeamName: '1º Grupo G',
-      awayTeamName: '3º Grupo A/E/H/I/J',
-      date: new Date('2026-07-01T21:00:00-03:00'),
-      stadium: 'Lumen Field',
+      stadium: 'Seattle Stadium',
       city: 'Seattle',
       stage: 'Dezesseisavos de Final',
     },
-    // 2 de julho
+    // Jogo 10
     {
-      homeTeamName: '2º Grupo K',
-      awayTeamName: '2º Grupo L',
-      date: new Date('2026-07-02T16:00:00-03:00'),
-      stadium: 'BMO Field',
-      city: 'Toronto',
-      stage: 'Dezesseisavos de Final',
-    },
-    {
-      homeTeamName: '1º Grupo H',
-      awayTeamName: '2º Grupo J',
-      date: new Date('2026-07-02T20:00:00-03:00'),
-      stadium: 'SoFi Stadium',
-      city: 'Los Angeles',
-      stage: 'Dezesseisavos de Final',
-    },
-    {
-      homeTeamName: '1º Grupo B',
-      awayTeamName: '3º Grupo E/F/G/I/J',
-      date: new Date('2026-07-02T23:59:00-03:00'),
-      stadium: 'BC Place',
-      city: 'Vancouver',
-      stage: 'Dezesseisavos de Final',
-    },
-    // 3 de julho
-    {
-      homeTeamName: '1º Grupo J',
-      awayTeamName: '2º Grupo H',
-      date: new Date('2026-07-03T15:00:00-03:00'),
-      stadium: 'Hard Rock Stadium',
-      city: 'Miami',
-      stage: 'Dezesseisavos de Final',
-    },
-    {
-      homeTeamName: '1º Grupo K',
-      awayTeamName: '3º Grupo D/E/I/J/L',
-      date: new Date('2026-07-03T19:00:00-03:00'),
-      stadium: 'Arrowhead Stadium',
+      homeTeamId: teams.find((t) => t.code === 'USA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'BIH')?.id,
+      date: new Date('2026-07-01T21:00:00-03:00'),
+      stadium: 'Kansas City Stadium',
       city: 'Kansas City',
       stage: 'Dezesseisavos de Final',
     },
+    // Jogo 11
     {
-      homeTeamName: '2º Grupo D',
-      awayTeamName: '2º Grupo G',
+      homeTeamId: teams.find((t) => t.code === 'ESP')?.id,
+      awayTeamId: teams.find((t) => t.code === 'AUT')?.id,
+      date: new Date('2026-07-02T16:00:00-03:00'),
+      stadium: 'Los Angeles Stadium',
+      city: 'Los Angeles',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 12
+    {
+      homeTeamId: teams.find((t) => t.code === 'POR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CRO')?.id,
+      date: new Date('2026-07-02T20:00:00-03:00'),
+      stadium: 'Miami Stadium',
+      city: 'Miami Gardens',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 13
+    {
+      homeTeamId: teams.find((t) => t.code === 'SUI')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ALG')?.id,
+      date: new Date('2026-07-03T00:00:00-03:00'),
+      stadium: 'San Francisco Bay Area Stadium',
+      city: 'Santa Clara',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 14
+    {
+      homeTeamId: teams.find((t) => t.code === 'AUS')?.id,
+      awayTeamId: teams.find((t) => t.code === 'EGY')?.id,
+      date: new Date('2026-07-03T15:00:00-03:00'),
+      stadium: 'Philadelphia Stadium',
+      city: 'Filadélfia',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 15
+    {
+      homeTeamId: teams.find((t) => t.code === 'ARG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
+      date: new Date('2026-07-03T19:00:00-03:00'),
+      stadium: 'Miami Stadium',
+      city: 'Miami Gardens',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 16
+    {
+      homeTeamId: teams.find((t) => t.code === 'COL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'GHA')?.id,
       date: new Date('2026-07-03T22:30:00-03:00'),
-      stadium: 'AT&T Stadium',
-      city: 'Dallas',
+      stadium: 'Vancouver Stadium',
+      city: 'Vancouver',
       stage: 'Dezesseisavos de Final',
     },
 
     // 🗓️ OITAVAS DE FINAL
     // 4 de julho
     {
-      homeTeamName: 'Vencedor do jogo 74',
-      awayTeamName: 'Vencedor do jogo 77',
+      homeTeamName: 'Vencedor do jogo 73',
+      awayTeamName: 'Vencedor do jogo 76',
       date: new Date('2026-07-04T14:00:00-03:00'),
       stadium: 'Lincoln Financial Field',
       city: 'Filadélfia',
       stage: 'Oitavas de Final',
     },
     {
-      homeTeamName: 'Vencedor do jogo 73',
-      awayTeamName: 'Vencedor do jogo 75',
+      homeTeamName: 'Vencedor do jogo 75',
+      awayTeamName: 'Vencedor do jogo 78',
       date: new Date('2026-07-04T18:00:00-03:00'),
       stadium: 'NRG Stadium',
       city: 'Houston',
@@ -880,8 +890,8 @@ async function main() {
     },
     // 5 de julho
     {
-      homeTeamName: 'Vencedor do jogo 76',
-      awayTeamName: 'Vencedor do jogo 78',
+      homeTeamName: 'Vencedor do jogo 74',
+      awayTeamName: 'Vencedor do jogo 77',
       date: new Date('2026-07-05T17:00:00-03:00'),
       stadium: 'MetLife Stadium',
       city: 'Nova York/Nova Jersey',
@@ -897,16 +907,16 @@ async function main() {
     },
     // 6 de julho
     {
-      homeTeamName: 'Vencedor do jogo 83',
-      awayTeamName: 'Vencedor do jogo 84',
+      homeTeamName: 'Vencedor do jogo 81',
+      awayTeamName: 'Vencedor do jogo 82',
       date: new Date('2026-07-06T16:00:00-03:00'),
       stadium: 'AT&T Stadium',
       city: 'Dallas',
       stage: 'Oitavas de Final',
     },
     {
-      homeTeamName: 'Vencedor do jogo 81',
-      awayTeamName: 'Vencedor do jogo 82',
+      homeTeamName: 'Vencedor do jogo 83',
+      awayTeamName: 'Vencedor do jogo 84',
       date: new Date('2026-07-06T21:00:00-03:00'),
       stadium: 'Lumen Field',
       city: 'Seattle',
@@ -914,16 +924,16 @@ async function main() {
     },
     // 7 de julho
     {
-      homeTeamName: 'Vencedor do jogo 86',
-      awayTeamName: 'Vencedor do jogo 88',
+      homeTeamName: 'Vencedor do jogo 85',
+      awayTeamName: 'Vencedor do jogo 86',
       date: new Date('2026-07-07T13:00:00-03:00'),
       stadium: 'Mercedes-Benz Stadium',
       city: 'Atlanta',
       stage: 'Oitavas de Final',
     },
     {
-      homeTeamName: 'Vencedor do jogo 85',
-      awayTeamName: 'Vencedor do jogo 87',
+      homeTeamName: 'Vencedor do jogo 87',
+      awayTeamName: 'Vencedor do jogo 88',
       date: new Date('2026-07-07T17:00:00-03:00'),
       stadium: 'BC Place',
       city: 'Vancouver',
@@ -942,8 +952,8 @@ async function main() {
     },
     // 10 de julho
     {
-      homeTeamName: 'Vencedor do jogo 93',
-      awayTeamName: 'Vencedor do jogo 94',
+      homeTeamName: 'Vencedor do jogo 91',
+      awayTeamName: 'Vencedor do jogo 92',
       date: new Date('2026-07-10T16:00:00-03:00'),
       stadium: 'SoFi Stadium',
       city: 'Los Angeles',
@@ -951,8 +961,8 @@ async function main() {
     },
     // 11 de julho
     {
-      homeTeamName: 'Vencedor do jogo 91',
-      awayTeamName: 'Vencedor do jogo 92',
+      homeTeamName: 'Vencedor do jogo 93',
+      awayTeamName: 'Vencedor do jogo 94',
       date: new Date('2026-07-11T18:00:00-03:00'),
       stadium: 'Hard Rock Stadium',
       city: 'Miami',
@@ -1054,7 +1064,7 @@ async function seedPlayers() {
     ...getGrupoE(), // GER | CUW | CIV | ECU
     ...getGrupoF(), // NED | JPN | SWE | TUN
     ...getGrupoG(), // BEL | EGY | IRN | NZL
-    ...getGrupoH(), // ESP | CPV | KSA | URU
+    ...getGrupoH(), // ESP | CPV | KSA | URY
     ...getGrupoI(), // FRA | SEN | IRQ | NOR
     ...getGrupoJ(), // ARG | ALG | AUT | JOR
     ...getGrupoK(), // POR | COL | UZB | COD
@@ -1980,33 +1990,33 @@ function getGrupoH() {
     { id: '80000002-0000-0000-0000-000000000025', name: 'Talal Haji', position: 'Atacante', teamCode: 'KSA' },
     { id: '80000002-0000-0000-0000-000000000026', name: 'Mohammed Maran', position: 'Atacante', teamCode: 'KSA' },
 
-    // URUGUAI (URU)
-    { id: '80000003-0000-0000-0000-000000000001', name: 'Sergio Rochet', position: 'Goleiro', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000002', name: 'Santiago Mele', position: 'Goleiro', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000003', name: 'Franco Israel', position: 'Goleiro', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000004', name: 'José María Giménez', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000005', name: 'Ronald Araújo', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000006', name: 'Mathías Olivera', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000007', name: 'Matías Viña', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000008', name: 'Nahitan Nández', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000009', name: 'Guillermo Varela', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000010', name: 'Sebastián Cáceres', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000011', name: 'Nicolás Marichal', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000012', name: 'Lucas Olaza', position: 'Defensor', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000013', name: 'Federico Valverde', position: 'Meio-campista', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000014', name: 'Manuel Ugarte', position: 'Meio-campista', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000015', name: 'Rodrigo Bentancur', position: 'Meio-campista', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000016', name: 'Nicolás de la Cruz', position: 'Meio-campista', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000017', name: 'Giorgian de Arrascaeta', position: 'Meio-campista', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000018', name: 'Maximiliano Araújo', position: 'Meio-campista', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000019', name: 'Darwin Núñez', position: 'Atacante', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000020', name: 'Facundo Pellistri', position: 'Atacante', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000021', name: 'Luciano Rodríguez', position: 'Atacante', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000022', name: 'Brian Rodríguez', position: 'Atacante', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000023', name: 'Agustín Canobbio', position: 'Atacante', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000024', name: 'Cristian Olivera', position: 'Atacante', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000025', name: 'Facundo Torres', position: 'Atacante', teamCode: 'URU' },
-    { id: '80000003-0000-0000-0000-000000000026', name: 'Brian Ocampo', position: 'Atacante', teamCode: 'URU' },
+    // URUGUAI (URY)
+    { id: '80000003-0000-0000-0000-000000000001', name: 'Sergio Rochet', position: 'Goleiro', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000002', name: 'Santiago Mele', position: 'Goleiro', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000003', name: 'Franco Israel', position: 'Goleiro', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000004', name: 'José María Giménez', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000005', name: 'Ronald Araújo', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000006', name: 'Mathías Olivera', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000007', name: 'Matías Viña', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000008', name: 'Nahitan Nández', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000009', name: 'Guillermo Varela', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000010', name: 'Sebastián Cáceres', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000011', name: 'Nicolás Marichal', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000012', name: 'Lucas Olaza', position: 'Defensor', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000013', name: 'Federico Valverde', position: 'Meio-campista', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000014', name: 'Manuel Ugarte', position: 'Meio-campista', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000015', name: 'Rodrigo Bentancur', position: 'Meio-campista', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000016', name: 'Nicolás de la Cruz', position: 'Meio-campista', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000017', name: 'Giorgian de Arrascaeta', position: 'Meio-campista', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000018', name: 'Maximiliano Araújo', position: 'Meio-campista', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000019', name: 'Darwin Núñez', position: 'Atacante', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000020', name: 'Facundo Pellistri', position: 'Atacante', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000021', name: 'Luciano Rodríguez', position: 'Atacante', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000022', name: 'Brian Rodríguez', position: 'Atacante', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000023', name: 'Agustín Canobbio', position: 'Atacante', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000024', name: 'Cristian Olivera', position: 'Atacante', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000025', name: 'Facundo Torres', position: 'Atacante', teamCode: 'URY' },
+    { id: '80000003-0000-0000-0000-000000000026', name: 'Brian Ocampo', position: 'Atacante', teamCode: 'URY' },
   ];
 }
 

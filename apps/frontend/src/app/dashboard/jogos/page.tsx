@@ -92,6 +92,8 @@ export default function CopaGamesPage() {
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editHomeScore, setEditHomeScore] = useState<string>("");
   const [editAwayScore, setEditAwayScore] = useState<string>("");
+  const [editHomePenalties, setEditHomePenalties] = useState<string>("");
+  const [editAwayPenalties, setEditAwayPenalties] = useState<string>("");
   const [submittingMatchId, setSubmittingMatchId] = useState<string | null>(null);
 
   async function loadData() {
@@ -100,6 +102,20 @@ export default function CopaGamesPage() {
     try {
       const data = await matchesApi.getMatches();
       setGrouped(data);
+
+      const allMatches = Object.values(data).flat();
+      const sortedMatches = [...allMatches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      const groupMatches = allMatches.filter(m => m.stage.startsWith("Grupo"));
+      const isGroupStageFinished = groupMatches.length > 0 && groupMatches.every(m => m.status === "FINISHED");
+      
+      const nextMatch = sortedMatches.find(m => m.status !== "FINISHED");
+      const nextMatchIsKnockout = nextMatch && !nextMatch.stage.startsWith("Grupo");
+      
+      if (isGroupStageFinished || nextMatchIsKnockout) {
+        setActiveCategory("MATA_MATA");
+        setSelectedGroup("ALL_MATA_MATA");
+      }
     } catch (err: any) {
       setError(err.message || "Erro ao carregar os jogos da Copa.");
     } finally {
@@ -132,19 +148,42 @@ export default function CopaGamesPage() {
     setEditingMatchId(game.id);
     setEditHomeScore(game.realHomeScore !== null ? String(game.realHomeScore) : "");
     setEditAwayScore(game.realAwayScore !== null ? String(game.realAwayScore) : "");
+    setEditHomePenalties(game.homePenalties !== null && game.homePenalties !== undefined ? String(game.homePenalties) : "");
+    setEditAwayPenalties(game.awayPenalties !== null && game.awayPenalties !== undefined ? String(game.awayPenalties) : "");
   }
 
-  async function handleSaveScore(matchId: string) {
+  async function handleSaveScore(game: MatchPredictionData) {
     const homeVal = parseInt(editHomeScore, 10);
     const awayVal = parseInt(editAwayScore, 10);
+    const isKnockout = !game.stage.startsWith("Fase de Grupos");
+    const homePenVal = parseInt(editHomePenalties, 10);
+    const awayPenVal = parseInt(editAwayPenalties, 10);
+
     if (isNaN(homeVal) || isNaN(awayVal) || homeVal < 0 || awayVal < 0) {
       toast.warning("Por favor, insira placares válidos maiores ou iguais a 0.");
       return;
     }
 
-    setSubmittingMatchId(matchId);
+    if (isKnockout && homeVal === awayVal) {
+      if (isNaN(homePenVal) || isNaN(awayPenVal) || homePenVal < 0 || awayPenVal < 0) {
+        toast.warning("Para empates no mata-mata, informe os pênaltis.");
+        return;
+      }
+      if (homePenVal === awayPenVal) {
+        toast.warning("Disputas de pênaltis não podem terminar empatadas.");
+        return;
+      }
+    }
+
+    setSubmittingMatchId(game.id);
     try {
-      await predictionsApi.updateMatchScore(matchId, homeVal, awayVal);
+      await predictionsApi.updateMatchScore(
+        game.id, 
+        homeVal, 
+        awayVal, 
+        isKnockout && homeVal === awayVal ? homePenVal : undefined, 
+        isKnockout && homeVal === awayVal ? awayPenVal : undefined
+      );
       // reload
       const data = await matchesApi.getMatches();
       setGrouped(data);
@@ -509,9 +548,33 @@ export default function CopaGamesPage() {
                                 className="w-10 h-10 rounded-xl bg-black/80 border border-[#ffd700]/40 text-center text-white font-black text-sm focus:outline-none focus:border-[#ffd700] focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none shadow-inner"
                               />
                             </div>
+                            
+                            {editHomeScore !== "" && editAwayScore !== "" && editHomeScore === editAwayScore && !game.stage.startsWith("Fase") && (
+                              <div className="flex flex-col items-center gap-1 w-full mt-1 bg-black/60 p-2 rounded-xl border border-white/10">
+                                <span className="text-[9px] font-black uppercase tracking-wider text-[#ffd700]">Pênaltis</span>
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={editHomePenalties}
+                                    onChange={(e) => setEditHomePenalties(e.target.value)}
+                                    className="w-8 h-8 rounded-lg bg-black/80 border border-white/20 text-center text-[#ffd700] font-black text-xs focus:outline-none focus:border-[#ffd700] focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                  <span className="text-white/20 font-bold text-xs">x</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={editAwayPenalties}
+                                    onChange={(e) => setEditAwayPenalties(e.target.value)}
+                                    className="w-8 h-8 rounded-lg bg-black/80 border border-white/20 text-center text-[#ffd700] font-black text-xs focus:outline-none focus:border-[#ffd700] focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
                             <div className="flex items-center gap-1.5 w-full justify-center">
                               <button
-                                onClick={() => handleSaveScore(game.id)}
+                                onClick={() => handleSaveScore(game)}
                                 disabled={submittingMatchId === game.id}
                                 className="p-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-all disabled:opacity-50 flex items-center justify-center cursor-pointer shadow-md"
                                 title="Confirmar Placar"
@@ -534,18 +597,25 @@ export default function CopaGamesPage() {
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-1">
-                            <div className="flex items-center gap-2.5">
-                              <span className={`w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center font-black text-base shadow-inner ${
-                                (isFinished || isLive) && game.realHomeScore !== null ? "text-[#ffd700]" : "text-white/25"
-                              }`}>
-                                {game.realHomeScore !== null ? game.realHomeScore : "—"}
-                              </span>
-                              <span className="text-white/20 font-bold text-xs">x</span>
-                              <span className={`w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center font-black text-base shadow-inner ${
-                                (isFinished || isLive) && game.realAwayScore !== null ? "text-[#ffd700]" : "text-white/25"
-                              }`}>
-                                {game.realAwayScore !== null ? game.realAwayScore : "—"}
-                              </span>
+                            <div className="flex flex-col items-center gap-0.5">
+                              <div className="flex items-center gap-2.5">
+                                <span className={`w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center font-black text-base shadow-inner ${
+                                  (isFinished || isLive) && game.realHomeScore !== null ? "text-[#ffd700]" : "text-white/25"
+                                }`}>
+                                  {game.realHomeScore !== null ? game.realHomeScore : "—"}
+                                </span>
+                                <span className="text-white/20 font-bold text-xs">x</span>
+                                <span className={`w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center font-black text-base shadow-inner ${
+                                  (isFinished || isLive) && game.realAwayScore !== null ? "text-[#ffd700]" : "text-white/25"
+                                }`}>
+                                  {game.realAwayScore !== null ? game.realAwayScore : "—"}
+                                </span>
+                              </div>
+                              {game.homePenalties != null && game.awayPenalties != null && (
+                                <span className="text-[10px] font-bold text-white/50 tracking-wider">
+                                  (Pên: {game.homePenalties} - {game.awayPenalties})
+                                </span>
+                              )}
                             </div>
                             {isAdmin && (
                               <button

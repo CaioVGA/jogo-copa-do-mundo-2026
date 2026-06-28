@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Home, Settings, Users, Sparkles, ShieldCheck, CalendarDays, ChevronUp } from "lucide-react";
+import { LogOut, Home, Settings, Users, Sparkles, ShieldCheck, CalendarDays, ChevronUp, Trophy } from "lucide-react";
 import { usersApi } from "@/lib/api";
 
 function handleLogout() {
@@ -52,6 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: "/dashboard", label: "Visão Geral", icon: Home, exact: true },
     { href: "/dashboard/jogos", label: "Jogos", icon: CalendarDays },
     { href: "/dashboard/grupos", label: "Grupos", icon: Users },
+    { href: "/dashboard/mata-mata", label: "Mata-Mata", icon: Trophy },
     ...(isAdmin
       ? [{ href: "/dashboard/gerenciamento", label: "Gerenciamento", icon: ShieldCheck }]
       : []),
@@ -265,7 +266,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Mobile Header */}
+      {/* Mobile Header Enxuto */}
       <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-gradient-to-r from-[#0d2b1a]/95 via-[#081a10]/95 to-[#040e09]/95 backdrop-blur-md fixed top-0 left-0 right-0 z-50 shadow-md">
         <div className="flex items-center gap-2.5">
           <div className="bg-black rounded-lg border border-[#ffd700]/20 shadow-sm flex items-center justify-center w-7 h-7 shrink-0 overflow-hidden p-0">
@@ -283,37 +284,55 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </Link>
         </div>
-        <nav className="flex items-center gap-1.5">
-          {dynamicNavItems.map((item) => {
+        <nav className="flex items-center gap-2">
+          {/* Avatar ou Iniciais do Usuário no Header Mobile */}
+          {user && (
+            <Link href="/dashboard/configuracoes" className="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center cursor-pointer hover:border-[#ffd700]/50 transition-colors">
+              {user.avatar ? (
+                <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[10px] font-black bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-black w-full h-full flex items-center justify-center uppercase">
+                  {user.name.charAt(0)}
+                </span>
+              )}
+            </Link>
+          )}
+        </nav>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 pt-[69px] pb-[80px] md:pt-0 md:pb-0 md:pl-64 overflow-x-hidden relative">
+        <div className="max-w-7xl xl:max-w-[1440px] mx-auto p-4 md:p-8">
+          {children}
+        </div>
+      </main>
+
+      {/* Bottom Navigation Bar (Mobile Only) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#081a10]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.5)] safe-area-pb">
+        <div className="flex items-center justify-around px-2 py-2">
+          {dynamicNavItems.filter(i => i.label !== "Configurações").slice(0, 5).map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`p-2.5 rounded-xl transition-all duration-300 ${
-                  active ? "text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/20" : "text-white/60 hover:text-white"
+                className={`flex flex-col items-center justify-center w-full py-1.5 gap-1 rounded-xl transition-all duration-300 relative ${
+                  active ? "text-[#ffd700]" : "text-white/50 hover:text-white/80"
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                {active && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-gradient-to-r from-[#ffd700] to-[#ffe135] rounded-b-md shadow-[0_2px_8px_rgba(255,215,0,0.5)]" />
+                )}
+                <Icon className={`w-5 h-5 transition-transform duration-300 ${active ? "scale-110" : "scale-100"}`} />
+                <span className={`text-[9px] font-semibold tracking-wide transition-all ${active ? "font-bold text-[#ffd700]" : ""}`}>
+                  {item.label === "Gerenciamento" ? "Admin" : item.label}
+                </span>
               </Link>
             );
           })}
-          <button
-            className="p-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-500/15"
-            onClick={() => setShowLogoutModal(true)}
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </nav>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 pt-[69px] md:pt-0 md:pl-64 overflow-x-hidden relative">
-        <div className="max-w-7xl xl:max-w-[1440px] mx-auto p-4 md:p-8">
-          {children}
         </div>
-      </main>
+      </nav>
 
       {/* Soccer-themed Logout Confirmation Modal */}
       {showLogoutModal && (

@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [upcomingGames, setUpcomingGames] = useState<MatchPredictionData[]>([]);
   const [selectedGroup, setSelectedGroup] = useState("Grupo A");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -49,6 +50,12 @@ export default function DashboardPage() {
         // Ordenar confrontos em ordem estritamente crescente de data/hora
         allMatches.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setAllGames(allMatches);
+
+        const groupMatches = allMatches.filter(m => m.stage.startsWith("Grupo"));
+        const nextMatch = allMatches.find(m => m.status !== "FINISHED");
+        const nextMatchIsKnockout = nextMatch && !nextMatch.stage.startsWith("Grupo");
+        
+        setIsGroupStageFinished((groupMatches.length > 0 && groupMatches.every(m => m.status === "FINISHED")) || Boolean(nextMatchIsKnockout));
 
         // Jogos que não foram finalizados
         const upcoming = allMatches.filter((m) => m.status !== "FINISHED");
@@ -189,15 +196,15 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Header */}
-      <div className="relative p-6 md:p-8 rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-r from-[#0d2b1a]/40 via-[#0a0f1e]/40 to-transparent flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+      <div className="relative p-5 md:p-8 rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-r from-[#0d2b1a]/40 via-[#0a0f1e]/40 to-transparent flex flex-col md:flex-row md:items-center justify-between gap-5 md:gap-6 shadow-xl">
         <div className="absolute -left-12 -top-12 w-48 h-48 bg-[#2d8a50]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute right-12 bottom-0 w-32 h-32 bg-[#ffd700]/5 rounded-full blur-2xl pointer-events-none" />
         
         <div className="relative z-10">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white">
+          <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">
             Olá, <span className="text-[#ffd700] bg-gradient-to-r from-[#ffd700] to-[#f5c800] bg-clip-text text-transparent">{userName}</span>! 👋
           </h1>
-          <p className="text-white/60 mt-2 text-sm md:text-base max-w-xl leading-relaxed">
+          <p className="text-white/60 mt-2 text-xs md:text-base max-w-xl leading-relaxed">
             Bem-vindo ao seu painel de controle da Copa 2026. Acompanhe seus palpites, classificação geral e o calendário do torneio.
           </p>
         </div>
@@ -244,16 +251,16 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Próximos Jogos Panel */}
-        <div className="auth-card p-6 border border-white/5 bg-[#0a0f1e]/40 space-y-6">
+        <div className="auth-card p-4 md:p-6 border border-white/5 bg-[#0a0f1e]/40 space-y-6">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
             <div>
-              <h2 className="text-xl font-black text-white flex items-center gap-2.5">
-                <Calendar className="w-5 h-5 text-[#ffd700]" />
+              <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-2.5">
+                <Calendar className="w-4 h-4 md:w-5 md:h-5 text-[#ffd700]" />
                 Próximos Jogos
               </h2>
-              <p className="text-xs text-white/45 mt-1">Os próximos 5 confrontos agendados no torneio</p>
+              <p className="text-[10px] md:text-xs text-white/45 mt-1">Os próximos confrontos no torneio</p>
             </div>
-            <Link href="/dashboard/jogos" className="text-xs font-bold text-[#ffd700] hover:underline flex items-center gap-1 group">
+            <Link href="/dashboard/jogos" className="text-[10px] md:text-xs font-bold text-[#ffd700] hover:underline flex items-center gap-1 group">
               Ver todos <span className="group-hover:translate-x-0.5 transition-transform">→</span>
             </Link>
           </div>
@@ -279,9 +286,9 @@ export default function DashboardPage() {
                 return (
                   <div 
                     key={game.id} 
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4.5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-[#ffd700]/20 transition-all duration-300"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 md:p-4.5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] hover:border-[#ffd700]/20 transition-all duration-300"
                   >
-                    <div className="flex flex-col gap-2 min-w-0">
+                    <div className="flex flex-col gap-2 min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 uppercase tracking-wider">
                           {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}
@@ -410,14 +417,15 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Standings Group Panel */}
-        <div className="auth-card p-5 border border-white/5 bg-[#0a0f1e]/40 space-y-5 self-start w-full">
+        {/* Standings Group Panel & Mata-Mata CTA */}
+        <div className="flex flex-col gap-6 self-start w-full">
+          <div className="auth-card p-4 md:p-5 border border-white/5 bg-[#0a0f1e]/40 space-y-5 w-full">
           <div className="border-b border-white/5 pb-4">
-            <h2 className="text-lg font-black text-white flex items-center gap-2.5">
-              <Trophy className="w-5 h-5 text-[#ffd700]" />
+            <h2 className="text-lg md:text-xl font-black text-white flex items-center gap-2.5">
+              <Trophy className="w-4 h-4 md:w-5 md:h-5 text-[#ffd700]" />
               Tabela do Grupo
             </h2>
-            <p className="text-xs text-white/45 mt-1">Classificação ao vivo das seleções</p>
+            <p className="text-[10px] md:text-xs text-white/45 mt-1">Classificação ao vivo das seleções</p>
           </div>
   
           {/* Group Selector with Next / Prev buttons */}
@@ -492,8 +500,8 @@ export default function DashboardPage() {
           </div>
   
           {/* Standings Table */}
-          <div className="overflow-hidden border border-white/5 rounded-2xl bg-black/10">
-            <table className="w-full text-left text-xs border-collapse table-fixed">
+          <div className="overflow-x-auto copa-scrollbar border border-white/5 rounded-2xl bg-black/10">
+            <table className="w-full min-w-[500px] text-left text-xs border-collapse table-fixed">
               <thead>
                 <tr className="bg-black/35 border-b border-white/5 text-[9px] font-bold uppercase text-white/40 tracking-wider">
                   <th className="py-2.5 px-1 text-center w-[8%]">Pos</th>
@@ -594,7 +602,27 @@ export default function DashboardPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.5)]" /> Repescagem
             </span>
           </div>
-  
+
+          {/* Mata-Mata CTA shown only when group stage is finished */}
+          {isGroupStageFinished && (
+            <div className="mt-6 border-t border-white/10 pt-6">
+              <div className="bg-gradient-to-br from-[#0d2b1a]/60 to-[#0a0f1e]/80 rounded-2xl p-5 md:p-6 border border-[#ffd700]/10 flex flex-col items-center justify-center text-center relative overflow-hidden shadow-xl">
+                 <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                   <Trophy className="w-24 h-24 text-[#ffd700]" />
+                 </div>
+                 <div className="w-12 h-12 rounded-2xl bg-[#ffd700]/10 border border-[#ffd700]/20 flex items-center justify-center mb-1 shadow-[0_0_30px_rgba(255,215,0,0.15)] relative z-10">
+                   <Trophy className="w-6 h-6 text-[#ffd700]" />
+                 </div>
+                 <h2 className="text-lg md:text-xl font-black text-white relative z-10 tracking-tight">Fase de Grupos Encerrada!</h2>
+                 <p className="text-xs text-white/50 max-w-sm mt-1 mb-4 relative z-10">O torneio agora entra na sua fase decisiva. Acompanhe os confrontos do mata-mata.</p>
+                 <Link href="/dashboard/mata-mata" className="copa-btn-primary px-6 py-2.5 text-xs font-bold flex items-center gap-2 hover:scale-105 transition-all relative z-10 shadow-lg shadow-[#ffd700]/20">
+                   Ver Chaveamento Oficial <ChevronRight className="w-4 h-4" />
+                 </Link>
+              </div>
+            </div>
+          )}
+        </div>
+        
         </div>
  
 

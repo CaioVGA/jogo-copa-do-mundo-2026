@@ -33,6 +33,6 @@ export class PredictionsController {
     @Body() dto: UpdateMatchScoreDto,
     @Request() req: any,
   ) {
-    return this.predictionsService.updateMatchScore(req.user.id, id, dto.homeScore, dto.awayScore);
+    return this.predictionsService.updateMatchScore(req.user.id, id, dto.homeScore, dto.awayScore, dto.homePenalties, dto.awayPenalties);
   }
 }
