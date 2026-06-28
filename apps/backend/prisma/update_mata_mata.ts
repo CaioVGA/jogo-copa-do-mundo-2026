@@ -19,28 +19,28 @@ async function main() {
 
   const matches = [
     {
-      homeTeamId: getTeamId('GER'), awayTeamId: getTeamId('PAR'),
-      date: new Date('2026-06-28T16:00:00-03:00'), stadium: 'Los Angeles Stadium', city: 'Los Angeles', stage: 'Dezesseisavos de Final'
+      homeTeamId: getTeamId('RSA'), awayTeamId: getTeamId('CAN'),
+      date: new Date('2026-06-28T16:00:00-03:00'), stadium: 'SoFi Stadium', city: 'Inglewood (Los Angeles)', stage: 'Dezesseisavos de Final'
     },
     {
       homeTeamId: getTeamId('BRA'), awayTeamId: getTeamId('JPN'),
-      date: new Date('2026-06-29T14:00:00-03:00'), stadium: 'Houston Stadium', city: 'Houston', stage: 'Dezesseisavos de Final'
+      date: new Date('2026-06-29T14:00:00-03:00'), stadium: 'NRG Stadium', city: 'Houston', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('RSA'), awayTeamId: getTeamId('CAN'),
-      date: new Date('2026-06-29T17:30:00-03:00'), stadium: 'Boston Stadium', city: 'Boston', stage: 'Dezesseisavos de Final'
-    },
-    {
-      homeTeamId: getTeamId('FRA'), awayTeamId: getTeamId('SWE'),
-      date: new Date('2026-06-29T22:00:00-03:00'), stadium: 'Estadio Monterrey', city: 'Monterrey', stage: 'Dezesseisavos de Final'
-    },
-    {
-      homeTeamId: getTeamId('CIV'), awayTeamId: getTeamId('NOR'),
-      date: new Date('2026-06-30T14:00:00-03:00'), stadium: 'Dallas Stadium', city: 'Arlington', stage: 'Dezesseisavos de Final'
+      homeTeamId: getTeamId('GER'), awayTeamId: getTeamId('PAR'),
+      date: new Date('2026-06-29T17:30:00-03:00'), stadium: 'Gillette Stadium', city: 'Foxborough (Boston)', stage: 'Dezesseisavos de Final'
     },
     {
       homeTeamId: getTeamId('NED'), awayTeamId: getTeamId('MAR'),
-      date: new Date('2026-06-30T18:00:00-03:00'), stadium: 'New York New Jersey Stadium', city: 'East Rutherford', stage: 'Dezesseisavos de Final'
+      date: new Date('2026-06-29T22:00:00-03:00'), stadium: 'Estadio BBVA', city: 'Guadalupe (Monterrey)', stage: 'Dezesseisavos de Final'
+    },
+    {
+      homeTeamId: getTeamId('CIV'), awayTeamId: getTeamId('NOR'),
+      date: new Date('2026-06-30T14:00:00-03:00'), stadium: 'AT&T Stadium', city: 'Arlington (Dallas)', stage: 'Dezesseisavos de Final'
+    },
+    {
+      homeTeamId: getTeamId('FRA'), awayTeamId: getTeamId('SWE'),
+      date: new Date('2026-06-30T18:00:00-03:00'), stadium: 'MetLife Stadium', city: 'East Rutherford (Nova Jersey)', stage: 'Dezesseisavos de Final'
     },
     {
       homeTeamId: getTeamId('MEX'), awayTeamId: getTeamId('ECU'),
@@ -48,39 +48,39 @@ async function main() {
     },
     {
       homeTeamId: getTeamId('ENG'), awayTeamId: getTeamId('COD'),
-      date: new Date('2026-07-01T13:00:00-03:00'), stadium: 'Atlanta Stadium', city: 'Atlanta', stage: 'Dezesseisavos de Final'
-    },
-    {
-      homeTeamId: getTeamId('POR'), awayTeamId: getTeamId('CRO'),
-      date: new Date('2026-07-01T17:00:00-03:00'), stadium: 'Seattle Stadium', city: 'Seattle', stage: 'Dezesseisavos de Final'
-    },
-    {
-      homeTeamId: getTeamId('ESP'), awayTeamId: getTeamId('AUT'),
-      date: new Date('2026-07-01T21:00:00-03:00'), stadium: 'Kansas City Stadium', city: 'Kansas City', stage: 'Dezesseisavos de Final'
-    },
-    {
-      homeTeamId: getTeamId('USA'), awayTeamId: getTeamId('BIH'),
-      date: new Date('2026-07-02T16:00:00-03:00'), stadium: 'Los Angeles Stadium', city: 'Los Angeles', stage: 'Dezesseisavos de Final'
+      date: new Date('2026-07-01T13:00:00-03:00'), stadium: 'Mercedes-Benz Stadium', city: 'Atlanta', stage: 'Dezesseisavos de Final'
     },
     {
       homeTeamId: getTeamId('BEL'), awayTeamId: getTeamId('SEN'),
-      date: new Date('2026-07-02T20:00:00-03:00'), stadium: 'Miami Stadium', city: 'Miami', stage: 'Dezesseisavos de Final'
+      date: new Date('2026-07-01T17:00:00-03:00'), stadium: 'Lumen Field', city: 'Seattle', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('ARG'), awayTeamId: getTeamId('CPV'),
-      date: new Date('2026-07-03T00:00:00-03:00'), stadium: 'San Francisco Bay Area Stadium', city: 'Santa Clara', stage: 'Dezesseisavos de Final'
+      homeTeamId: getTeamId('USA'), awayTeamId: getTeamId('BIH'),
+      date: new Date('2026-07-01T21:00:00-03:00'), stadium: 'Arrowhead Stadium', city: 'Kansas City', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('AUS'), awayTeamId: getTeamId('EGY'),
-      date: new Date('2026-07-03T15:00:00-03:00'), stadium: 'Philadelphia Stadium', city: 'Filadélfia', stage: 'Dezesseisavos de Final'
+      homeTeamId: getTeamId('ESP'), awayTeamId: getTeamId('AUT'),
+      date: new Date('2026-07-02T16:00:00-03:00'), stadium: 'SoFi Stadium', city: 'Inglewood (Los Angeles)', stage: 'Dezesseisavos de Final'
+    },
+    {
+      homeTeamId: getTeamId('POR'), awayTeamId: getTeamId('CRO'),
+      date: new Date('2026-07-02T20:00:00-03:00'), stadium: 'Hard Rock Stadium', city: 'Miami Gardens', stage: 'Dezesseisavos de Final'
     },
     {
       homeTeamId: getTeamId('SUI'), awayTeamId: getTeamId('ALG'),
-      date: new Date('2026-07-03T19:00:00-03:00'), stadium: 'Miami Stadium', city: 'Miami', stage: 'Dezesseisavos de Final'
+      date: new Date('2026-07-03T00:00:00-03:00'), stadium: 'Levi\'s Stadium', city: 'Santa Clara', stage: 'Dezesseisavos de Final'
+    },
+    {
+      homeTeamId: getTeamId('AUS'), awayTeamId: getTeamId('EGY'),
+      date: new Date('2026-07-03T15:00:00-03:00'), stadium: 'Lincoln Financial Field', city: 'Filadélfia', stage: 'Dezesseisavos de Final'
+    },
+    {
+      homeTeamId: getTeamId('ARG'), awayTeamId: getTeamId('CPV'),
+      date: new Date('2026-07-03T19:00:00-03:00'), stadium: 'Hard Rock Stadium', city: 'Miami Gardens', stage: 'Dezesseisavos de Final'
     },
     {
       homeTeamId: getTeamId('COL'), awayTeamId: getTeamId('GHA'),
-      date: new Date('2026-07-03T22:30:00-03:00'), stadium: 'Vancouver Stadium', city: 'Vancouver', stage: 'Dezesseisavos de Final'
+      date: new Date('2026-07-03T22:30:00-03:00'), stadium: 'BC Place', city: 'Vancouver', stage: 'Dezesseisavos de Final'
     }
   ];
 
