@@ -19,7 +19,7 @@ async function main() {
 
   const matches = [
     {
-      homeTeamId: getTeamId('RSA'), awayTeamId: getTeamId('CAN'),
+      homeTeamId: getTeamId('GER'), awayTeamId: getTeamId('PAR'),
       date: new Date('2026-06-28T16:00:00-03:00'), stadium: 'Los Angeles Stadium', city: 'Los Angeles', stage: 'Dezesseisavos de Final'
     },
     {
@@ -27,11 +27,11 @@ async function main() {
       date: new Date('2026-06-29T14:00:00-03:00'), stadium: 'Houston Stadium', city: 'Houston', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('GER'), awayTeamId: getTeamId('PAR'),
+      homeTeamId: getTeamId('RSA'), awayTeamId: getTeamId('CAN'),
       date: new Date('2026-06-29T17:30:00-03:00'), stadium: 'Boston Stadium', city: 'Boston', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('NED'), awayTeamId: getTeamId('MAR'),
+      homeTeamId: getTeamId('FRA'), awayTeamId: getTeamId('SWE'),
       date: new Date('2026-06-29T22:00:00-03:00'), stadium: 'Estadio Monterrey', city: 'Monterrey', stage: 'Dezesseisavos de Final'
     },
     {
@@ -39,7 +39,7 @@ async function main() {
       date: new Date('2026-06-30T14:00:00-03:00'), stadium: 'Dallas Stadium', city: 'Arlington', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('FRA'), awayTeamId: getTeamId('SWE'),
+      homeTeamId: getTeamId('NED'), awayTeamId: getTeamId('MAR'),
       date: new Date('2026-06-30T18:00:00-03:00'), stadium: 'New York New Jersey Stadium', city: 'East Rutherford', stage: 'Dezesseisavos de Final'
     },
     {
@@ -51,23 +51,23 @@ async function main() {
       date: new Date('2026-07-01T13:00:00-03:00'), stadium: 'Atlanta Stadium', city: 'Atlanta', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('BEL'), awayTeamId: getTeamId('SEN'),
+      homeTeamId: getTeamId('POR'), awayTeamId: getTeamId('CRO'),
       date: new Date('2026-07-01T17:00:00-03:00'), stadium: 'Seattle Stadium', city: 'Seattle', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('USA'), awayTeamId: getTeamId('BIH'),
+      homeTeamId: getTeamId('ESP'), awayTeamId: getTeamId('AUT'),
       date: new Date('2026-07-01T21:00:00-03:00'), stadium: 'Kansas City Stadium', city: 'Kansas City', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('ESP'), awayTeamId: getTeamId('AUT'),
+      homeTeamId: getTeamId('USA'), awayTeamId: getTeamId('BIH'),
       date: new Date('2026-07-02T16:00:00-03:00'), stadium: 'Los Angeles Stadium', city: 'Los Angeles', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('POR'), awayTeamId: getTeamId('CRO'),
+      homeTeamId: getTeamId('BEL'), awayTeamId: getTeamId('SEN'),
       date: new Date('2026-07-02T20:00:00-03:00'), stadium: 'Miami Stadium', city: 'Miami', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('SUI'), awayTeamId: getTeamId('ALG'),
+      homeTeamId: getTeamId('ARG'), awayTeamId: getTeamId('CPV'),
       date: new Date('2026-07-03T00:00:00-03:00'), stadium: 'San Francisco Bay Area Stadium', city: 'Santa Clara', stage: 'Dezesseisavos de Final'
     },
     {
@@ -75,7 +75,7 @@ async function main() {
       date: new Date('2026-07-03T15:00:00-03:00'), stadium: 'Philadelphia Stadium', city: 'Filadélfia', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('ARG'), awayTeamId: getTeamId('CPV'),
+      homeTeamId: getTeamId('SUI'), awayTeamId: getTeamId('ALG'),
       date: new Date('2026-07-03T19:00:00-03:00'), stadium: 'Miami Stadium', city: 'Miami', stage: 'Dezesseisavos de Final'
     },
     {

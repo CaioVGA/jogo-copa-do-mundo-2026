@@ -727,8 +727,8 @@ async function main() {
     // 🔥 DEZESSEISAVOS DE FINAL (Fase de 32)
     // Jogo 1
     {
-      homeTeamId: teams.find((t) => t.code === 'RSA')?.id,
-      awayTeamId: teams.find((t) => t.code === 'CAN')?.id,
+      homeTeamId: teams.find((t) => t.code === 'GER')?.id,
+      awayTeamId: teams.find((t) => t.code === 'PAR')?.id,
       date: new Date('2026-06-28T16:00:00-03:00'),
       stadium: 'Los Angeles Stadium',
       city: 'Los Angeles',
@@ -736,17 +736,17 @@ async function main() {
     },
     // Jogo 2
     {
-      homeTeamId: teams.find((t) => t.code === 'NED')?.id,
-      awayTeamId: teams.find((t) => t.code === 'MAR')?.id,
-      date: new Date('2026-06-29T22:00:00-03:00'),
-      stadium: 'Estadio Monterrey',
-      city: 'Monterrey',
+      homeTeamId: teams.find((t) => t.code === 'BRA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'JPN')?.id,
+      date: new Date('2026-06-29T14:00:00-03:00'),
+      stadium: 'Houston Stadium',
+      city: 'Houston',
       stage: 'Dezesseisavos de Final',
     },
     // Jogo 3
     {
-      homeTeamId: teams.find((t) => t.code === 'GER')?.id,
-      awayTeamId: teams.find((t) => t.code === 'PAR')?.id,
+      homeTeamId: teams.find((t) => t.code === 'RSA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CAN')?.id,
       date: new Date('2026-06-29T17:30:00-03:00'),
       stadium: 'Boston Stadium',
       city: 'Boston',
@@ -756,27 +756,27 @@ async function main() {
     {
       homeTeamId: teams.find((t) => t.code === 'FRA')?.id,
       awayTeamId: teams.find((t) => t.code === 'SWE')?.id,
-      date: new Date('2026-06-30T18:00:00-03:00'),
-      stadium: 'New York New Jersey Stadium',
-      city: 'East Rutherford',
+      date: new Date('2026-06-29T22:00:00-03:00'),
+      stadium: 'Estadio Monterrey',
+      city: 'Monterrey',
       stage: 'Dezesseisavos de Final',
     },
     // Jogo 5
-    {
-      homeTeamId: teams.find((t) => t.code === 'BRA')?.id,
-      awayTeamId: teams.find((t) => t.code === 'JPN')?.id,
-      date: new Date('2026-06-29T14:00:00-03:00'),
-      stadium: 'Houston Stadium',
-      city: 'Houston',
-      stage: 'Dezesseisavos de Final',
-    },
-    // Jogo 6
     {
       homeTeamId: teams.find((t) => t.code === 'CIV')?.id,
       awayTeamId: teams.find((t) => t.code === 'NOR')?.id,
       date: new Date('2026-06-30T14:00:00-03:00'),
       stadium: 'Dallas Stadium',
       city: 'Arlington',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 6
+    {
+      homeTeamId: teams.find((t) => t.code === 'NED')?.id,
+      awayTeamId: teams.find((t) => t.code === 'MAR')?.id,
+      date: new Date('2026-06-30T18:00:00-03:00'),
+      stadium: 'New York New Jersey Stadium',
+      city: 'East Rutherford',
       stage: 'Dezesseisavos de Final',
     },
     // Jogo 7
@@ -799,8 +799,8 @@ async function main() {
     },
     // Jogo 9
     {
-      homeTeamId: teams.find((t) => t.code === 'BEL')?.id,
-      awayTeamId: teams.find((t) => t.code === 'SEN')?.id,
+      homeTeamId: teams.find((t) => t.code === 'POR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CRO')?.id,
       date: new Date('2026-07-01T17:00:00-03:00'),
       stadium: 'Seattle Stadium',
       city: 'Seattle',
@@ -808,8 +808,8 @@ async function main() {
     },
     // Jogo 10
     {
-      homeTeamId: teams.find((t) => t.code === 'USA')?.id,
-      awayTeamId: teams.find((t) => t.code === 'BIH')?.id,
+      homeTeamId: teams.find((t) => t.code === 'ESP')?.id,
+      awayTeamId: teams.find((t) => t.code === 'AUT')?.id,
       date: new Date('2026-07-01T21:00:00-03:00'),
       stadium: 'Kansas City Stadium',
       city: 'Kansas City',
@@ -817,8 +817,8 @@ async function main() {
     },
     // Jogo 11
     {
-      homeTeamId: teams.find((t) => t.code === 'ESP')?.id,
-      awayTeamId: teams.find((t) => t.code === 'AUT')?.id,
+      homeTeamId: teams.find((t) => t.code === 'USA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'BIH')?.id,
       date: new Date('2026-07-02T16:00:00-03:00'),
       stadium: 'Los Angeles Stadium',
       city: 'Los Angeles',
@@ -826,8 +826,8 @@ async function main() {
     },
     // Jogo 12
     {
-      homeTeamId: teams.find((t) => t.code === 'POR')?.id,
-      awayTeamId: teams.find((t) => t.code === 'CRO')?.id,
+      homeTeamId: teams.find((t) => t.code === 'BEL')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SEN')?.id,
       date: new Date('2026-07-02T20:00:00-03:00'),
       stadium: 'Miami Stadium',
       city: 'Miami Gardens',
@@ -835,8 +835,8 @@ async function main() {
     },
     // Jogo 13
     {
-      homeTeamId: teams.find((t) => t.code === 'SUI')?.id,
-      awayTeamId: teams.find((t) => t.code === 'ALG')?.id,
+      homeTeamId: teams.find((t) => t.code === 'ARG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
       date: new Date('2026-07-03T00:00:00-03:00'),
       stadium: 'San Francisco Bay Area Stadium',
       city: 'Santa Clara',
@@ -853,8 +853,8 @@ async function main() {
     },
     // Jogo 15
     {
-      homeTeamId: teams.find((t) => t.code === 'ARG')?.id,
-      awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
+      homeTeamId: teams.find((t) => t.code === 'SUI')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ALG')?.id,
       date: new Date('2026-07-03T19:00:00-03:00'),
       stadium: 'Miami Stadium',
       city: 'Miami Gardens',
