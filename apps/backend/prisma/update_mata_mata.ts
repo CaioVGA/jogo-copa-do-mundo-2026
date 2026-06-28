@@ -59,7 +59,7 @@ async function main() {
       date: new Date('2026-07-01T21:00:00-03:00'), stadium: 'Kansas City Stadium', city: 'Kansas City', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('ESP'), awayTeamName: '2º colocado do Grupo J',
+      homeTeamId: getTeamId('ESP'), awayTeamId: getTeamId('AUT'),
       date: new Date('2026-07-02T16:00:00-03:00'), stadium: 'Los Angeles Stadium', city: 'Los Angeles', stage: 'Dezesseisavos de Final'
     },
     {
@@ -67,7 +67,7 @@ async function main() {
       date: new Date('2026-07-02T20:00:00-03:00'), stadium: 'Miami Stadium', city: 'Miami', stage: 'Dezesseisavos de Final'
     },
     {
-      homeTeamId: getTeamId('SUI'), awayTeamName: 'Melhor 3º colocado (Grupos E/F/G/I/J)',
+      homeTeamId: getTeamId('SUI'), awayTeamId: getTeamId('ALG'),
       date: new Date('2026-07-03T00:00:00-03:00'), stadium: 'San Francisco Bay Area Stadium', city: 'Santa Clara', stage: 'Dezesseisavos de Final'
     },
     {
