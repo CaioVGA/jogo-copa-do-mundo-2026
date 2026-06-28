@@ -725,61 +725,61 @@ async function main() {
     },
 
     // 🔥 DEZESSEISAVOS DE FINAL (Fase de 32)
-    // Jogo 1
+    // Jogo 1 (Match 73)
     {
-      homeTeamId: teams.find((t) => t.code === 'GER')?.id,
-      awayTeamId: teams.find((t) => t.code === 'PAR')?.id,
+      homeTeamId: teams.find((t) => t.code === 'RSA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CAN')?.id,
       date: new Date('2026-06-28T16:00:00-03:00'),
-      stadium: 'Los Angeles Stadium',
-      city: 'Los Angeles',
+      stadium: 'SoFi Stadium',
+      city: 'Inglewood (Los Angeles)',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 2
+    // Jogo 2 (Match 74)
     {
       homeTeamId: teams.find((t) => t.code === 'BRA')?.id,
       awayTeamId: teams.find((t) => t.code === 'JPN')?.id,
       date: new Date('2026-06-29T14:00:00-03:00'),
-      stadium: 'Houston Stadium',
+      stadium: 'NRG Stadium',
       city: 'Houston',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 3
+    // Jogo 3 (Match 75)
     {
-      homeTeamId: teams.find((t) => t.code === 'RSA')?.id,
-      awayTeamId: teams.find((t) => t.code === 'CAN')?.id,
+      homeTeamId: teams.find((t) => t.code === 'GER')?.id,
+      awayTeamId: teams.find((t) => t.code === 'PAR')?.id,
       date: new Date('2026-06-29T17:30:00-03:00'),
-      stadium: 'Boston Stadium',
-      city: 'Boston',
+      stadium: 'Gillette Stadium',
+      city: 'Foxborough (Boston)',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 4
+    // Jogo 4 (Match 76)
     {
-      homeTeamId: teams.find((t) => t.code === 'FRA')?.id,
-      awayTeamId: teams.find((t) => t.code === 'SWE')?.id,
+      homeTeamId: teams.find((t) => t.code === 'NED')?.id,
+      awayTeamId: teams.find((t) => t.code === 'MAR')?.id,
       date: new Date('2026-06-29T22:00:00-03:00'),
-      stadium: 'Estadio Monterrey',
-      city: 'Monterrey',
+      stadium: 'Estadio BBVA',
+      city: 'Guadalupe (Monterrey)',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 5
+    // Jogo 5 (Match 77)
     {
       homeTeamId: teams.find((t) => t.code === 'CIV')?.id,
       awayTeamId: teams.find((t) => t.code === 'NOR')?.id,
       date: new Date('2026-06-30T14:00:00-03:00'),
-      stadium: 'Dallas Stadium',
-      city: 'Arlington',
+      stadium: 'AT&T Stadium',
+      city: 'Arlington (Dallas)',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 6
+    // Jogo 6 (Match 78)
     {
-      homeTeamId: teams.find((t) => t.code === 'NED')?.id,
-      awayTeamId: teams.find((t) => t.code === 'MAR')?.id,
+      homeTeamId: teams.find((t) => t.code === 'FRA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'SWE')?.id,
       date: new Date('2026-06-30T18:00:00-03:00'),
-      stadium: 'New York New Jersey Stadium',
-      city: 'East Rutherford',
+      stadium: 'MetLife Stadium',
+      city: 'East Rutherford (Nova Jersey)',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 7
+    // Jogo 7 (Match 79)
     {
       homeTeamId: teams.find((t) => t.code === 'MEX')?.id,
       awayTeamId: teams.find((t) => t.code === 'ECU')?.id,
@@ -788,98 +788,90 @@ async function main() {
       city: 'Cidade do México',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 8
+    // Jogo 8 (Match 80)
     {
       homeTeamId: teams.find((t) => t.code === 'ENG')?.id,
       awayTeamId: teams.find((t) => t.code === 'COD')?.id,
       date: new Date('2026-07-01T13:00:00-03:00'),
-      stadium: 'Atlanta Stadium',
+      stadium: 'Mercedes-Benz Stadium',
       city: 'Atlanta',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 9
-    {
-      homeTeamId: teams.find((t) => t.code === 'POR')?.id,
-      awayTeamId: teams.find((t) => t.code === 'CRO')?.id,
-      date: new Date('2026-07-01T17:00:00-03:00'),
-      stadium: 'Seattle Stadium',
-      city: 'Seattle',
-      stage: 'Dezesseisavos de Final',
-    },
-    // Jogo 10
-    {
-      homeTeamId: teams.find((t) => t.code === 'ESP')?.id,
-      awayTeamId: teams.find((t) => t.code === 'AUT')?.id,
-      date: new Date('2026-07-01T21:00:00-03:00'),
-      stadium: 'Kansas City Stadium',
-      city: 'Kansas City',
-      stage: 'Dezesseisavos de Final',
-    },
-    // Jogo 11
-    {
-      homeTeamId: teams.find((t) => t.code === 'USA')?.id,
-      awayTeamId: teams.find((t) => t.code === 'BIH')?.id,
-      date: new Date('2026-07-02T16:00:00-03:00'),
-      stadium: 'Los Angeles Stadium',
-      city: 'Los Angeles',
-      stage: 'Dezesseisavos de Final',
-    },
-    // Jogo 12
+    // Jogo 9 (Match 81)
     {
       homeTeamId: teams.find((t) => t.code === 'BEL')?.id,
       awayTeamId: teams.find((t) => t.code === 'SEN')?.id,
+      date: new Date('2026-07-01T17:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 10 (Match 82)
+    {
+      homeTeamId: teams.find((t) => t.code === 'USA')?.id,
+      awayTeamId: teams.find((t) => t.code === 'BIH')?.id,
+      date: new Date('2026-07-01T21:00:00-03:00'),
+      stadium: 'Arrowhead Stadium',
+      city: 'Kansas City',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 11 (Match 83)
+    {
+      homeTeamId: teams.find((t) => t.code === 'ESP')?.id,
+      awayTeamId: teams.find((t) => t.code === 'AUT')?.id,
+      date: new Date('2026-07-02T16:00:00-03:00'),
+      stadium: 'SoFi Stadium',
+      city: 'Inglewood (Los Angeles)',
+      stage: 'Dezesseisavos de Final',
+    },
+    // Jogo 12 (Match 84)
+    {
+      homeTeamId: teams.find((t) => t.code === 'POR')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CRO')?.id,
       date: new Date('2026-07-02T20:00:00-03:00'),
-      stadium: 'Miami Stadium',
+      stadium: 'Hard Rock Stadium',
       city: 'Miami Gardens',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 13
+    // Jogo 13 (Match 85)
     {
-      homeTeamId: teams.find((t) => t.code === 'ARG')?.id,
-      awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
+      homeTeamId: teams.find((t) => t.code === 'SUI')?.id,
+      awayTeamId: teams.find((t) => t.code === 'ALG')?.id,
       date: new Date('2026-07-03T00:00:00-03:00'),
-      stadium: 'San Francisco Bay Area Stadium',
+      stadium: 'Levi\'s Stadium',
       city: 'Santa Clara',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 14
+    // Jogo 14 (Match 86)
     {
       homeTeamId: teams.find((t) => t.code === 'AUS')?.id,
       awayTeamId: teams.find((t) => t.code === 'EGY')?.id,
       date: new Date('2026-07-03T15:00:00-03:00'),
-      stadium: 'Philadelphia Stadium',
+      stadium: 'Lincoln Financial Field',
       city: 'Filadélfia',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 15
+    // Jogo 15 (Match 87)
     {
-      homeTeamId: teams.find((t) => t.code === 'SUI')?.id,
-      awayTeamId: teams.find((t) => t.code === 'ALG')?.id,
+      homeTeamId: teams.find((t) => t.code === 'ARG')?.id,
+      awayTeamId: teams.find((t) => t.code === 'CPV')?.id,
       date: new Date('2026-07-03T19:00:00-03:00'),
-      stadium: 'Miami Stadium',
+      stadium: 'Hard Rock Stadium',
       city: 'Miami Gardens',
       stage: 'Dezesseisavos de Final',
     },
-    // Jogo 16
+    // Jogo 16 (Match 88)
     {
       homeTeamId: teams.find((t) => t.code === 'COL')?.id,
       awayTeamId: teams.find((t) => t.code === 'GHA')?.id,
       date: new Date('2026-07-03T22:30:00-03:00'),
-      stadium: 'Vancouver Stadium',
+      stadium: 'BC Place',
       city: 'Vancouver',
       stage: 'Dezesseisavos de Final',
     },
 
-    // 🗓️ OITAVAS DE FINAL
-    // 4 de julho
-    {
-      homeTeamName: 'Vencedor do jogo 73',
-      awayTeamName: 'Vencedor do jogo 76',
-      date: new Date('2026-07-04T14:00:00-03:00'),
-      stadium: 'Lincoln Financial Field',
-      city: 'Filadélfia',
-      stage: 'Oitavas de Final',
-    },
+    // 🔥 OITAVAS DE FINAL
+    // Jogo 17 (Oitava 1: 75 vs 78) - Match 89
     {
       homeTeamName: 'Vencedor do jogo 75',
       awayTeamName: 'Vencedor do jogo 78',
