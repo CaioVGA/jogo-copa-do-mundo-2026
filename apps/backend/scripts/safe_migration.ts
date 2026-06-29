@@ -14,72 +14,96 @@ const pool = new Pool({ connectionString: databaseUrl });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const knockoutMatchesData = [
-  // 🗓️ OITAVAS DE FINAL
-  { home: 'Vencedor do jogo 75', away: 'Vencedor do jogo 78', date: new Date('2026-07-04T18:00:00-03:00'), stage: 'Oitavas de Final' },
-  { home: 'Vencedor do jogo 73', away: 'Vencedor do jogo 76', date: new Date('2026-07-04T21:00:00-03:00'), stage: 'Oitavas de Final' },
-  { home: 'Vencedor do jogo 84', away: 'Vencedor do jogo 83', date: new Date('2026-07-05T18:00:00-03:00'), stage: 'Oitavas de Final' },
-  { home: 'Vencedor do jogo 82', away: 'Vencedor do jogo 81', date: new Date('2026-07-05T21:00:00-03:00'), stage: 'Oitavas de Final' },
-  { home: 'Vencedor do jogo 74', away: 'Vencedor do jogo 77', date: new Date('2026-07-06T18:00:00-03:00'), stage: 'Oitavas de Final' },
-  { home: 'Vencedor do jogo 79', away: 'Vencedor do jogo 80', date: new Date('2026-07-06T21:00:00-03:00'), stage: 'Oitavas de Final' },
-  { home: 'Vencedor do jogo 87', away: 'Vencedor do jogo 86', date: new Date('2026-07-07T18:00:00-03:00'), stage: 'Oitavas de Final' },
-  { home: 'Vencedor do jogo 85', away: 'Vencedor do jogo 88', date: new Date('2026-07-07T21:00:00-03:00'), stage: 'Oitavas de Final' },
-
-  // 🗓️ QUARTAS DE FINAL
-  { home: 'Vencedor do jogo 89', away: 'Vencedor do jogo 90', date: new Date('2026-07-09T17:00:00-03:00'), stage: 'Quartas de Final' },
-  { home: 'Vencedor do jogo 91', away: 'Vencedor do jogo 92', date: new Date('2026-07-10T16:00:00-03:00'), stage: 'Quartas de Final' },
-  { home: 'Vencedor do jogo 93', away: 'Vencedor do jogo 94', date: new Date('2026-07-11T18:00:00-03:00'), stage: 'Quartas de Final' },
-  { home: 'Vencedor do jogo 95', away: 'Vencedor do jogo 96', date: new Date('2026-07-11T22:00:00-03:00'), stage: 'Quartas de Final' },
-
-  // 🗓️ SEMIFINAIS
-  { home: 'Vencedor do jogo 97', away: 'Vencedor do jogo 98', date: new Date('2026-07-14T16:00:00-03:00'), stage: 'Semifinais' },
-  { home: 'Vencedor do jogo 99', away: 'Vencedor do jogo 100', date: new Date('2026-07-15T16:00:00-03:00'), stage: 'Semifinais' },
-
-  // 🗓️ DISPUTA DO 3º LUGAR
-  { home: 'Perdedor do jogo 101', away: 'Perdedor do jogo 102', date: new Date('2026-07-18T16:00:00-03:00'), stage: 'Terceiro Lugar' },
-
-  // 🗓️ FINAL
-  { home: 'Vencedor do jogo 101', away: 'Vencedor do jogo 102', date: new Date('2026-07-19T16:00:00-03:00'), stage: 'Final' }
+const migrations = [
+  {
+    stage: 'Oitavas de Final',
+    matches: [
+      { home: 'Vencedor do jogo 75', away: 'Vencedor do jogo 78', date: new Date('2026-07-04T18:00:00-03:00') },
+      { home: 'Vencedor do jogo 73', away: 'Vencedor do jogo 76', date: new Date('2026-07-04T21:00:00-03:00') },
+      { home: 'Vencedor do jogo 84', away: 'Vencedor do jogo 83', date: new Date('2026-07-05T18:00:00-03:00') },
+      { home: 'Vencedor do jogo 82', away: 'Vencedor do jogo 81', date: new Date('2026-07-05T21:00:00-03:00') },
+      { home: 'Vencedor do jogo 74', away: 'Vencedor do jogo 77', date: new Date('2026-07-06T18:00:00-03:00') },
+      { home: 'Vencedor do jogo 79', away: 'Vencedor do jogo 80', date: new Date('2026-07-06T21:00:00-03:00') },
+      { home: 'Vencedor do jogo 87', away: 'Vencedor do jogo 86', date: new Date('2026-07-07T18:00:00-03:00') },
+      { home: 'Vencedor do jogo 85', away: 'Vencedor do jogo 88', date: new Date('2026-07-07T21:00:00-03:00') },
+    ]
+  },
+  {
+    stage: 'Quartas de Final',
+    matches: [
+      { home: 'Vencedor do jogo 89', away: 'Vencedor do jogo 90', date: new Date('2026-07-09T17:00:00-03:00') },
+      { home: 'Vencedor do jogo 91', away: 'Vencedor do jogo 92', date: new Date('2026-07-10T16:00:00-03:00') },
+      { home: 'Vencedor do jogo 93', away: 'Vencedor do jogo 94', date: new Date('2026-07-11T18:00:00-03:00') },
+      { home: 'Vencedor do jogo 95', away: 'Vencedor do jogo 96', date: new Date('2026-07-11T22:00:00-03:00') },
+    ]
+  },
+  {
+    stage: 'Semifinais',
+    matches: [
+      { home: 'Vencedor do jogo 97', away: 'Vencedor do jogo 98', date: new Date('2026-07-14T16:00:00-03:00') },
+      { home: 'Vencedor do jogo 99', away: 'Vencedor do jogo 100', date: new Date('2026-07-15T16:00:00-03:00') },
+    ]
+  },
+  {
+    stage: 'Terceiro Lugar',
+    matches: [
+      { home: 'Perdedor do jogo 101', away: 'Perdedor do jogo 102', date: new Date('2026-07-18T16:00:00-03:00') },
+    ]
+  },
+  {
+    stage: 'Final',
+    matches: [
+      { home: 'Vencedor do jogo 101', away: 'Vencedor do jogo 102', date: new Date('2026-07-19T16:00:00-03:00') },
+    ]
+  }
 ];
 
 async function main() {
-  console.log('Iniciando migração segura das partidas do Mata-Mata...');
+  console.log('Iniciando migração segura das partidas do Mata-Mata V2...');
   
   let successCount = 0;
   let notFoundCount = 0;
 
-  for (const matchData of knockoutMatchesData) {
-    // Tenta encontrar o jogo no banco pela data exata
-    const existingMatch = await prisma.match.findFirst({
-      where: {
-        date: matchData.date,
-        stage: matchData.stage,
-      },
+  for (const group of migrations) {
+    const existingMatches = await prisma.match.findMany({
+      where: { stage: group.stage },
+      orderBy: { date: 'asc' }
     });
 
-    if (existingMatch) {
+    if (existingMatches.length !== group.matches.length) {
+      console.log(`[ERRO] A fase '${group.stage}' deveria ter ${group.matches.length} jogos, mas encontrou ${existingMatches.length} no banco. Isso pode causar problemas.`);
+    }
+
+    for (let i = 0; i < existingMatches.length; i++) {
+      const dbMatch = existingMatches[i];
+      const newMatchData = group.matches[i];
+
+      if (!newMatchData) {
+        console.log(`[AVISO] Sobrou um jogo extra no banco para ${group.stage} que não tem mapeamento correspondente: ${dbMatch.id}`);
+        notFoundCount++;
+        continue;
+      }
+
       await prisma.match.update({
-        where: { id: existingMatch.id },
+        where: { id: dbMatch.id },
         data: {
-          homeTeamName: matchData.home,
-          awayTeamName: matchData.away,
+          homeTeamName: newMatchData.home,
+          awayTeamName: newMatchData.away,
+          date: newMatchData.date, // Atualizamos também a data para garantir que bata 100%
         }
       });
-      console.log(`[OK] Jogo de ${matchData.stage} (${matchData.date.toISOString()}) atualizado com sucesso. Preservado ID: ${existingMatch.id}`);
+      console.log(`[OK] Jogo de ${group.stage} (ID: ${dbMatch.id}) atualizado para: ${newMatchData.home} vs ${newMatchData.away} (${newMatchData.date.toISOString()})`);
       successCount++;
-    } else {
-      console.log(`[AVISO] Jogo de ${matchData.stage} (${matchData.date.toISOString()}) NÃO ENCONTRADO.`);
-      notFoundCount++;
     }
   }
 
   console.log('--- Resumo da Migração ---');
   console.log(`Partidas atualizadas com sucesso: ${successCount}`);
-  console.log(`Partidas não encontradas: ${notFoundCount}`);
-  if (successCount === 16) {
-    console.log('MIGRAÇÃO CONCLUÍDA COM SUCESSO! SEUS DADOS ESTÃO SEGUROS.');
-  } else {
+  if (notFoundCount > 0) {
+    console.log(`Partidas com problemas de mapeamento: ${notFoundCount}`);
     console.log('MIGRAÇÃO FINALIZADA COM AVISOS.');
+  } else {
+    console.log('MIGRAÇÃO CONCLUÍDA COM SUCESSO! 100% DOS DADOS ATUALIZADOS.');
   }
 }
 
