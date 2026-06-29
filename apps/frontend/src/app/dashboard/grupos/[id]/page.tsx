@@ -2501,8 +2501,6 @@ export default function GroupDetailsPage() {
                   const thirdMatch = r2.find(m => m.stage === "Terceiro Lugar" || m.stage === "Disputa do 3º Lugar");
 
                   const handleResetKnockout = async () => {
-                    if (isOracleClosed) return;
-                    
                     const newOracleKnockout: Record<string, string> = {};
                     
                     // Manter os jogos que já foram encerrados ou cuja fase está bloqueada
@@ -2511,8 +2509,7 @@ export default function GroupDetailsPage() {
                     Object.keys(oracleKnockout).forEach((matchId) => {
                       const matchInfo = knockoutMatchesList.find(m => m.id === matchId);
                       if (matchInfo) {
-                        const deadlineDate = knockoutDeadlines[matchInfo.stage] ? new Date(knockoutDeadlines[matchInfo.stage]) : null;
-                        const isLocked = deadlineDate ? deadlineDate.getTime() <= Date.now() : false;
+                        const isLocked = new Date(matchInfo.date).getTime() <= Date.now();
                         const isFinished = matchInfo.status === "FINISHED";
                         
                         if (isLocked || isFinished) {
@@ -2545,50 +2542,10 @@ export default function GroupDetailsPage() {
                         <h3 className="text-[#ffd700] font-bold flex items-center gap-2 mb-2 text-sm sm:text-base">
                           <Trophy className="w-4 h-4" /> Regras e Prazos do Mata-Mata
                         </h3>
-                        <p className="text-white/70 text-xs mb-4">
+                        <p className="text-white/70 text-xs">
                           Você ganha <strong className="text-emerald-400">5 pontos</strong> por cada seleção que acertar que avançará de fase! 
-                          O Oráculo do mata-mata é bloqueado <strong>por fase</strong>. Assim que a primeira partida de uma fase começar, os palpites para todos os jogos dela são encerrados.
+                          O Oráculo do mata-mata é bloqueado <strong>por partida</strong>. Você pode selecionar ou alterar seu palpite até o apito inicial de cada confronto específico, de forma idêntica ao bolão!
                         </p>
-                        
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                          {[
-                            { id: "Dezesseisavos de Final", label: "1/16 Final" },
-                            { id: "Oitavas de Final", label: "Oitavas" },
-                            { id: "Quartas de Final", label: "Quartas" },
-                            { id: "Semifinais", label: "Semifinais" },
-                            { id: "Terceiro Lugar", label: "3º Lugar" },
-                            { id: "Final", label: "Final" }
-                          ].map(stage => {
-                            const deadlineDate = knockoutDeadlines[stage.id] ? new Date(knockoutDeadlines[stage.id]) : null;
-                            const isLocked = deadlineDate ? deadlineDate.getTime() <= Date.now() : false;
-                            
-                            return (
-                              <div key={stage.id} className={`p-2 rounded-xl border flex flex-col items-center justify-center text-center gap-1 ${
-                                isLocked ? "bg-red-500/10 border-red-500/20" : "bg-emerald-500/10 border-emerald-500/20"
-                              }`}>
-                                <span className={`text-[10px] font-bold uppercase ${isLocked ? "text-red-400" : "text-emerald-400"}`}>
-                                  {stage.label}
-                                </span>
-                                {isLocked ? (
-                                  <span className="flex items-center gap-1 text-[9px] text-red-400/80">
-                                    <Lock className="w-3 h-3" /> Bloqueado
-                                  </span>
-                                ) : deadlineDate ? (
-                                  <div className="flex flex-col items-center">
-                                    <span className="flex items-center gap-1 text-[9px] text-emerald-400/80">
-                                      <Clock className="w-3 h-3" /> Aberto até
-                                    </span>
-                                    <span className="text-[9px] text-white/60 font-medium">
-                                      {deadlineDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às {deadlineDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-[9px] text-white/40">Indefinida</span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
                       </div>
 
                       {/* Navegação entre as fases do chaveamento */}
@@ -2644,7 +2601,6 @@ export default function GroupDetailsPage() {
                           </button>
                           <button
                             onClick={handleResetKnockout}
-                            disabled={isOracleClosed}
                             className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ml-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed`}
                             title="Limpar todos os palpites do mata-mata"
                           >
@@ -2674,7 +2630,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={r32Mappings[game.id]?.home}
                                     oracleAwayTeam={r32Mappings[game.id]?.away}
-                                    isLocked={knockoutDeadlines["Dezesseisavos de Final"] ? new Date(knockoutDeadlines["Dezesseisavos de Final"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2694,7 +2650,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r16Left, r32Left)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r16Left, r32Left)}
-                                    isLocked={knockoutDeadlines["Oitavas de Final"] ? new Date(knockoutDeadlines["Oitavas de Final"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2714,7 +2670,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r8Left, r16Left)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r8Left, r16Left)}
-                                    isLocked={knockoutDeadlines["Quartas de Final"] ? new Date(knockoutDeadlines["Quartas de Final"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2734,7 +2690,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r4Left, r8Left)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r4Left, r8Left)}
-                                    isLocked={knockoutDeadlines["Semifinais"] ? new Date(knockoutDeadlines["Semifinais"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2758,7 +2714,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[finalMatch.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(finalMatch.id, true, [finalMatch], [...r4Left, ...r4Right])}
                                     oracleAwayTeam={getOracleTeamForSlot(finalMatch.id, false, [finalMatch], [...r4Left, ...r4Right])}
-                                    isLocked={knockoutDeadlines["Final"] ? new Date(knockoutDeadlines["Final"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(finalMatch.date).getTime() <= Date.now()}
                                   />
                                 ) : (
                                   <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
@@ -2781,7 +2737,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[thirdMatch.id]}
                                     oracleHomeTeam={getOracleLoserForSlot(thirdMatch.id, true, [thirdMatch], [...r4Left, ...r4Right], [...r8Left, ...r8Right])}
                                     oracleAwayTeam={getOracleLoserForSlot(thirdMatch.id, false, [thirdMatch], [...r4Left, ...r4Right], [...r8Left, ...r8Right])}
-                                    isLocked={knockoutDeadlines["Terceiro Lugar"] ? new Date(knockoutDeadlines["Terceiro Lugar"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(thirdMatch.date).getTime() <= Date.now()}
                                   />
                                 ) : (
                                   <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
@@ -2805,7 +2761,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r4Right, r8Right)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r4Right, r8Right)}
-                                    isLocked={knockoutDeadlines["Semifinais"] ? new Date(knockoutDeadlines["Semifinais"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2825,7 +2781,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r8Right, r16Right)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r8Right, r16Right)}
-                                    isLocked={knockoutDeadlines["Quartas de Final"] ? new Date(knockoutDeadlines["Quartas de Final"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2845,7 +2801,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r16Right, r32Right)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r16Right, r32Right)}
-                                    isLocked={knockoutDeadlines["Oitavas de Final"] ? new Date(knockoutDeadlines["Oitavas de Final"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2865,7 +2821,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={r32Mappings[game.id]?.home}
                                     oracleAwayTeam={r32Mappings[game.id]?.away}
-                                    isLocked={knockoutDeadlines["Dezesseisavos de Final"] ? new Date(knockoutDeadlines["Dezesseisavos de Final"]).getTime() <= Date.now() : false}
+                                    isLocked={new Date(game.date).getTime() <= Date.now()}
                                   />
                                 ))}
                               </div>
@@ -2916,7 +2872,7 @@ export default function GroupDetailsPage() {
                                   oracleWinner={oracleKnockout[game.id]}
                                   oracleHomeTeam={resolveOracleTeamForGame(game, true)}
                                   oracleAwayTeam={resolveOracleTeamForGame(game, false)}
-                                  isLocked={knockoutDeadlines[game.stage] ? new Date(knockoutDeadlines[game.stage]).getTime() <= Date.now() : false}
+                                  isLocked={new Date(game.date).getTime() <= Date.now()}
                                 />
                               </div>
                             );
