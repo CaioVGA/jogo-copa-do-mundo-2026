@@ -867,11 +867,11 @@ async function main() {
       date: new Date('2026-07-03T22:30:00-03:00'),
       stadium: 'BC Place',
       city: 'Vancouver',
-      stage: 'Dezesseisavos de Final',
+      stage: 'Fase de Grupos - Rodada 3',
     },
 
     // 🔥 OITAVAS DE FINAL
-    // Jogo 17 (Oitava 1: 75 vs 78) - Match 89
+    // Match 89 (Oitava 1: Jogo 1 vs Jogo 2 -> 75 vs 78)
     {
       homeTeamName: 'Vencedor do jogo 75',
       awayTeamName: 'Vencedor do jogo 78',
@@ -880,60 +880,72 @@ async function main() {
       city: 'Houston',
       stage: 'Oitavas de Final',
     },
-    // 5 de julho
+    // Match 90 (Oitava 2: Jogo 3 vs Jogo 4 -> 73 vs 76)
     {
-      homeTeamName: 'Vencedor do jogo 74',
-      awayTeamName: 'Vencedor do jogo 77',
-      date: new Date('2026-07-05T17:00:00-03:00'),
+      homeTeamName: 'Vencedor do jogo 73',
+      awayTeamName: 'Vencedor do jogo 76',
+      date: new Date('2026-07-04T21:00:00-03:00'),
       stadium: 'MetLife Stadium',
       city: 'Nova York/Nova Jersey',
       stage: 'Oitavas de Final',
     },
+    // Match 91 (Oitava 3: Jogo 9 vs Jogo 10 -> 84 vs 83)
     {
-      homeTeamName: 'Vencedor do jogo 79',
-      awayTeamName: 'Vencedor do jogo 80',
-      date: new Date('2026-07-05T21:00:00-03:00'),
+      homeTeamName: 'Vencedor do jogo 84',
+      awayTeamName: 'Vencedor do jogo 83',
+      date: new Date('2026-07-05T18:00:00-03:00'),
       stadium: 'Estádio Azteca',
       city: 'Cidade do México',
       stage: 'Oitavas de Final',
     },
-    // 6 de julho
+    // Match 92 (Oitava 4: Jogo 11 vs Jogo 12 -> 82 vs 81)
     {
-      homeTeamName: 'Vencedor do jogo 81',
-      awayTeamName: 'Vencedor do jogo 82',
-      date: new Date('2026-07-06T16:00:00-03:00'),
+      homeTeamName: 'Vencedor do jogo 82',
+      awayTeamName: 'Vencedor do jogo 81',
+      date: new Date('2026-07-05T21:00:00-03:00'),
       stadium: 'AT&T Stadium',
       city: 'Dallas',
       stage: 'Oitavas de Final',
     },
+    // Match 93 (Oitava 5: Jogo 5 vs Jogo 6 -> 74 vs 77)
     {
-      homeTeamName: 'Vencedor do jogo 83',
-      awayTeamName: 'Vencedor do jogo 84',
-      date: new Date('2026-07-06T21:00:00-03:00'),
+      homeTeamName: 'Vencedor do jogo 74',
+      awayTeamName: 'Vencedor do jogo 77',
+      date: new Date('2026-07-06T18:00:00-03:00'),
       stadium: 'Lumen Field',
       city: 'Seattle',
       stage: 'Oitavas de Final',
     },
-    // 7 de julho
+    // Match 94 (Oitava 6: Jogo 7 vs Jogo 8 -> 79 vs 80)
     {
-      homeTeamName: 'Vencedor do jogo 85',
-      awayTeamName: 'Vencedor do jogo 86',
-      date: new Date('2026-07-07T13:00:00-03:00'),
+      homeTeamName: 'Vencedor do jogo 79',
+      awayTeamName: 'Vencedor do jogo 80',
+      date: new Date('2026-07-06T21:00:00-03:00'),
       stadium: 'Mercedes-Benz Stadium',
       city: 'Atlanta',
       stage: 'Oitavas de Final',
     },
+    // Match 95 (Oitava 7: Jogo 13 vs Jogo 14 -> 87 vs 86)
     {
       homeTeamName: 'Vencedor do jogo 87',
-      awayTeamName: 'Vencedor do jogo 88',
-      date: new Date('2026-07-07T17:00:00-03:00'),
+      awayTeamName: 'Vencedor do jogo 86',
+      date: new Date('2026-07-07T18:00:00-03:00'),
       stadium: 'BC Place',
       city: 'Vancouver',
       stage: 'Oitavas de Final',
     },
+    // Match 96 (Oitava 8: Jogo 15 vs Jogo 16 -> 85 vs 88)
+    {
+      homeTeamName: 'Vencedor do jogo 85',
+      awayTeamName: 'Vencedor do jogo 88',
+      date: new Date('2026-07-07T21:00:00-03:00'),
+      stadium: 'Lumen Field',
+      city: 'Seattle',
+      stage: 'Oitavas de Final',
+    },
 
     // 🗓️ QUARTAS DE FINAL
-    // 9 de julho
+    // Match 97 (Quartas 1: Oitavas 1 vs Oitavas 2 -> 89 vs 90)
     {
       homeTeamName: 'Vencedor do jogo 89',
       awayTeamName: 'Vencedor do jogo 90',
@@ -942,7 +954,7 @@ async function main() {
       city: 'Boston',
       stage: 'Quartas de Final',
     },
-    // 10 de julho
+    // Match 98 (Quartas 2: Oitavas 3 vs Oitavas 4 -> 91 vs 92)
     {
       homeTeamName: 'Vencedor do jogo 91',
       awayTeamName: 'Vencedor do jogo 92',
@@ -951,7 +963,7 @@ async function main() {
       city: 'Los Angeles',
       stage: 'Quartas de Final',
     },
-    // 11 de julho
+    // Match 99 (Quartas 3: Oitavas 5 vs Oitavas 6 -> 93 vs 94)
     {
       homeTeamName: 'Vencedor do jogo 93',
       awayTeamName: 'Vencedor do jogo 94',
@@ -960,6 +972,7 @@ async function main() {
       city: 'Miami',
       stage: 'Quartas de Final',
     },
+    // Match 100 (Quartas 4: Oitavas 7 vs Oitavas 8 -> 95 vs 96)
     {
       homeTeamName: 'Vencedor do jogo 95',
       awayTeamName: 'Vencedor do jogo 96',
@@ -970,7 +983,7 @@ async function main() {
     },
 
     // 🗓️ SEMIFINAIS
-    // 14 de julho
+    // Match 101 (Semifinal 1: Quartas 1 vs Quartas 2 -> 97 vs 98)
     {
       homeTeamName: 'Vencedor do jogo 97',
       awayTeamName: 'Vencedor do jogo 98',
@@ -979,7 +992,7 @@ async function main() {
       city: 'Dallas',
       stage: 'Semifinais',
     },
-    // 15 de julho
+    // Match 102 (Semifinal 2: Quartas 3 vs Quartas 4 -> 99 vs 100)
     {
       homeTeamName: 'Vencedor do jogo 99',
       awayTeamName: 'Vencedor do jogo 100',
@@ -990,7 +1003,6 @@ async function main() {
     },
 
     // 🗓️ TERCEIRO LUGAR
-    // 18 de julho
     {
       homeTeamName: 'Perdedor do jogo 101',
       awayTeamName: 'Perdedor do jogo 102',
@@ -1001,7 +1013,6 @@ async function main() {
     },
 
     // 👑 FINAL
-    // 19 de julho
     {
       homeTeamName: 'Vencedor do jogo 101',
       awayTeamName: 'Vencedor do jogo 102',

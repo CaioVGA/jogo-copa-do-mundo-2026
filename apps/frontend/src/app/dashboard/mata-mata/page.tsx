@@ -13,6 +13,16 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
   const hTeam = game.homeTeam?.name ? game.homeTeam : null;
   const aTeam = game.awayTeam?.name ? game.awayTeam : null;
 
+  const homeWon = game.realHomeScore !== null && (
+    game.realHomeScore > (game.realAwayScore ?? 0) || 
+    (game.realHomeScore === game.realAwayScore && (game.homePenalties ?? 0) > (game.awayPenalties ?? 0))
+  );
+  
+  const awayWon = game.realAwayScore !== null && (
+    game.realAwayScore > (game.realHomeScore ?? 0) || 
+    (game.realAwayScore === game.realHomeScore && (game.awayPenalties ?? 0) > (game.homePenalties ?? 0))
+  );
+
   return (
     <div className={`relative w-40 sm:w-44 bg-black/40 border ${isLive ? "border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]" : "border-white/10"} rounded-xl p-2 shrink-0 flex flex-col gap-1.5 backdrop-blur-sm mx-auto hover:bg-black/60 transition-colors`}>
       {/* Date & Stage */}
@@ -31,7 +41,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
       {/* Teams Container */}
       <div className="flex flex-col gap-1.5 bg-black/30 rounded-lg p-1.5 border border-white/5">
         {/* Home Team */}
-        <div className={`flex items-center justify-between gap-1.5 p-1 rounded-md transition-colors ${game.realHomeScore !== null && game.realHomeScore > (game.realAwayScore || 0) ? "bg-[#ffd700]/5" : ""}`}>
+        <div className={`flex items-center justify-between gap-1.5 p-1 rounded-md transition-colors ${homeWon ? "bg-[#ffd700]/5" : ""}`}>
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
               {hTeam?.flag ? (
@@ -40,7 +50,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
                 hTeam?.code || "?"
               )}
             </div>
-            <span className={`text-[10px] font-bold truncate ${game.realHomeScore !== null && game.realHomeScore > (game.realAwayScore || 0) ? "text-[#ffd700]" : "text-white/80"}`} title={hTeam?.name || game.homeTeamFallback || "A Definir"}>
+            <span className={`text-[10px] font-bold truncate ${homeWon ? "text-[#ffd700]" : "text-white/80"}`} title={hTeam?.name || game.homeTeamFallback || "A Definir"}>
               {hTeam?.name || game.homeTeamFallback || "A Definir"}
             </span>
           </div>
@@ -49,7 +59,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
               {game.homePenalties !== null && game.homePenalties !== undefined && (
                 <span className="text-[8px] text-white/50 font-bold">({game.homePenalties})</span>
               )}
-              <span className={`text-xs font-black shrink-0 ${isLive ? "text-emerald-400 animate-pulse" : (game.realHomeScore !== null && game.realHomeScore > (game.realAwayScore || 0) ? "text-[#ffd700]" : "text-white")}`}>
+              <span className={`text-xs font-black shrink-0 ${isLive ? "text-emerald-400 animate-pulse" : (homeWon ? "text-[#ffd700]" : "text-white")}`}>
                 {game.realHomeScore}
               </span>
             </div>
@@ -57,7 +67,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
         </div>
 
         {/* Away Team */}
-        <div className={`flex items-center justify-between gap-1.5 p-1 rounded-md transition-colors ${game.realAwayScore !== null && game.realAwayScore > (game.realHomeScore || 0) ? "bg-[#ffd700]/5" : ""}`}>
+        <div className={`flex items-center justify-between gap-1.5 p-1 rounded-md transition-colors ${awayWon ? "bg-[#ffd700]/5" : ""}`}>
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
               {aTeam?.flag ? (
@@ -66,7 +76,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
                 aTeam?.code || "?"
               )}
             </div>
-            <span className={`text-[10px] font-bold truncate ${game.realAwayScore !== null && game.realAwayScore > (game.realHomeScore || 0) ? "text-[#ffd700]" : "text-white/80"}`} title={aTeam?.name || game.awayTeamFallback || "A Definir"}>
+            <span className={`text-[10px] font-bold truncate ${awayWon ? "text-[#ffd700]" : "text-white/80"}`} title={aTeam?.name || game.awayTeamFallback || "A Definir"}>
               {aTeam?.name || game.awayTeamFallback || "A Definir"}
             </span>
           </div>
@@ -75,7 +85,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
               {game.awayPenalties !== null && game.awayPenalties !== undefined && (
                 <span className="text-[8px] text-white/50 font-bold">({game.awayPenalties})</span>
               )}
-              <span className={`text-xs font-black shrink-0 ${isLive ? "text-emerald-400 animate-pulse" : (game.realAwayScore !== null && game.realAwayScore > (game.realHomeScore || 0) ? "text-[#ffd700]" : "text-white")}`}>
+              <span className={`text-xs font-black shrink-0 ${isLive ? "text-emerald-400 animate-pulse" : (awayWon ? "text-[#ffd700]" : "text-white")}`}>
                 {game.realAwayScore}
               </span>
             </div>
