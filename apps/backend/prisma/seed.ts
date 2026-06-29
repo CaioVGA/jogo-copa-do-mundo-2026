@@ -867,7 +867,7 @@ async function main() {
       date: new Date('2026-07-03T22:30:00-03:00'),
       stadium: 'BC Place',
       city: 'Vancouver',
-      stage: 'Fase de Grupos - Rodada 3',
+      stage: 'Dezesseisavos de Final',
     },
 
     // 🔥 OITAVAS DE FINAL

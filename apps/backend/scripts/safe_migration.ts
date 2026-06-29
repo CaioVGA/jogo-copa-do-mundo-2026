@@ -61,6 +61,21 @@ const migrations = [
 async function main() {
   console.log('Iniciando migração segura das partidas do Mata-Mata V2...');
   
+  // FIX CRÍTICO: Corrige o estágio do Jogo 88 (Colômbia x Gana) que estava errado no banco
+  console.log('Verificando erro de estágio no Jogo 88...');
+  const match88 = await prisma.match.findFirst({
+    where: {
+      date: new Date('2026-07-03T22:30:00-03:00'),
+    }
+  });
+  if (match88 && match88.stage === 'Fase de Grupos - Rodada 3') {
+    await prisma.match.update({
+      where: { id: match88.id },
+      data: { stage: 'Dezesseisavos de Final' }
+    });
+    console.log('[OK] Jogo 88 corrigido de Fase de Grupos para Dezesseisavos de Final!');
+  }
+
   let successCount = 0;
   let notFoundCount = 0;
 
