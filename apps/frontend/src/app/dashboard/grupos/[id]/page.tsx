@@ -297,7 +297,13 @@ function OracleBracketCircleMatch({
     const team = (isOracleMode && dynamicTeam) ? dynamicTeam : originalTeam;
     const teamName = team?.name;
     const teamIdentifier = team?.code === "TBD" ? `TBD_${game.id}_${isHome ? 'HOME' : 'AWAY'}` : team?.code;
-    const isSelected = isOracleMode ? (team && oracleWinner === teamIdentifier) : (isHome ? homePredicted : awayPredicted);
+    const isSelected = isOracleMode
+      ? !!team && (
+          oracleWinner === teamIdentifier ||
+          oracleWinner === team?.code ||
+          oracleWinner === team?.name
+        )
+      : (isHome ? homePredicted : awayPredicted);
     const hasAnySelection = isOracleMode ? (!!oracleWinner && oracleWinner !== "TBD") : (homePredicted || awayPredicted);
     const isLoser = hasAnySelection && !isSelected;
     const isWinner = isOracleMode ? false : (isHome ? homeWon : awayWon);
@@ -354,10 +360,10 @@ function OracleBracketCircleMatch({
           }`}
         >
           {team.flag ? (
-            <img 
-              src={team.flag} 
-              alt={team.code} 
-              className={`w-full h-full object-cover animate-fade-in transition-all duration-300 ${isLoser ? "brightness-50 grayscale group-hover:brightness-90 group-hover:grayscale-0" : ""}`} 
+            <img
+              src={team.flag}
+              alt={team.code}
+              className={`w-full h-full object-cover animate-fade-in transition-all duration-300 ${isLoser ? "brightness-40 grayscale saturate-0" : ""}`}
             />
           ) : (
             <span className={`text-white font-black text-[10px] transition-all duration-300 ${isLoser ? "opacity-40" : ""}`}>{team.code}</span>
@@ -553,7 +559,11 @@ export default function GroupDetailsPage() {
     return 0;
   };
 
+  const isKnockoutMatchLocked = (match: MatchPredictionData) =>
+    match.status !== "PENDING" || new Date(match.date).getTime() <= Date.now();
+
   const handleOracleKnockoutSelect = async (matchId: string, teamCode: string) => {
+    const previousKnockout = { ...oracleKnockout };
     const oldTeamCode = oracleKnockout[matchId];
     let newKnockout = { ...oracleKnockout };
 
@@ -592,6 +602,13 @@ export default function GroupDetailsPage() {
       }));
       await groupsApi.saveOraclePredictions(groupId, payload, knockoutPayload);
     } catch (err: any) {
+      console.error("[Oráculo Mata-Mata] Falha ao atualizar palpite", {
+        groupId,
+        matchId,
+        attemptedWinner: teamCode,
+        error: err,
+      });
+      setOracleKnockout(previousKnockout);
       toast.error(err.message || "Erro ao salvar palpite");
     } finally {
       setSavingMatchId(null);
@@ -604,8 +621,34 @@ export default function GroupDetailsPage() {
     roundGames: MatchPredictionData[], 
     parentRoundGames: MatchPredictionData[]
   ) => {
-    const game = games.find(g => g.id === gameId);
+    const game = resolvedGames.find(g => g.id === gameId) || games.find(g => g.id === gameId);
     if (!game) return null;
+
+    const getFinishedWinnerCode = (match: MatchPredictionData) => {
+      if (
+        match.status !== "FINISHED" ||
+        match.realHomeScore === null ||
+        match.realAwayScore === null
+      ) {
+        return null;
+      }
+
+      if (match.realHomeScore > match.realAwayScore) return match.homeTeam?.code || null;
+      if (match.realHomeScore < match.realAwayScore) return match.awayTeam?.code || null;
+
+      if (match.homePenalties != null && match.awayPenalties != null) {
+        if (match.homePenalties > match.awayPenalties) return match.homeTeam?.code || null;
+        if (match.homePenalties < match.awayPenalties) return match.awayTeam?.code || null;
+      }
+
+      return null;
+    };
+
+    const resolveTeamInMatch = (match: MatchPredictionData, teamCode: string) => {
+      if (match.homeTeam?.code === teamCode) return match.homeTeam;
+      if (match.awayTeam?.code === teamCode) return match.awayTeam;
+      return null;
+    };
     
     let parentGameId = null;
     const fallback = isHome ? game.homeTeamFallback : game.awayTeamFallback;
@@ -613,7 +656,7 @@ export default function GroupDetailsPage() {
       const match = fallback.match(/^(Vencedor|Perdedor) do jogo (\d+)$/);
       if (match) {
         const matchNumber = parseInt(match[2], 10);
-        const parentMatch = games.find(g => g.matchNumber === matchNumber);
+        const parentMatch = resolvedGames.find(g => g.matchNumber === matchNumber) || games.find(g => g.matchNumber === matchNumber);
         if (parentMatch) {
           parentGameId = parentMatch.id;
         }
@@ -630,10 +673,20 @@ export default function GroupDetailsPage() {
 
     if (!parentGameId) return null;
 
+    const parentGame = resolvedGames.find(g => g.id === parentGameId) || games.find(g => g.id === parentGameId);
+    if (!parentGame) return null;
+
+    const finishedWinnerCode = getFinishedWinnerCode(parentGame);
+    if (finishedWinnerCode) {
+      const teamFromParent = resolveTeamInMatch(parentGame, finishedWinnerCode);
+      if (teamFromParent) return teamFromParent;
+      return { code: finishedWinnerCode, name: finishedWinnerCode, flag: teams[finishedWinnerCode] || null };
+    }
+
     const winnerCode = oracleKnockout[parentGameId];
     if (!winnerCode) return null;
 
-    for (const g of games) {
+    for (const g of resolvedGames) {
       if (g.homeTeam?.code === winnerCode || g.homeTeam?.name === winnerCode || `TBD_${g.id}_HOME` === winnerCode) {
         return { ...g.homeTeam, code: winnerCode };
       }
@@ -651,8 +704,34 @@ export default function GroupDetailsPage() {
     parentRoundGames: MatchPredictionData[],
     grandparentRoundGames: MatchPredictionData[]
   ) => {
-    const game = games.find(g => g.id === gameId);
+    const game = resolvedGames.find(g => g.id === gameId) || games.find(g => g.id === gameId);
     if (!game) return null;
+
+    const getFinishedLoserCode = (match: MatchPredictionData) => {
+      if (
+        match.status !== "FINISHED" ||
+        match.realHomeScore === null ||
+        match.realAwayScore === null
+      ) {
+        return null;
+      }
+
+      if (match.realHomeScore > match.realAwayScore) return match.awayTeam?.code || null;
+      if (match.realHomeScore < match.realAwayScore) return match.homeTeam?.code || null;
+
+      if (match.homePenalties != null && match.awayPenalties != null) {
+        if (match.homePenalties > match.awayPenalties) return match.awayTeam?.code || null;
+        if (match.homePenalties < match.awayPenalties) return match.homeTeam?.code || null;
+      }
+
+      return null;
+    };
+
+    const resolveTeamInMatch = (match: MatchPredictionData, teamCode: string) => {
+      if (match.homeTeam?.code === teamCode) return match.homeTeam;
+      if (match.awayTeam?.code === teamCode) return match.awayTeam;
+      return null;
+    };
 
     let parentGameId = null;
     const fallback = isHome ? game.homeTeamFallback : game.awayTeamFallback;
@@ -660,7 +739,7 @@ export default function GroupDetailsPage() {
       const match = fallback.match(/^(Vencedor|Perdedor) do jogo (\d+)$/);
       if (match) {
         const matchNumber = parseInt(match[2], 10);
-        const parentMatch = games.find(g => g.matchNumber === matchNumber);
+        const parentMatch = resolvedGames.find(g => g.matchNumber === matchNumber) || games.find(g => g.matchNumber === matchNumber);
         if (parentMatch) {
           parentGameId = parentMatch.id;
         }
@@ -676,6 +755,16 @@ export default function GroupDetailsPage() {
     }
 
     if (!parentGameId) return null;
+
+    const parentGame = resolvedGames.find(g => g.id === parentGameId) || games.find(g => g.id === parentGameId);
+    if (!parentGame) return null;
+
+    const finishedLoserCode = getFinishedLoserCode(parentGame);
+    if (finishedLoserCode) {
+      const teamFromParent = resolveTeamInMatch(parentGame, finishedLoserCode);
+      if (teamFromParent) return teamFromParent;
+      return { code: finishedLoserCode, name: finishedLoserCode, flag: teams[finishedLoserCode] || null };
+    }
 
     const winnerCode = oracleKnockout[parentGameId];
     if (!winnerCode) return null;
@@ -2391,7 +2480,12 @@ export default function GroupDetailsPage() {
                                 setOracleMessage("Palpites salvos com sucesso!");
                                 setTimeout(() => setOracleMessage(null), 5000);
                               } catch (err: any) {
+                                console.error("[Oráculo] Falha ao salvar palpites", {
+                                  groupId,
+                                  error: err,
+                                });
                                 setOracleMessage(err.message || "Erro ao salvar palpites");
+                                toast.error(err.message || "Erro ao salvar palpites");
                               } finally {
                                 setSavingOracle(false);
                               }
@@ -2509,10 +2603,8 @@ export default function GroupDetailsPage() {
                     Object.keys(oracleKnockout).forEach((matchId) => {
                       const matchInfo = knockoutMatchesList.find(m => m.id === matchId);
                       if (matchInfo) {
-                        const isLocked = new Date(matchInfo.date).getTime() <= Date.now();
-                        const isFinished = matchInfo.status === "FINISHED";
-                        
-                        if (isLocked || isFinished) {
+                        const isLocked = isKnockoutMatchLocked(matchInfo);
+                        if (isLocked) {
                           newOracleKnockout[matchId] = oracleKnockout[matchId];
                         }
                       }
@@ -2528,6 +2620,10 @@ export default function GroupDetailsPage() {
                       await groupsApi.saveOraclePredictions(groupId, payload, [], true);
                       toast.success("Árvore limpa com sucesso!");
                     } catch (err: any) {
+                      console.error("[Oráculo Mata-Mata] Falha ao limpar árvore", {
+                        groupId,
+                        error: err,
+                      });
                       toast.error(err.message || "Erro ao resetar palpites");
                     }
                   };
@@ -2630,7 +2726,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={r32Mappings[game.id]?.home}
                                     oracleAwayTeam={r32Mappings[game.id]?.away}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2650,7 +2746,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r16Left, r32Left)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r16Left, r32Left)}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2670,7 +2766,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r8Left, r16Left)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r8Left, r16Left)}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2690,7 +2786,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r4Left, r8Left)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r4Left, r8Left)}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2714,7 +2810,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[finalMatch.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(finalMatch.id, true, [finalMatch], [...r4Left, ...r4Right])}
                                     oracleAwayTeam={getOracleTeamForSlot(finalMatch.id, false, [finalMatch], [...r4Left, ...r4Right])}
-                                    isLocked={new Date(finalMatch.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(finalMatch)}
                                   />
                                 ) : (
                                   <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
@@ -2737,7 +2833,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[thirdMatch.id]}
                                     oracleHomeTeam={getOracleLoserForSlot(thirdMatch.id, true, [thirdMatch], [...r4Left, ...r4Right], [...r8Left, ...r8Right])}
                                     oracleAwayTeam={getOracleLoserForSlot(thirdMatch.id, false, [thirdMatch], [...r4Left, ...r4Right], [...r8Left, ...r8Right])}
-                                    isLocked={new Date(thirdMatch.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(thirdMatch)}
                                   />
                                 ) : (
                                   <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center text-white/20 text-xs">
@@ -2761,7 +2857,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r4Right, r8Right)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r4Right, r8Right)}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2781,7 +2877,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r8Right, r16Right)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r8Right, r16Right)}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2801,7 +2897,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={getOracleTeamForSlot(game.id, true, r16Right, r32Right)}
                                     oracleAwayTeam={getOracleTeamForSlot(game.id, false, r16Right, r32Right)}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2821,7 +2917,7 @@ export default function GroupDetailsPage() {
                                     oracleWinner={oracleKnockout[game.id]}
                                     oracleHomeTeam={r32Mappings[game.id]?.home}
                                     oracleAwayTeam={r32Mappings[game.id]?.away}
-                                    isLocked={new Date(game.date).getTime() <= Date.now()}
+                                    isLocked={isKnockoutMatchLocked(game)}
                                   />
                                 ))}
                               </div>
@@ -2872,7 +2968,7 @@ export default function GroupDetailsPage() {
                                   oracleWinner={oracleKnockout[game.id]}
                                   oracleHomeTeam={resolveOracleTeamForGame(game, true)}
                                   oracleAwayTeam={resolveOracleTeamForGame(game, false)}
-                                  isLocked={new Date(game.date).getTime() <= Date.now()}
+                                  isLocked={isKnockoutMatchLocked(game)}
                                 />
                               </div>
                             );

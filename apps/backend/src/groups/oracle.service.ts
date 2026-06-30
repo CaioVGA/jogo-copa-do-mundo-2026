@@ -1,10 +1,12 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../prisma/redis.service';
 import { SaveOracleDto } from './dto/save-oracle.dto';
 
 @Injectable()
 export class OracleService {
+  private readonly logger = new Logger(OracleService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
@@ -320,30 +322,59 @@ export class OracleService {
       }
     }
 
-    // 3. Gravar os palpites do mata-mata (validando fase a fase)
+    // 3. Gravar os palpites do mata-mata (validando por partida)
     if (dto.knockoutPredictions) {
-      // Buscar o stage (fase) de cada matchId enviado para poder validar a deadline correta
       const matchIds = dto.knockoutPredictions.map(p => p.matchId);
       const matchesInfo = await this.prisma.match.findMany({
         where: { id: { in: matchIds } },
-        select: { id: true, stage: true }
+        select: { id: true, stage: true, date: true, status: true }
       });
-      
-      const matchStageMap = new Map<string, string>();
-      matchesInfo.forEach(m => matchStageMap.set(m.id, m.stage));
+
+      const matchInfoMap = new Map(matchesInfo.map((m) => [m.id, m] as const));
+      const existingPredictions = await this.prisma.oracleKnockoutPrediction.findMany({
+        where: {
+          userId,
+          groupId,
+          matchId: { in: matchIds }
+        },
+        select: { matchId: true, predictedWinner: true }
+      });
+      const existingPredictionsMap = new Map(existingPredictions.map((p) => [p.matchId, p.predictedWinner]));
+      const blockedUpdates: Array<{ matchId: string; stage: string; attemptedWinner: string }> = [];
+      const allowedUpdates: typeof dto.knockoutPredictions = [];
 
       for (const pred of dto.knockoutPredictions) {
         if (!pred.matchId || !pred.predictedWinner) continue;
-        
-        const stage = matchStageMap.get(pred.matchId);
-        if (!stage) continue;
-        
-        const stageDeadline = knockoutDeadlines[stage];
-        // Se a data atual for maior ou igual ao deadline daquela fase, a previsão é ignorada silenciosamente (proteção backend)
-        if (stageDeadline && now >= stageDeadline) {
-          continue; 
-        }
 
+        const matchInfo = matchInfoMap.get(pred.matchId);
+        if (!matchInfo) continue;
+
+        // Regra do Oráculo mata-mata: trava no apito inicial de cada confronto.
+        if (now >= matchInfo.date || matchInfo.status !== 'PENDING') {
+          const previousWinner = existingPredictionsMap.get(pred.matchId);
+          const isNoopUpdate = previousWinner === pred.predictedWinner;
+          if (!isNoopUpdate) {
+            blockedUpdates.push({
+              matchId: pred.matchId,
+              stage: matchInfo.stage,
+              attemptedWinner: pred.predictedWinner
+            });
+          }
+          continue;
+        }
+        allowedUpdates.push(pred);
+      }
+
+      if (blockedUpdates.length > 0) {
+        this.logger.warn(
+          `[ORACLE_KNOCKOUT_BLOCKED] userId=${userId} groupId=${groupId} blocked=${JSON.stringify(blockedUpdates)}`
+        );
+        throw new ForbiddenException(
+          'Não foi possível salvar um ou mais palpites do mata-mata porque essas partidas já estão bloqueadas.'
+        );
+      }
+
+      for (const pred of allowedUpdates) {
         await this.prisma.oracleKnockoutPrediction.upsert({
           where: {
             userId_groupId_matchId: {
@@ -366,15 +397,13 @@ export class OracleService {
     }
 
     if (dto.resetKnockout) {
-      const lockedStages = Object.keys(knockoutDeadlines).filter(
-        stage => now >= knockoutDeadlines[stage]
-      );
-      
       const lockedMatches = await this.prisma.match.findMany({
-        where: { stage: { in: lockedStages } },
-        select: { id: true }
+        where: { stage: { in: knockoutStages } },
+        select: { id: true, date: true, status: true }
       });
-      const lockedMatchIds = lockedMatches.map(m => m.id);
+      const lockedMatchIds = lockedMatches
+        .filter((m) => now >= m.date || m.status !== 'PENDING')
+        .map((m) => m.id);
 
       await this.prisma.oracleKnockoutPrediction.deleteMany({
         where: {
