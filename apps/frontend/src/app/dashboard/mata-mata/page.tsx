@@ -8,7 +8,7 @@ import { Loader2, AlertCircle, Trophy } from "lucide-react";
 // Simplified CircleMatch component for display only (no predictions)
 function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
   const isFinished = game.status === "FINISHED";
-  const isLive = game.status === "IN_PLAY";
+  const isLive = game.status === "LIVE" || game.status === "IN_PLAY";
   
   const hTeam = game.homeTeam?.name ? game.homeTeam : null;
   const aTeam = game.awayTeam?.name ? game.awayTeam : null;
@@ -25,17 +25,18 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
 
   return (
     <div className={`relative w-40 sm:w-44 bg-black/40 border ${isLive ? "border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]" : "border-white/10"} rounded-xl p-2 shrink-0 flex flex-col gap-1.5 backdrop-blur-sm mx-auto hover:bg-black/60 transition-colors`}>
+      {isLive && (
+        <span className="absolute top-2 right-2 flex h-2.5 w-2.5 z-20">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+        </span>
+      )}
+
       {/* Date & Stage */}
       <div className="flex justify-between items-center px-1">
         <span className="text-[9px] text-white/50 tracking-wider font-semibold">
           {new Date(game.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
         </span>
-        {isLive && (
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-        )}
       </div>
 
       {/* Teams Container */}
