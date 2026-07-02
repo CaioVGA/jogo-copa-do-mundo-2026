@@ -6,14 +6,17 @@ import { Users, Crown, Trash2, LogOut, Plus, UserPlus, Copy, Check, Loader2 } fr
 import { groupsApi, GroupData } from "@/lib/api";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
 import JoinGroupModal from "@/components/groups/JoinGroupModal";
+import { useToast } from "@/components/ui/toast";
 
 interface GroupCardProps {
   group: GroupData;
   isOwner: boolean;
   onAction: () => void;
+  onError: (message: string) => void;
+  onSuccess?: (message: string) => void;
 }
 
-function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
+function GroupCard({ group, isOwner, onAction, onError, onSuccess }: GroupCardProps) {
   const router = useRouter();
   const [copiedCode, setCopiedCode] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -23,9 +26,14 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
 
   async function handleCopyCode(e: React.MouseEvent) {
     e.stopPropagation();
-    await navigator.clipboard.writeText(group.inviteCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
+    try {
+      await navigator.clipboard.writeText(group.inviteCode);
+      setCopiedCode(true);
+      onSuccess?.("Código copiado!");
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      onError("Não foi possível copiar o código agora.");
+    }
   }
 
   async function handleLeave(e: React.MouseEvent) {
@@ -33,9 +41,11 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
     setActionLoading(true);
     try {
       await groupsApi.leaveGroup(group.id);
+      onSuccess?.("Você saiu do grupo.");
       onAction();
     } catch (err) {
       console.error(err);
+      onError("Falha ao sair do grupo.");
     } finally {
       setActionLoading(false);
     }
@@ -47,9 +57,11 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
     setActionLoading(true);
     try {
       await groupsApi.deleteGroup(group.id);
+      onSuccess?.("Grupo excluído com sucesso.");
       onAction();
     } catch (err) {
       console.error(err);
+      onError("Falha ao excluir o grupo.");
     } finally {
       setActionLoading(false);
       setConfirmDelete(false);
@@ -97,6 +109,7 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
         </div>
         <button
           onClick={handleCopyCode}
+          aria-label={`Copiar código de convite do grupo ${group.name}`}
           className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md ${
             copiedCode 
               ? "bg-emerald-500 text-white shadow-emerald-500/20" 
@@ -164,6 +177,7 @@ function GroupCard({ group, isOwner, onAction }: GroupCardProps) {
 }
 
 export default function GruposPage() {
+  const toast = useToast();
   const [ownedGroups, setOwnedGroups] = useState<GroupData[]>([]);
   const [joinedGroups, setJoinedGroups] = useState<GroupData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,10 +192,11 @@ export default function GruposPage() {
       setJoinedGroups(data.joined);
     } catch (err) {
       console.error("Erro ao carregar grupos:", err);
+      toast.error("Não foi possível carregar seus grupos.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => { fetchGroups(); }, [fetchGroups]);
 
@@ -278,7 +293,14 @@ export default function GruposPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {ownedGroups.map((g) => (
-                    <GroupCard key={g.id} group={g} isOwner onAction={fetchGroups} />
+                    <GroupCard
+                      key={g.id}
+                      group={g}
+                      isOwner
+                      onAction={fetchGroups}
+                      onError={(message) => toast.error(message)}
+                      onSuccess={(message) => toast.success(message)}
+                    />
                   ))}
                 </div>
               </section>
@@ -296,7 +318,14 @@ export default function GruposPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {joinedGroups.map((g) => (
-                    <GroupCard key={g.id} group={g} isOwner={false} onAction={fetchGroups} />
+                    <GroupCard
+                      key={g.id}
+                      group={g}
+                      isOwner={false}
+                      onAction={fetchGroups}
+                      onError={(message) => toast.error(message)}
+                      onSuccess={(message) => toast.success(message)}
+                    />
                   ))}
                 </div>
               </section>

@@ -9,6 +9,9 @@ export class SyncService implements OnApplicationBootstrap {
   private readonly logger = new Logger('SyncService');
   private isPollingActive = false;
   private pollingTimeout: NodeJS.Timeout | null = null;
+  private readonly teamCodeAliases: Record<string, string> = {
+    URY: 'URU', // código local legado -> código football-data.org
+  };
 
   constructor(
     private readonly config: ConfigService,
@@ -32,6 +35,18 @@ export class SyncService implements OnApplicationBootstrap {
     this.isPollingActive = true;
     this.logger.log('Iniciando rotina de polling da API de Sincronização (intervalo de 5 minutos)...');
     this.poll();
+  }
+
+  private normalizeTeamCode(code?: string | null): string {
+    if (!code) return '';
+    const normalized = code.trim().toUpperCase();
+    return this.teamCodeAliases[normalized] ?? normalized;
+  }
+
+  private areCodesEquivalent(a?: string | null, b?: string | null): boolean {
+    const normalizedA = this.normalizeTeamCode(a);
+    const normalizedB = this.normalizeTeamCode(b);
+    return !!normalizedA && !!normalizedB && normalizedA === normalizedB;
   }
 
   stopPolling() {
@@ -217,8 +232,8 @@ export class SyncService implements OnApplicationBootstrap {
         if (!apiHomeCode || !apiAwayCode) return false;
 
         const teamsMatch =
-          (apiHomeCode === homeCode && apiAwayCode === awayCode) ||
-          (apiHomeCode === awayCode && apiAwayCode === homeCode);
+          (this.areCodesEquivalent(apiHomeCode, homeCode) && this.areCodesEquivalent(apiAwayCode, awayCode)) ||
+          (this.areCodesEquivalent(apiHomeCode, awayCode) && this.areCodesEquivalent(apiAwayCode, homeCode));
 
         if (!teamsMatch) return false;
 

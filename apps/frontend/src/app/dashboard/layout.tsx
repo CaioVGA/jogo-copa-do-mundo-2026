@@ -39,6 +39,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
   }, []);
 
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowLogoutModal(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -301,7 +312,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pt-[69px] pb-[80px] md:pt-0 md:pb-0 md:pl-64 overflow-x-hidden relative">
+      <main className="flex-1 pt-[69px] pb-[88px] md:pt-0 md:pb-0 md:pl-64 overflow-x-hidden relative safe-area-pb">
         <div className="max-w-7xl xl:max-w-[1440px] mx-auto p-4 md:p-8">
           {children}
         </div>
@@ -309,8 +320,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Bottom Navigation Bar (Mobile Only) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#081a10]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-4px_24px_-10px_rgba(0,0,0,0.5)] safe-area-pb">
-        <div className="flex items-center justify-around px-2 py-2">
-          {dynamicNavItems.filter(i => i.label !== "Configurações").slice(0, 5).map((item) => {
+        <div className="flex items-center justify-around gap-1 px-2 py-2">
+          {dynamicNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
             return (
@@ -325,8 +336,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-gradient-to-r from-[#ffd700] to-[#ffe135] rounded-b-md shadow-[0_2px_8px_rgba(255,215,0,0.5)]" />
                 )}
                 <Icon className={`w-5 h-5 transition-transform duration-300 ${active ? "scale-110" : "scale-100"}`} />
-                <span className={`text-[9px] font-semibold tracking-wide transition-all ${active ? "font-bold text-[#ffd700]" : ""}`}>
-                  {item.label === "Gerenciamento" ? "Admin" : item.label}
+                <span className={`text-[8px] font-semibold tracking-wide transition-all ${active ? "font-bold text-[#ffd700]" : ""}`}>
+                  {item.label === "Gerenciamento" ? "Admin" : item.label === "Configurações" ? "Config" : item.label}
                 </span>
               </Link>
             );
@@ -336,7 +347,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Soccer-themed Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-modal-title"
+          aria-describedby="logout-modal-description"
+        >
           {/* Modal Card */}
           <div className="auth-card max-w-sm w-full p-8 text-center flex flex-col items-center gap-6 relative overflow-hidden border border-white/10 shadow-2xl scale-in">
             {/* Glowing lights */}
@@ -419,10 +436,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="inline-flex px-3 py-1 rounded-full text-[10px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/25 uppercase tracking-widest">
                 Substituição
               </div>
-              <h2 className="text-2xl font-black text-white tracking-tight">
+              <h2 id="logout-modal-title" className="text-2xl font-black text-white tracking-tight">
                 CANSOU DO JOGO? 🥵
               </h2>
-              <p className="text-white/60 text-sm leading-relaxed">
+              <p id="logout-modal-description" className="text-white/60 text-sm leading-relaxed">
                 Você correu muito e parece cansado. Tem certeza de que deseja pedir substituição e ir direto para o vestiário?
               </p>
             </div>
@@ -449,7 +466,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Scroll to Top Button */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-6 right-6 z-50 p-3 rounded-full bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-black shadow-lg shadow-[#ffd700]/10 border border-[#ffd700]/30 transition-all duration-500 hover:scale-110 active:scale-95 ${
+        className={`fixed right-6 z-50 p-3 rounded-full bg-gradient-to-br from-[#ffd700] to-[#f5c800] text-black shadow-lg shadow-[#ffd700]/10 border border-[#ffd700]/30 transition-all duration-500 hover:scale-110 active:scale-95 bottom-24 md:bottom-6 safe-area-bottom-offset ${
           showScrollTop
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 translate-y-4 pointer-events-none"

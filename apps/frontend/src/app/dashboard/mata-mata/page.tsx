@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
-import { Loader2, AlertCircle, Trophy } from "lucide-react";
+import { Loader2, AlertCircle, Trophy, Crown, Sparkles } from "lucide-react";
 
 // Simplified CircleMatch component for display only (no predictions)
 function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
@@ -34,7 +34,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
 
       {/* Date & Stage */}
       <div className="flex justify-between items-center px-1">
-        <span className="text-[9px] text-white/50 tracking-wider font-semibold">
+        <span className="text-[10px] text-white/50 tracking-wider font-semibold">
           {new Date(game.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
@@ -44,21 +44,21 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
         {/* Home Team */}
         <div className={`flex items-center justify-between gap-1.5 p-1 rounded-md transition-colors ${homeWon ? "bg-[#ffd700]/5" : ""}`}>
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+            <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[10px] team-flag-shell-3d">
               {hTeam?.flag ? (
-                <img src={hTeam.flag} alt={hTeam.code} className="w-full h-full object-cover" />
+                <img src={hTeam.flag} alt={hTeam.code} className="w-full h-full object-cover team-flag-3d" />
               ) : (
                 hTeam?.code || "?"
               )}
             </div>
-            <span className={`text-[10px] font-bold truncate ${homeWon ? "text-[#ffd700]" : "text-white/80"}`} title={hTeam?.name || game.homeTeamFallback || "A Definir"}>
+            <span className={`text-xs font-bold truncate ${homeWon ? "text-[#ffd700]" : "text-white/80"}`} title={hTeam?.name || game.homeTeamFallback || "A Definir"}>
               {hTeam?.name || game.homeTeamFallback || "A Definir"}
             </span>
           </div>
           {(isFinished || isLive || game.realHomeScore !== null) && (
             <div className="flex items-center gap-1">
               {game.homePenalties !== null && game.homePenalties !== undefined && (
-                <span className="text-[8px] text-white/50 font-bold">({game.homePenalties})</span>
+                <span className="text-[10px] text-white/50 font-bold">({game.homePenalties})</span>
               )}
               <span className={`text-xs font-black shrink-0 ${isLive ? "text-emerald-400 animate-pulse" : (homeWon ? "text-[#ffd700]" : "text-white")}`}>
                 {game.realHomeScore}
@@ -70,21 +70,21 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
         {/* Away Team */}
         <div className={`flex items-center justify-between gap-1.5 p-1 rounded-md transition-colors ${awayWon ? "bg-[#ffd700]/5" : ""}`}>
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+            <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[10px] team-flag-shell-3d">
               {aTeam?.flag ? (
-                <img src={aTeam.flag} alt={aTeam.code} className="w-full h-full object-cover" />
+                <img src={aTeam.flag} alt={aTeam.code} className="w-full h-full object-cover team-flag-3d" />
               ) : (
                 aTeam?.code || "?"
               )}
             </div>
-            <span className={`text-[10px] font-bold truncate ${awayWon ? "text-[#ffd700]" : "text-white/80"}`} title={aTeam?.name || game.awayTeamFallback || "A Definir"}>
+            <span className={`text-xs font-bold truncate ${awayWon ? "text-[#ffd700]" : "text-white/80"}`} title={aTeam?.name || game.awayTeamFallback || "A Definir"}>
               {aTeam?.name || game.awayTeamFallback || "A Definir"}
             </span>
           </div>
           {(isFinished || isLive || game.realAwayScore !== null) && (
             <div className="flex items-center gap-1">
               {game.awayPenalties !== null && game.awayPenalties !== undefined && (
-                <span className="text-[8px] text-white/50 font-bold">({game.awayPenalties})</span>
+                <span className="text-[10px] text-white/50 font-bold">({game.awayPenalties})</span>
               )}
               <span className={`text-xs font-black shrink-0 ${isLive ? "text-emerald-400 animate-pulse" : (awayWon ? "text-[#ffd700]" : "text-white")}`}>
                 {game.realAwayScore}
@@ -95,7 +95,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
       </div>
       
       {/* Footer Info */}
-      <div className="bg-black/15 px-2 flex justify-between items-center text-[8px] border-t border-white/5 pt-1">
+      <div className="bg-black/15 px-2 flex justify-between items-center text-[10px] border-t border-white/5 pt-1">
          <span className="text-white/30 truncate max-w-[100%] italic">{game.stadium || "Estádio a definir"}</span>
       </div>
     </div>
@@ -175,6 +175,17 @@ export default function MataMataPage() {
   const r4Right = getMatchesByOrder(r4, rightR4Order);
   const finalMatch = r2.find(m => m.stage === "Final");
   const thirdMatch = r2.find(m => m.stage === "Terceiro Lugar" || m.stage === "Disputa do 3º Lugar");
+  const finalIsFinished = finalMatch?.status === "FINISHED";
+  const championTeam = (() => {
+    if (!finalMatch || !finalIsFinished) return null;
+    if (!finalMatch.homeTeam || !finalMatch.awayTeam) return null;
+    if (finalMatch.realHomeScore === null || finalMatch.realAwayScore === null) return null;
+
+    const homeWins = finalMatch.realHomeScore > finalMatch.realAwayScore ||
+      (finalMatch.realHomeScore === finalMatch.realAwayScore && (finalMatch.homePenalties ?? 0) > (finalMatch.awayPenalties ?? 0));
+
+    return homeWins ? finalMatch.homeTeam : finalMatch.awayTeam;
+  })();
 
   const getSelectedMatches = () => {
     switch (bracketRound) {
@@ -206,13 +217,42 @@ export default function MataMataPage() {
         </div>
       </div>
 
+      {championTeam && (
+        <div className="relative overflow-hidden rounded-2xl border border-[#ffd700]/35 bg-gradient-to-b from-[#195735]/95 via-[#0f3a24]/95 to-[#0b2118]/95 px-3 py-3 sm:px-4 sm:py-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.45)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.22),transparent_56%)] pointer-events-none" />
+          <div className="absolute top-2 right-2 text-[#ffd700]/75 animate-pulse pointer-events-none">
+            <Sparkles className="w-3.5 h-3.5" />
+          </div>
+
+          <div className="relative flex items-center gap-3">
+            <div className="relative shrink-0">
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#ffd700] bg-[#0d2b1a] flex items-center justify-center team-flag-shell-3d shadow-[0_0_16px_rgba(255,215,0,0.35)]">
+                {championTeam.flag ? (
+                  <img src={championTeam.flag} alt={championTeam.code} className="w-full h-full object-cover team-flag-3d" />
+                ) : (
+                  <span className="text-[10px] font-black text-[#ffd700]">{championTeam.code || "?"}</span>
+                )}
+              </div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full border border-[#ffe27a] bg-[#ffd700] flex items-center justify-center shadow-[0_0_10px_rgba(255,215,0,0.45)]">
+                <Crown className="w-2.5 h-2.5 text-[#0d2b1a]" />
+              </div>
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-[9px] uppercase tracking-[0.15em] font-black text-[#ffd700]">Campeão Mundial 2026</p>
+              <p className="text-base sm:text-lg font-black text-white truncate">{championTeam.name || championTeam.code}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         {/* Navegação entre as fases do chaveamento */}
         <div className="flex flex-col sm:flex-row gap-3 bg-black/20 p-3 rounded-2xl border border-white/5 items-center justify-between">
           <div className="flex flex-wrap gap-1">
             <button
               onClick={() => setBracketRound("all")}
-              className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-2.5 min-h-11 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 bracketRound === "all" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
               }`}
             >
@@ -220,7 +260,7 @@ export default function MataMataPage() {
             </button>
             <button
               onClick={() => setBracketRound("r32")}
-              className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-2.5 min-h-11 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 bracketRound === "r32" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
               }`}
             >
@@ -228,7 +268,7 @@ export default function MataMataPage() {
             </button>
             <button
               onClick={() => setBracketRound("r16")}
-              className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-2.5 min-h-11 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 bracketRound === "r16" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
               }`}
             >
@@ -236,7 +276,7 @@ export default function MataMataPage() {
             </button>
             <button
               onClick={() => setBracketRound("r8")}
-              className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-2.5 min-h-11 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 bracketRound === "r8" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
               }`}
             >
@@ -244,7 +284,7 @@ export default function MataMataPage() {
             </button>
             <button
               onClick={() => setBracketRound("r4")}
-              className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-2.5 min-h-11 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 bracketRound === "r4" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
               }`}
             >
@@ -252,7 +292,7 @@ export default function MataMataPage() {
             </button>
             <button
               onClick={() => setBracketRound("r2")}
-              className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-2.5 min-h-11 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 bracketRound === "r2" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
               }`}
             >
@@ -267,7 +307,7 @@ export default function MataMataPage() {
             <div className="flex gap-4 md:gap-6 items-stretch py-2 min-w-max px-4 mx-auto">
               {/* COLUNA 1: Dezesseisavos (Lado Esquerdo) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
                 <div className="flex flex-col justify-between flex-1 py-1 gap-2">
                   {r32Left.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -277,7 +317,7 @@ export default function MataMataPage() {
 
               {/* COLUNA 2: Oitavas (Lado Esquerdo) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
                 <div className="flex flex-col justify-around flex-1 py-4">
                   {r16Left.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -287,7 +327,7 @@ export default function MataMataPage() {
 
               {/* COLUNA 3: Quartas (Lado Esquerdo) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
                 <div className="flex flex-col justify-around flex-1 py-12">
                   {r8Left.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -297,7 +337,7 @@ export default function MataMataPage() {
 
               {/* COLUNA 4: Semifinal (Lado Esquerdo) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
                 <div className="flex flex-col justify-around flex-1 py-24">
                   {r4Left.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -311,7 +351,7 @@ export default function MataMataPage() {
                 
                 {/* Campeão / Final */}
                 <div className="flex flex-col items-center gap-2">
-                  <span className="text-[9px] font-black uppercase text-[#ffd700] tracking-widest bg-[#ffd700]/10 border border-[#ffd700]/25 px-2.5 py-1 rounded-full shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-[#ffd700] tracking-widest bg-[#ffd700]/10 border border-[#ffd700]/25 px-2.5 py-1 rounded-full shadow-sm">
                     🏆 Final
                   </span>
                   {finalMatch ? (
@@ -325,7 +365,7 @@ export default function MataMataPage() {
 
                 {/* Disputa do 3º Lugar */}
                 <div className="flex flex-col items-center gap-2 mt-4">
-                  <span className="text-[9px] font-black uppercase text-teal-400 tracking-widest bg-teal-500/10 border border-teal-500/25 px-2.5 py-1 rounded-full shadow-sm">
+                  <span className="text-[10px] font-black uppercase text-teal-400 tracking-widest bg-teal-500/10 border border-teal-500/25 px-2.5 py-1 rounded-full shadow-sm">
                     🥉 3º Lugar
                   </span>
                   {thirdMatch ? (
@@ -340,7 +380,7 @@ export default function MataMataPage() {
 
               {/* COLUNA 6: Semifinal (Lado Direito) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
                 <div className="flex flex-col justify-around flex-1 py-24">
                   {r4Right.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -350,7 +390,7 @@ export default function MataMataPage() {
 
               {/* COLUNA 7: Quartas (Lado Direito) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
                 <div className="flex flex-col justify-around flex-1 py-12">
                   {r8Right.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -360,7 +400,7 @@ export default function MataMataPage() {
 
               {/* COLUNA 8: Oitavas (Lado Direito) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
                 <div className="flex flex-col justify-around flex-1 py-4">
                   {r16Right.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -370,7 +410,7 @@ export default function MataMataPage() {
 
               {/* COLUNA 9: Dezesseisavos (Lado Direito) */}
               <div className="flex flex-col gap-2 w-44">
-                <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
+                <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
                 <div className="flex flex-col justify-between flex-1 py-1 gap-2">
                   {r32Right.map((game) => (
                     <BracketCircleMatch key={game.id} game={game} />
@@ -383,7 +423,7 @@ export default function MataMataPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center pt-2">
             {selectedMatches.map((game) => (
               <div key={game.id} className="flex flex-col items-center gap-1.5 p-2 bg-black/10 border border-white/5 rounded-2xl">
-                <span className="text-[8px] font-black text-white/30 uppercase truncate max-w-[80px]">
+                <span className="text-[10px] font-black text-white/30 uppercase truncate max-w-[90px]">
                   {game.stage?.replace("Dezesseisavos", "1/16").replace(" de Final", "")}
                 </span>
                 <BracketCircleMatch game={game} />
