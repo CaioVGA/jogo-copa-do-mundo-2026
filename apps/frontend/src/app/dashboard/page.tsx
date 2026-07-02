@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy, Calendar, Users, Activity, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Trophy, Calendar, Users, Activity, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Sparkles, AlertCircle, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { matchesApi, teamsApi } from "@/lib/api";
 import type { MatchPredictionData, TeamData } from "@/lib/api";
@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [selectedGroup, setSelectedGroup] = useState("Grupo A");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -35,6 +36,7 @@ export default function DashboardPage() {
 
     async function loadDashboardData() {
       try {
+        setError(null);
         const [data, fetchedTeams] = await Promise.all([
           matchesApi.getMatches(),
           teamsApi.getTeams(),
@@ -62,6 +64,7 @@ export default function DashboardPage() {
         setUpcomingGames(upcoming.length > 0 ? upcoming.slice(0, 5) : [...allMatches].reverse().slice(0, 5));
       } catch (err) {
         console.error("Erro ao carregar confrontos para o dashboard:", err);
+        setError("Não foi possível carregar os dados do painel. Tente novamente.");
       } finally {
         setLoading(false);
       }
@@ -193,6 +196,27 @@ export default function DashboardPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="auth-card p-6 border border-red-500/20 bg-red-500/5 max-w-lg w-full text-center">
+          <div className="w-12 h-12 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+            <AlertCircle className="w-6 h-6 text-red-400" />
+          </div>
+          <h2 className="text-lg font-black text-white mb-2">Erro ao carregar painel</h2>
+          <p className="text-sm text-white/65 mb-5">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="copa-btn-primary px-5 py-2.5 text-xs inline-flex items-center gap-2"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Header */}
@@ -315,9 +339,9 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-3.5 mt-0.5">
                         {/* Home Team */}
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/30 flex items-center justify-center text-[8px] font-black shadow-md">
+                          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/30 flex items-center justify-center text-[8px] font-black shadow-md team-flag-shell-3d">
                             {game.homeTeam.flag ? (
-                              <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
+                              <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover team-flag-3d" />
                             ) : (
                               game.homeTeam.code
                             )}
@@ -334,9 +358,9 @@ export default function DashboardPage() {
 
                         {/* Away Team */}
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/30 flex items-center justify-center text-[8px] font-black shadow-md">
+                          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/30 flex items-center justify-center text-[8px] font-black shadow-md team-flag-shell-3d">
                             {game.awayTeam.flag ? (
-                              <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
+                              <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover team-flag-3d" />
                             ) : (
                               game.awayTeam.code
                             )}
@@ -546,9 +570,9 @@ export default function DashboardPage() {
                       {/* Team Info */}
                       <td className="py-3 px-1 font-bold w-[24%]">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <div className="w-4 h-4 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/40 flex items-center justify-center font-bold text-[6px] shadow-sm">
+                          <div className="w-4 h-4 rounded-full overflow-hidden shrink-0 border border-white/15 bg-black/40 flex items-center justify-center font-bold text-[6px] shadow-sm team-flag-shell-3d">
                             {team.flag ? (
-                              <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                              <img src={team.flag} alt={team.code} className="w-full h-full object-cover team-flag-3d" />
                             ) : (
                               team.code
                             )}

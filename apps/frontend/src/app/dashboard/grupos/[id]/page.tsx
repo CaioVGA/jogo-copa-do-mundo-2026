@@ -72,11 +72,11 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
   }
 
   return (
-    <div className="flex flex-col bg-black/40 border border-white/5 rounded-xl overflow-hidden hover:border-[#ffd700]/25 transition-all w-60 shrink-0 select-none">
+    <div className="flex flex-col bg-black/40 border border-white/5 rounded-xl overflow-hidden hover:border-[#ffd700]/25 transition-all w-64 shrink-0 select-none">
       {/* Small Header */}
-      <div className="bg-black/20 px-2 py-1 flex items-center justify-between border-b border-white/5 text-[9px] text-white/40" title={game.stadium || undefined}>
-        <span className="truncate max-w-[90px]" title={game.stage}>{game.stage}</span>
-        <span className="text-[8px] text-white/50">{new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+      <div className="bg-black/20 px-2 py-1.5 flex items-center justify-between border-b border-white/5 text-[10px] text-white/40" title={game.stadium || undefined}>
+        <span className="truncate max-w-[110px]" title={game.stage}>{game.stage}</span>
+        <span className="hidden sm:inline text-[10px] text-white/50">{new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
         <span className={`px-1.5 py-0.5 rounded border font-bold flex items-center gap-1 ${deadlineColor}`}>
           {isLive && <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />}
           {isFinished && <span className="w-1 h-1 rounded-full bg-red-500" />}
@@ -90,9 +90,9 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
         {/* Home Team Row */}
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px] team-flag-shell-3d">
               {game.homeTeam.flag ? (
-                <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
+                <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover team-flag-3d" />
               ) : (
                 game.homeTeam.code
               )}
@@ -118,7 +118,7 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
                   home: e.target.value
                 }
               }))}
-              className="w-7 h-6 text-center text-[10px] font-bold rounded bg-black/60 border border-white/10 text-white focus:border-[#ffd700] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-11 h-10 text-center text-xs font-bold rounded bg-black/60 border border-white/10 text-white focus:border-[#ffd700] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           )}
         </div>
@@ -126,9 +126,9 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
         {/* Away Team Row */}
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px] team-flag-shell-3d">
               {game.awayTeam.flag ? (
-                <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
+                <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover team-flag-3d" />
               ) : (
                 game.awayTeam.code
               )}
@@ -154,20 +154,20 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
                   away: e.target.value
                 }
               }))}
-              className="w-7 h-6 text-center text-[10px] font-bold rounded bg-black/60 border border-white/10 text-white focus:border-[#ffd700] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-11 h-10 text-center text-xs font-bold rounded bg-black/60 border border-white/10 text-white focus:border-[#ffd700] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           )}
         </div>
       </div>
 
       {/* Footer (Save button or scored points badge) */}
-      <div className="bg-black/15 p-1.5 flex justify-between items-center text-[8px] border-t border-white/5">
+      <div className="bg-black/15 p-2 flex justify-between items-center text-[10px] border-t border-white/5">
         {isFinished || isLive ? (
           game.predictedHomeScore !== null ? (
             <div className="flex items-center justify-between w-full">
-              <span className="text-[8px] text-white/40">Palpite: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
+              <span className="text-[10px] text-white/40">Palpite: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
               {isFinished ? (
-                <span className={`text-[8px] px-1 py-0.2 rounded font-black border leading-none ${
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-black border leading-none ${
                   game.pointsEarned === 5 ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
                   game.pointsEarned === 4 ? "text-teal-400 bg-teal-500/10 border-teal-500/20" :
                   game.pointsEarned === 3 ? "text-blue-400 bg-blue-500/10 border-blue-500/20" :
@@ -177,7 +177,7 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
                   +{game.pointsEarned} pts
                 </span>
               ) : (
-                <span className="text-[8px] px-1.5 py-0.5 rounded font-black border leading-none text-emerald-400 bg-emerald-500/10 border-emerald-500/20 animate-pulse">
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-black border leading-none text-emerald-400 bg-emerald-500/10 border-emerald-500/20 animate-pulse">
                   Ao Vivo
                 </span>
               )}
@@ -186,7 +186,7 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
             <div className="flex items-center justify-between w-full text-white/35 italic">
               <span>Sem palpite</span>
               {isLive && (
-                <span className="text-[8px] px-1.5 py-0.5 rounded font-black border leading-none text-emerald-400 bg-emerald-500/10 border-emerald-500/20 animate-pulse">
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-black border leading-none text-emerald-400 bg-emerald-500/10 border-emerald-500/20 animate-pulse">
                   Ao Vivo
                 </span>
               )}
@@ -194,7 +194,7 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
           )
         ) : !isClosed ? (
           <div className="flex items-center justify-between w-full">
-            <span className="text-white/40 truncate max-w-[100px]">
+            <span className="text-white/40 truncate max-w-[120px]">
               {game.predictedHomeScore !== null ? (
                 <span className="text-emerald-400 font-semibold">Salvo: {game.predictedHomeScore}x{game.predictedAwayScore}</span>
               ) : (
@@ -204,7 +204,7 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
             <button
               disabled={saving}
               onClick={() => handleSavePrediction(game.id)}
-              className="bg-[#ffd700] hover:bg-[#f5c800] text-[#0d2b1a] px-2 py-0.5 rounded text-[8px] font-black uppercase transition-all disabled:opacity-40"
+              className="bg-[#ffd700] hover:bg-[#f5c800] text-[#0d2b1a] px-3 py-2 min-h-11 rounded text-[10px] font-black uppercase transition-all disabled:opacity-40"
             >
               {saving ? "..." : "Salvar"}
             </button>
@@ -271,6 +271,14 @@ function OracleBracketCircleMatch({
     const isUndecided = (t: any) => !t || !t.code || t.name?.startsWith("Vencedor") || t.name?.startsWith("Perdedor");
     return !isUndecided(home) && !isUndecided(away);
   })();
+  const homeTeamCurrent = (isOracleMode && oracleHomeTeam) ? oracleHomeTeam : game.homeTeam;
+  const awayTeamCurrent = (isOracleMode && oracleAwayTeam) ? oracleAwayTeam : game.awayTeam;
+  const winnerMatchesTeam = (winner: string | undefined, targetTeam: any, isTargetHome: boolean) => {
+    if (!winner || winner === "TBD" || !targetTeam) return false;
+    const targetIdentifier = targetTeam?.code === "TBD" ? `TBD_${game.id}_${isTargetHome ? "HOME" : "AWAY"}` : targetTeam?.code;
+    return winner === targetIdentifier || winner === targetTeam?.code || winner === targetTeam?.name;
+  };
+  const isFinalStage = (game.stage || "").trim().toLowerCase() === "final";
 
   const handleSelectTeam = async (isHome: boolean) => {
     if (saving) return;
@@ -304,7 +312,9 @@ function OracleBracketCircleMatch({
           oracleWinner === team?.name
         )
       : (isHome ? homePredicted : awayPredicted);
-    const hasAnySelection = isOracleMode ? (!!oracleWinner && oracleWinner !== "TBD") : (homePredicted || awayPredicted);
+    const hasAnySelection = isOracleMode
+      ? winnerMatchesTeam(oracleWinner, homeTeamCurrent, true) || winnerMatchesTeam(oracleWinner, awayTeamCurrent, false)
+      : (homePredicted || awayPredicted);
     const isLoser = hasAnySelection && !isSelected;
     const isWinner = isOracleMode ? false : (isHome ? homeWon : awayWon);
     const isUndecided = !team || !team.code || teamName?.startsWith("Vencedor") || teamName?.startsWith("Perdedor");
@@ -312,7 +322,7 @@ function OracleBracketCircleMatch({
     if (isUndecided) {
       return (
         <div className="flex flex-col items-center gap-1 group relative">
-          <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/20 bg-white/5 flex items-center justify-center text-white/30 text-xs font-black select-none">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-white/20 bg-white/5 flex items-center justify-center text-white/30 text-xs font-black select-none">
             {isLocked && !isSelected && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                 <Lock className="w-4 h-4 text-white/40" />
@@ -345,7 +355,7 @@ function OracleBracketCircleMatch({
         }`}
       >
         <div
-          className={`w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 relative transition-all duration-300 bg-[#0d2b1a] flex items-center justify-center ${
+          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden shrink-0 border-2 relative transition-all duration-300 bg-[#0d2b1a] flex items-center justify-center team-flag-shell-3d ${
             isLocked && !isSelected
               ? "border-white/5 opacity-50 grayscale"
               : isSelected
@@ -363,16 +373,15 @@ function OracleBracketCircleMatch({
             <img
               src={team.flag}
               alt={team.code}
-              className={`w-full h-full object-cover animate-fade-in transition-all duration-300 ${isLoser ? "brightness-40 grayscale saturate-0" : ""}`}
+              className="w-full h-full object-cover team-flag-3d animate-fade-in transition-all duration-300"
+              style={isLoser ? { filter: "grayscale(1) saturate(0) brightness(0.45) contrast(0.9)" } : undefined}
             />
           ) : (
             <span className={`text-white font-black text-[10px] transition-all duration-300 ${isLoser ? "opacity-40" : ""}`}>{team.code}</span>
           )}
 
-          {isSelected && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center animate-fade-in">
-              <span className="text-[#ffd700] text-xs font-black">✓</span>
-            </div>
+          {isLoser && (
+            <div className="absolute inset-0 bg-black/30 pointer-events-none z-20" />
           )}
 
           {saving && (
@@ -383,7 +392,7 @@ function OracleBracketCircleMatch({
         </div>
 
         <span
-          className={`text-[9px] font-black px-1.5 py-0.5 rounded transition-all duration-300 uppercase ${
+          className={`text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded transition-all duration-300 uppercase ${
             isSelected
               ? "bg-[#ffd700] text-[#0d2b1a] shadow"
               : "bg-black/40 text-white/70 group-hover:text-white"
@@ -393,7 +402,7 @@ function OracleBracketCircleMatch({
         </span>
 
         <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-30 pointer-events-none">
-          <div className="bg-black/90 border border-white/10 text-white text-[9px] font-bold px-2 py-1 rounded shadow-xl whitespace-nowrap">
+          <div className="bg-black/90 border border-white/10 text-white text-[10px] font-bold px-2 py-1 rounded shadow-xl whitespace-nowrap">
             {team.name}
           </div>
           <div className="w-1.5 h-1.5 bg-black border-r border-b border-white/10 rotate-45 -mt-1" />
@@ -405,9 +414,8 @@ function OracleBracketCircleMatch({
   const correctPrediction = isOracleMode
     ? (isFinished && !!oracleWinner && oracleWinner !== "TBD" && ((homeWon && oracleWinner === (oracleHomeTeam?.code || game.homeTeam?.code)) || (awayWon && oracleWinner === (oracleAwayTeam?.code || game.awayTeam?.code))))
     : ((homePredicted && homeWon) || (awayPredicted && awayWon));
-
   return (
-    <div className="flex flex-col items-center bg-black/25 border border-white/5 rounded-2xl p-2 px-3.5 hover:border-[#ffd700]/10 transition-all duration-300 w-20 shrink-0 relative select-none">
+    <div className="flex flex-col items-center bg-black/25 border border-white/5 rounded-2xl p-2 px-2.5 sm:px-3.5 hover:border-[#ffd700]/10 transition-all duration-300 w-[74px] sm:w-20 shrink-0 relative select-none">
       {isFinished && isOracleMode && oracleWinner && oracleWinner !== "TBD" && (
         <div className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg border absolute -top-2 -right-2 shadow-lg z-30 ${
           correctPrediction
@@ -1067,9 +1075,9 @@ export default function GroupDetailsPage() {
 
     return (
       <div className="auth-card p-3 border border-white/10 bg-white/[0.02] rounded-2xl flex items-center gap-3 w-full sm:w-[280px] max-w-[280px] shrink-0 relative overflow-hidden transition-all duration-300 hover:border-white/20">
-        <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/20 bg-white/5 flex items-center justify-center font-bold text-xs relative">
+        <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/20 bg-white/5 flex items-center justify-center font-bold text-xs relative team-flag-shell-3d">
           {player.team?.flag ? (
-            <img src={player.team.flag} alt={player.team.name} className="w-full h-full object-cover" />
+            <img src={player.team.flag} alt={player.team.name} className="w-full h-full object-cover team-flag-3d" />
           ) : (
             <span className="text-white/60 font-black">{player.team?.code || "??"}</span>
           )}
@@ -1581,8 +1589,8 @@ export default function GroupDetailsPage() {
                               {/* Match teams and scores */}
                               <div className="p-3.5 flex items-center justify-between gap-3 border-b border-white/5 bg-white/5">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0">
-                                    {game.homeTeam.flag ? <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" /> : game.homeTeam.code}
+                                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0 team-flag-shell-3d">
+                                    {game.homeTeam.flag ? <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover team-flag-3d" /> : game.homeTeam.code}
                                   </div>
                                   <span className="font-bold text-xs text-white/90 truncate cursor-help" title={game.homeTeam.name}>{game.homeTeam.name}</span>
                                 </div>
@@ -1610,8 +1618,8 @@ export default function GroupDetailsPage() {
 
                                 <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
                                   <span className="font-bold text-xs text-white/90 truncate text-right cursor-help" title={game.awayTeam.name}>{game.awayTeam.name}</span>
-                                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0">
-                                    {game.awayTeam.flag ? <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" /> : game.awayTeam.code}
+                                  <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20 bg-white/5 shrink-0 team-flag-shell-3d">
+                                    {game.awayTeam.flag ? <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover team-flag-3d" /> : game.awayTeam.code}
                                   </div>
                                 </div>
                               </div>
@@ -1956,9 +1964,9 @@ export default function GroupDetailsPage() {
                               <div className="p-3.5 flex items-center justify-between gap-3 sm:gap-4">
                                 {/* Team A */}
                                 <div className="flex flex-col items-center flex-1 min-w-0">
-                                  <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
+                                  <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0 team-flag-shell-3d">
                                     {game.homeTeam.flag ? (
-                                      <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover" />
+                                      <img src={game.homeTeam.flag} alt={game.homeTeam.code} className="w-full h-full object-cover team-flag-3d" />
                                     ) : (
                                       game.homeTeam.code
                                     )}
@@ -2048,9 +2056,9 @@ export default function GroupDetailsPage() {
 
                                 {/* Team B */}
                                 <div className="flex flex-col items-center flex-1 min-w-0">
-                                  <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0">
+                                  <div className="w-8 h-8 rounded-full overflow-hidden mb-1.5 flex items-center justify-center font-bold text-sm border border-white/20 bg-white/5 shrink-0 team-flag-shell-3d">
                                     {game.awayTeam.flag ? (
-                                      <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover" />
+                                      <img src={game.awayTeam.flag} alt={game.awayTeam.code} className="w-full h-full object-cover team-flag-3d" />
                                     ) : (
                                       game.awayTeam.code
                                     )}
@@ -2349,13 +2357,13 @@ export default function GroupDetailsPage() {
                                     </span>
 
                                     {/* Flag */}
-                                    <div className={`w-7 h-7 rounded-full overflow-hidden shrink-0 border bg-white/5 flex items-center justify-center font-bold text-[10px] ${
+                                    <div className={`w-7 h-7 rounded-full overflow-hidden shrink-0 border bg-white/5 flex items-center justify-center font-bold text-[10px] team-flag-shell-3d ${
                                       isDirectClassified ? "border-emerald-500/30" :
                                       isRepescagem ? "border-blue-500/30" :
                                       "border-white/15"
                                     }`}>
                                       {team.flag ? (
-                                        <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                                        <img src={team.flag} alt={team.code} className="w-full h-full object-cover team-flag-3d" />
                                       ) : (
                                         team.code
                                       )}
@@ -2593,6 +2601,36 @@ export default function GroupDetailsPage() {
                   const r4Right = getMatchesByOrder(r4, rightR4Order);
                   const finalMatch = r2.find(m => m.stage === "Final");
                   const thirdMatch = r2.find(m => m.stage === "Terceiro Lugar" || m.stage === "Disputa do 3º Lugar");
+                  const finalOracleWinner = finalMatch ? oracleKnockout[finalMatch.id] : undefined;
+                  const finalHomeTeam = finalMatch ? getOracleTeamForSlot(finalMatch.id, true, [finalMatch], [...r4Left, ...r4Right]) : null;
+                  const finalAwayTeam = finalMatch ? getOracleTeamForSlot(finalMatch.id, false, [finalMatch], [...r4Left, ...r4Right]) : null;
+                  const finalIsFinished = finalMatch?.status === "FINISHED";
+                  const finalPointsGenerated = !!finalMatch && finalIsFinished && !!finalOracleWinner && finalOracleWinner !== "TBD";
+                  const finalChampionTeam = (() => {
+                    if (!finalMatch) return null;
+
+                    if (
+                      finalIsFinished &&
+                      finalHomeTeam &&
+                      finalAwayTeam &&
+                      finalMatch.realHomeScore !== null &&
+                      finalMatch.realAwayScore !== null
+                    ) {
+                      const homeWins = finalMatch.realHomeScore > finalMatch.realAwayScore ||
+                        (finalMatch.realHomeScore === finalMatch.realAwayScore && (finalMatch.homePenalties || 0) > (finalMatch.awayPenalties || 0));
+                      return homeWins ? finalHomeTeam : finalAwayTeam;
+                    }
+
+                    const matchesWinner = (team: any, isHome: boolean) => {
+                      if (!team || !finalOracleWinner) return false;
+                      const identifier = team.code === "TBD" ? `TBD_${finalMatch.id}_${isHome ? "HOME" : "AWAY"}` : team.code;
+                      return finalOracleWinner === identifier || finalOracleWinner === team.code || finalOracleWinner === team.name;
+                    };
+
+                    if (matchesWinner(finalHomeTeam, true)) return finalHomeTeam;
+                    if (matchesWinner(finalAwayTeam, false)) return finalAwayTeam;
+                    return null;
+                  })();
 
                   const handleResetKnockout = async () => {
                     const newOracleKnockout: Record<string, string> = {};
@@ -2646,10 +2684,10 @@ export default function GroupDetailsPage() {
 
                       {/* Navegação entre as fases do chaveamento */}
                       <div className="flex flex-col sm:flex-row gap-3 bg-black/20 p-3 rounded-2xl border border-white/5 items-center justify-between">
-                        <div className="flex overflow-x-auto whitespace-nowrap copa-scrollbar gap-1.5 w-full sm:w-auto pb-1 sm:pb-0">
+                      <div className="flex overflow-x-auto whitespace-nowrap copa-scrollbar gap-2 w-full sm:w-auto pb-1 sm:pb-0">
                           <button
                             onClick={() => setBracketRound("all")}
-                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3.5 py-2 min-h-10 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               bracketRound === "all" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
                             }`}
                           >
@@ -2657,7 +2695,7 @@ export default function GroupDetailsPage() {
                           </button>
                           <button
                             onClick={() => setBracketRound("r32")}
-                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3.5 py-2 min-h-10 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               bracketRound === "r32" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
                             }`}
                           >
@@ -2665,7 +2703,7 @@ export default function GroupDetailsPage() {
                           </button>
                           <button
                             onClick={() => setBracketRound("r16")}
-                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3.5 py-2 min-h-10 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               bracketRound === "r16" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
                             }`}
                           >
@@ -2673,7 +2711,7 @@ export default function GroupDetailsPage() {
                           </button>
                           <button
                             onClick={() => setBracketRound("r8")}
-                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3.5 py-2 min-h-10 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               bracketRound === "r8" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
                             }`}
                           >
@@ -2681,7 +2719,7 @@ export default function GroupDetailsPage() {
                           </button>
                           <button
                             onClick={() => setBracketRound("r4")}
-                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3.5 py-2 min-h-10 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               bracketRound === "r4" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
                             }`}
                           >
@@ -2689,7 +2727,7 @@ export default function GroupDetailsPage() {
                           </button>
                           <button
                             onClick={() => setBracketRound("r2")}
-                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
+                            className={`px-3.5 py-2 min-h-10 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               bracketRound === "r2" ? "bg-white/10 text-white border border-white/20" : "text-white/60 hover:text-white"
                             }`}
                           >
@@ -2697,24 +2735,24 @@ export default function GroupDetailsPage() {
                           </button>
                           <button
                             onClick={handleResetKnockout}
-                            className={`px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ml-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={`px-3.5 py-2 min-h-10 rounded-lg text-xs font-bold transition-all cursor-pointer ml-2 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed`}
                             title="Limpar todos os palpites do mata-mata"
                           >
                             Resetar
                           </button>
                         </div>
-                        <span className="text-[10px] text-white/40 italic flex items-center gap-1">
+                        <span className="text-xs text-white/40 italic flex items-center gap-1">
                         Selecione clicando na bandeira da seleção que vai avançar
                         </span>
                       </div>
 
                       {/* Exibição da Árvore Symmetrical ou Grade Focada */}
                       {bracketRound === "all" ? (
-                        <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 justify-start lg:justify-center items-stretch copa-scrollbar w-full">
-                          <div className="flex gap-4 md:gap-6 items-stretch py-2 min-w-[1200px] md:min-w-[1300px] justify-center mx-auto px-4 md:px-0">
+                        <div className="flex overflow-x-auto gap-3 sm:gap-4 md:gap-6 pb-6 pt-2 justify-start lg:justify-center items-stretch copa-scrollbar w-full">
+                          <div className="flex gap-3 sm:gap-4 md:gap-6 items-stretch py-2 min-w-[1040px] sm:min-w-[1180px] md:min-w-[1300px] justify-center mx-auto px-2 sm:px-4 md:px-0">
                             {/* COLUNA 1: Dezesseisavos (Lado Esquerdo) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
                               <div className="flex flex-col justify-between flex-1 py-1">
                                 {r32Left.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2733,8 +2771,8 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 2: Oitavas (Lado Esquerdo) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
                               <div className="flex flex-col justify-around flex-1 py-4">
                                 {r16Left.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2753,8 +2791,8 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 3: Quartas (Lado Esquerdo) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
                               <div className="flex flex-col justify-around flex-1 py-12">
                                 {r8Left.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2773,8 +2811,8 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 4: Semifinal (Lado Esquerdo) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
                               <div className="flex flex-col justify-around flex-1 py-24">
                                 {r4Left.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2793,13 +2831,53 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 5: FINAIS (Centro do Chaveamento) */}
-                            <div className="flex flex-col gap-4 justify-center items-center px-4 min-w-[210px] bg-black/10 border border-white/5 rounded-3xl relative overflow-hidden py-6">
-                              <div className="absolute inset-0 bg-gradient-to-b from-[#ffd700]/5 to-transparent pointer-events-none" />
+                            <div className="flex flex-col gap-4 justify-center items-center px-3 sm:px-4 min-w-[186px] sm:min-w-[218px] bg-black/20 border border-[#ffd700]/15 rounded-3xl relative overflow-hidden py-6 shadow-[0_12px_34px_rgba(0,0,0,0.35)] backdrop-blur-[1.5px]">
+                              <div className="absolute inset-0 bg-gradient-to-b from-[#ffd700]/8 to-transparent pointer-events-none" />
+                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-44 h-24 bg-[#ffd700]/10 blur-2xl pointer-events-none" />
                               
                               {/* Campeão / Final */}
                               <div className="flex flex-col items-center gap-2">
+                                {finalPointsGenerated && finalChampionTeam && (
+                                  <div className="w-full max-w-[202px] rounded-2xl border border-[#ffd700]/45 bg-gradient-to-b from-[#195735]/95 via-[#0f3a24]/95 to-[#0b2118]/95 px-3 py-2.5 shadow-[0_12px_30px_rgba(0,0,0,0.5)] relative overflow-hidden -mt-3 mb-2 backdrop-blur-[2px]">
+                                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.26),transparent_54%)] pointer-events-none" />
+                                    <div className="absolute -top-3 -right-3 w-14 h-14 rounded-full bg-[#ffd700]/15 blur-xl pointer-events-none" />
+                                    <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-emerald-400/10 blur-xl pointer-events-none" />
+                                    <div className="absolute top-2 left-2 text-[#ffd700]/75 animate-pulse pointer-events-none">
+                                      <Sparkles className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="absolute top-3 right-2 text-[#ffd700]/70 animate-pulse [animation-delay:180ms] pointer-events-none">
+                                      <Sparkles className="w-3 h-3" />
+                                    </div>
+                                    <div className="absolute bottom-2 right-5 w-1.5 h-1.5 rounded-full bg-[#ffd700]/80 animate-pulse pointer-events-none" />
+                                    <div className="absolute bottom-3 left-5 w-1 h-1 rounded-full bg-emerald-300/80 animate-pulse [animation-delay:240ms] pointer-events-none" />
+
+                                    <div className="relative flex items-center gap-2.5">
+                                      <div className="relative shrink-0">
+                                        <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-[#ffd700] bg-[#0d2b1a] flex items-center justify-center team-flag-shell-3d shadow-[0_0_16px_rgba(255,215,0,0.35)]">
+                                          {finalChampionTeam.flag ? (
+                                            <img src={finalChampionTeam.flag} alt={finalChampionTeam.code} className="w-full h-full object-cover team-flag-3d" />
+                                          ) : (
+                                            <span className="text-[10px] font-black text-[#ffd700]">{finalChampionTeam.code || "?"}</span>
+                                          )}
+                                        </div>
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full border border-[#ffe27a] bg-[#ffd700] flex items-center justify-center shadow-[0_0_10px_rgba(255,215,0,0.45)]">
+                                          <Crown className="w-2.5 h-2.5 text-[#0d2b1a]" />
+                                        </div>
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="flex items-center gap-1">
+                                          <p className="text-[0.5rem] font-semibold tracking-[0.16rem] text-[#ffd700] uppercase">Campeão</p>
+                                        </div>
+                                        <p className="text-xs font-black text-white truncate drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">{finalChampionTeam.name || finalChampionTeam.code}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                                 <span className="text-[9px] font-black uppercase text-[#ffd700] tracking-widest bg-[#ffd700]/10 border border-[#ffd700]/25 px-2.5 py-1 rounded-full shadow-sm">
                                   🏆 Final
+                                </span>
+                                <span className="text-[8px] text-white/55 font-semibold tracking-wide -mt-1 mb-1">
+                                  Defina o campeão no confronto abaixo
                                 </span>
                                 {finalMatch ? (
                                   <OracleBracketCircleMatch
@@ -2844,8 +2922,8 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 6: Semifinal (Lado Direito) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Semifinal</div>
                               <div className="flex flex-col justify-around flex-1 py-24">
                                 {r4Right.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2864,8 +2942,8 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 7: Quartas (Lado Direito) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Quartas</div>
                               <div className="flex flex-col justify-around flex-1 py-12">
                                 {r8Right.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2884,8 +2962,8 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 8: Oitavas (Lado Direito) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">Oitavas</div>
                               <div className="flex flex-col justify-around flex-1 py-4">
                                 {r16Right.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2904,8 +2982,8 @@ export default function GroupDetailsPage() {
                             </div>
 
                             {/* COLUNA 9: Dezesseisavos (Lado Direito) */}
-                            <div className="flex flex-col gap-2 w-20">
-                              <div className="text-[9px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
+                            <div className="flex flex-col gap-2 w-[78px] sm:w-[88px]">
+                              <div className="text-[10px] uppercase font-black text-white/30 tracking-wider text-center border-b border-white/5 pb-1">1/16 Final</div>
                               <div className="flex flex-col justify-between flex-1 py-1">
                                 {r32Right.map((game) => (
                                   <OracleBracketCircleMatch
@@ -2956,8 +3034,8 @@ export default function GroupDetailsPage() {
                             };
 
                             return (
-                              <div key={game.id} className="flex flex-col items-center gap-1.5 p-2 bg-black/10 border border-white/5 rounded-2xl">
-                                <span className="text-[8px] font-black text-white/30 uppercase truncate max-w-[80px]">
+                              <div key={game.id} className="flex flex-col items-center gap-2 p-2.5 bg-black/10 border border-white/5 rounded-2xl">
+                                <span className="text-[10px] font-black text-white/30 uppercase truncate max-w-[96px]">
                                   {game.stage?.replace("Dezesseisavos", "1/16").replace(" de Final", "")}
                                 </span>
                                 <OracleBracketCircleMatch
@@ -3934,9 +4012,9 @@ export default function GroupDetailsPage() {
                           const second = groupTeams[1];
                           return [first, second].filter(Boolean).map((team) => (
                             <div key={team.code} className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs">
-                              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+                              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px] team-flag-shell-3d">
                                 {team.flag ? (
-                                  <img src={team.flag} alt={team.code} className="w-full h-full object-cover" />
+                                  <img src={team.flag} alt={team.code} className="w-full h-full object-cover team-flag-3d" />
                                 ) : (
                                   team.code
                                 )}
@@ -3958,9 +4036,9 @@ export default function GroupDetailsPage() {
                       <div className="grid grid-cols-2 gap-1.5 max-h-[120px] overflow-y-auto pr-1 copa-scrollbar">
                         {(hasGroupStandingData ? rankedBestThirds : allThirdCandidates).map((third) => (
                             <div key={third.code} className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/5 border border-blue-500/10 text-xs">
-                              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px]">
+                              <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-white/10 bg-white/5 flex items-center justify-center font-bold text-[8px] team-flag-shell-3d">
                                 {third.flag ? (
-                                  <img src={third.flag} alt={third.code} className="w-full h-full object-cover" />
+                                  <img src={third.flag} alt={third.code} className="w-full h-full object-cover team-flag-3d" />
                                 ) : (
                                   third.code
                                 )}
