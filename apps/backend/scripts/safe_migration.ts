@@ -18,14 +18,14 @@ const migrations = [
   {
     stage: 'Oitavas de Final',
     matches: [
+      { home: 'Vencedor do jogo 73', away: 'Vencedor do jogo 76', date: new Date('2026-07-04T14:00:00-03:00') },
       { home: 'Vencedor do jogo 75', away: 'Vencedor do jogo 78', date: new Date('2026-07-04T18:00:00-03:00') },
-      { home: 'Vencedor do jogo 73', away: 'Vencedor do jogo 76', date: new Date('2026-07-04T21:00:00-03:00') },
-      { home: 'Vencedor do jogo 84', away: 'Vencedor do jogo 83', date: new Date('2026-07-05T18:00:00-03:00') },
-      { home: 'Vencedor do jogo 82', away: 'Vencedor do jogo 81', date: new Date('2026-07-05T21:00:00-03:00') },
-      { home: 'Vencedor do jogo 74', away: 'Vencedor do jogo 77', date: new Date('2026-07-06T18:00:00-03:00') },
-      { home: 'Vencedor do jogo 79', away: 'Vencedor do jogo 80', date: new Date('2026-07-06T21:00:00-03:00') },
-      { home: 'Vencedor do jogo 87', away: 'Vencedor do jogo 86', date: new Date('2026-07-07T18:00:00-03:00') },
-      { home: 'Vencedor do jogo 85', away: 'Vencedor do jogo 88', date: new Date('2026-07-07T21:00:00-03:00') },
+      { home: 'Vencedor do jogo 74', away: 'Vencedor do jogo 77', date: new Date('2026-07-05T17:00:00-03:00') },
+      { home: 'Vencedor do jogo 79', away: 'Vencedor do jogo 80', date: new Date('2026-07-05T21:00:00-03:00') },
+      { home: 'Vencedor do jogo 84', away: 'Vencedor do jogo 83', date: new Date('2026-07-06T16:00:00-03:00') },
+      { home: 'Vencedor do jogo 82', away: 'Vencedor do jogo 81', date: new Date('2026-07-06T21:00:00-03:00') },
+      { home: 'Vencedor do jogo 87', away: 'Vencedor do jogo 86', date: new Date('2026-07-07T13:00:00-03:00') },
+      { home: 'Vencedor do jogo 85', away: 'Vencedor do jogo 88', date: new Date('2026-07-07T17:00:00-03:00') },
     ]
   },
   {
@@ -47,7 +47,7 @@ const migrations = [
   {
     stage: 'Terceiro Lugar',
     matches: [
-      { home: 'Perdedor do jogo 101', away: 'Perdedor do jogo 102', date: new Date('2026-07-18T16:00:00-03:00') },
+      { home: 'Perdedor do jogo 101', away: 'Perdedor do jogo 102', date: new Date('2026-07-18T18:00:00-03:00') },
     ]
   },
   {

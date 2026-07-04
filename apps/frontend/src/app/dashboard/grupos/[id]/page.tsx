@@ -26,6 +26,16 @@ const MATA_MATA_SUB = [
   "ALL_MATA_MATA", "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"
 ];
 
+function formatMatchDateTime(dateValue: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateValue));
+}
+
 const MOCK_ORACLE_QUESTIONS = [
   { id: 1, question: "Quem será o campeão?", answer: null, options: ["Brasil", "França", "Argentina", "Inglaterra"], points: 50 },
   { id: 2, question: "Artilheiro da Copa", answer: "Mbappé", options: ["Mbappé", "Messi", "Kane", "Vini Jr"], points: 30 },
@@ -76,7 +86,7 @@ function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, hand
       {/* Small Header */}
       <div className="bg-black/20 px-2 py-1.5 flex items-center justify-between border-b border-white/5 text-[10px] text-white/40" title={game.stadium || undefined}>
         <span className="truncate max-w-[110px]" title={game.stage}>{game.stage}</span>
-        <span className="hidden sm:inline text-[10px] text-white/50">{new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+        <span className="hidden sm:inline text-[10px] text-white/50">{formatMatchDateTime(game.date)}</span>
         <span className={`px-1.5 py-0.5 rounded border font-bold flex items-center gap-1 ${deadlineColor}`}>
           {isLive && <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />}
           {isFinished && <span className="w-1 h-1 rounded-full bg-red-500" />}
@@ -1563,7 +1573,7 @@ export default function GroupDetailsPage() {
                             <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all bg-black/20 hover:scale-[1.01] duration-300">
                               {/* Top bar with game status */}
                               <div className="bg-black/40 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
-                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}</span>
+                                <span>{game.stage} • {formatMatchDateTime(game.date)}{game.stadium && ` • ${game.stadium}`}</span>
                                 {isLive ? (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)] animate-pulse">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -1939,7 +1949,7 @@ export default function GroupDetailsPage() {
                           return (
                             <div key={game.id} className="auth-card p-0 overflow-hidden border border-white/5 hover:border-[#ffd700]/25 transition-all hover:scale-[1.01] duration-300 group">
                               <div className="bg-black/20 p-2.5 flex justify-between items-center text-[10px] text-white/50 border-b border-white/5">
-                                <span>{game.stage} • {new Date(game.date).toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}</span>
+                                <span>{game.stage} • {formatMatchDateTime(game.date)}{game.stadium && ` • ${game.stadium}`}</span>
                                 {isLive ? (
                                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)] animate-pulse">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

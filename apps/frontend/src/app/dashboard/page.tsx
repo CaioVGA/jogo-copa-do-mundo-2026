@@ -6,6 +6,16 @@ import Link from "next/link";
 import { matchesApi, teamsApi } from "@/lib/api";
 import type { MatchPredictionData, TeamData } from "@/lib/api";
 
+function formatMatchDateTime(dateValue: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateValue));
+}
+
 const GROUPS_LIST = [
   "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
   "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L"
@@ -305,7 +315,6 @@ export default function DashboardPage() {
                 const isFinished = game.status === "FINISHED";
                 const isLive = game.status === "LIVE";
                 const hasPredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null;
-                const gameDate = new Date(game.date);
 
                 return (
                   <div 
@@ -315,7 +324,7 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-2 min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="inline-flex max-w-fit px-2 py-0.5 rounded-md text-[9px] font-black text-[#ffd700] bg-[#ffd700]/10 border border-[#ffd700]/15 uppercase tracking-wider">
-                          {game.stage} • {gameDate.toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}{game.stadium && ` • ${game.stadium}`}
+                          {game.stage} • {formatMatchDateTime(game.date)}{game.stadium && ` • ${game.stadium}`}
                         </span>
                         
                         {isLive ? (
