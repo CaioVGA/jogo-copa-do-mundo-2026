@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException, NotFoundException, Logger } from '@nest
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../prisma/redis.service';
 import { SaveOracleDto } from './dto/save-oracle.dto';
+import { getMatchKickoffTimestamp, isMatchLockedByKickoff } from '../common/utils/match-time';
 
 @Injectable()
 export class OracleService {
@@ -261,7 +262,9 @@ export class OracleService {
       where: { stage: { startsWith: 'Fase de Grupos' } },
       orderBy: { date: 'asc' },
     });
-    const oracleGroupsDeadline = firstGroupMatch ? new Date(firstGroupMatch.date) : new Date('2026-06-11T16:00:00-03:00');
+    const oracleGroupsDeadline = firstGroupMatch
+      ? getMatchKickoffTimestamp(firstGroupMatch.date)
+      : new Date('2026-06-11T16:00:00-03:00').getTime();
 
     // Buscando os deadlines de cada fase para validação granular
     const knockoutStages = [
@@ -283,11 +286,11 @@ export class OracleService {
     for (const stage of knockoutStages) {
       const match = knockoutMatchesList.find(m => m.stage === stage);
       if (match) {
-        knockoutDeadlines[stage] = new Date(match.date);
+        knockoutDeadlines[stage] = new Date(getMatchKickoffTimestamp(match.date));
       }
     }
 
-    const isGroupsClosed = now >= oracleGroupsDeadline;
+    const isGroupsClosed = now.getTime() >= oracleGroupsDeadline;
 
     // Removemos o throw global de isKnockoutClosed para que seja validado por fase
     // if (isGroupsClosed && isKnockoutClosed) {
@@ -350,7 +353,7 @@ export class OracleService {
         if (!matchInfo) continue;
 
         // Regra do Oráculo mata-mata: trava no apito inicial de cada confronto.
-        if (now >= matchInfo.date || matchInfo.status !== 'PENDING') {
+        if (isMatchLockedByKickoff(matchInfo.date, now) || matchInfo.status !== 'PENDING') {
           const previousWinner = existingPredictionsMap.get(pred.matchId);
           const isNoopUpdate = previousWinner === pred.predictedWinner;
           if (!isNoopUpdate) {
@@ -402,7 +405,7 @@ export class OracleService {
         select: { id: true, date: true, status: true }
       });
       const lockedMatchIds = lockedMatches
-        .filter((m) => now >= m.date || m.status !== 'PENDING')
+        .filter((m) => isMatchLockedByKickoff(m.date, now) || m.status !== 'PENDING')
         .map((m) => m.id);
 
       await this.prisma.oracleKnockoutPrediction.deleteMany({
