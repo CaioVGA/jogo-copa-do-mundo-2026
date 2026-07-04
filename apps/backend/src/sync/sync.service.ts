@@ -3,12 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { PredictionsService } from '../predictions/predictions.service';
 import { RedisService } from '../prisma/redis.service';
+import { isMatchLockedByKickoff } from '../common/utils/match-time';
 
 @Injectable()
 export class SyncService implements OnApplicationBootstrap {
   private readonly logger = new Logger('SyncService');
   private isPollingActive = false;
   private pollingTimeout: NodeJS.Timeout | null = null;
+  private isKickoffWatcherActive = false;
+  private kickoffWatcherTimeout: NodeJS.Timeout | null = null;
   private readonly teamCodeAliases: Record<string, string> = {
     URY: 'URU', // código local legado -> código football-data.org
   };
@@ -28,6 +31,7 @@ export class SyncService implements OnApplicationBootstrap {
       this.logger.error('Erro ao limpar cache de grupos na inicialização:', err);
     }
     this.startPolling();
+    this.startKickoffWatcher();
   }
 
   startPolling() {
@@ -55,6 +59,62 @@ export class SyncService implements OnApplicationBootstrap {
       clearTimeout(this.pollingTimeout);
       this.pollingTimeout = null;
     }
+  }
+
+  startKickoffWatcher() {
+    if (this.isKickoffWatcherActive) return;
+    this.isKickoffWatcherActive = true;
+    this.logger.log('Iniciando watcher de kickoff (PENDING -> LIVE a cada 5s)...');
+    this.kickoffWatcherTick();
+  }
+
+  stopKickoffWatcher() {
+    this.isKickoffWatcherActive = false;
+    if (this.kickoffWatcherTimeout) {
+      clearTimeout(this.kickoffWatcherTimeout);
+      this.kickoffWatcherTimeout = null;
+    }
+  }
+
+  private async kickoffWatcherTick() {
+    try {
+      await this.promotePendingMatchesToLive();
+    } catch (err) {
+      this.logger.error('Erro no watcher de kickoff:', err);
+    }
+
+    if (this.isKickoffWatcherActive) {
+      this.kickoffWatcherTimeout = setTimeout(() => this.kickoffWatcherTick(), 5_000);
+    }
+  }
+
+  private async promotePendingMatchesToLive() {
+    const now = new Date();
+    const pendingToLive = await this.prisma.match.findMany({
+      where: {
+        status: 'PENDING',
+        date: { lte: now },
+      },
+      select: { id: true, date: true },
+    });
+
+    const matchIds = pendingToLive
+      .filter((m) => isMatchLockedByKickoff(m.date, now))
+      .map((m) => m.id);
+
+    if (matchIds.length === 0) return 0;
+
+    const updated = await this.prisma.match.updateMany({
+      where: { id: { in: matchIds }, status: 'PENDING' },
+      data: { status: 'LIVE' },
+    });
+
+    if ((updated.count ?? 0) > 0) {
+      await this.redis.delByPattern('group:details:*');
+      this.logger.log(`Watcher de kickoff: ${updated.count} partida(s) alterada(s) de PENDING para LIVE.`);
+    }
+
+    return updated.count ?? 0;
   }
 
   private async poll() {
@@ -273,6 +333,9 @@ export class SyncService implements OnApplicationBootstrap {
    * @param forceIgnoreWindow Se true, ignora a janela de otimização de requests e faz a chamada HTTP obrigatoriamente.
    */
   async syncScores(forceIgnoreWindow = false) {
+    // Garante virada imediata para LIVE no horário de início, mesmo antes da API externa refletir o status.
+    await this.promotePendingMatchesToLive();
+
     const apiKey = this.config.get<string>('API_FOOTBALL_KEY');
     if (!apiKey || apiKey === 'your-api-key-here') {
       this.logger.warn('Sincronização abortada: chave da API de sincronização não configurada no arquivo de ambiente');
@@ -432,6 +495,11 @@ export class SyncService implements OnApplicationBootstrap {
         newStatus = 'LIVE';
       } else {
         newStatus = 'PENDING';
+      }
+
+      // Nunca permite voltar para PENDING após o horário de kickoff local.
+      if (newStatus === 'PENDING' && isMatchLockedByKickoff(localMatch.date, new Date())) {
+        newStatus = 'LIVE';
       }
 
       // Se o placar mudou ou o status mudou, atualiza
