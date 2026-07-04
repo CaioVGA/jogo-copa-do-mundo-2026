@@ -5,6 +5,16 @@ import { matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { Loader2, AlertCircle, Trophy, Crown, Sparkles } from "lucide-react";
 
+function formatMatchDateTime(dateValue: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateValue));
+}
+
 // Simplified CircleMatch component for display only (no predictions)
 function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
   const isFinished = game.status === "FINISHED";
@@ -35,7 +45,7 @@ function BracketCircleMatch({ game }: { game: MatchPredictionData }) {
       {/* Date & Stage */}
       <div className="flex justify-between items-center px-1">
         <span className="text-[10px] text-white/50 tracking-wider font-semibold">
-          {new Date(game.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+          {formatMatchDateTime(game.date)}
         </span>
       </div>
 

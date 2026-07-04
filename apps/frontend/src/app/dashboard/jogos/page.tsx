@@ -6,6 +6,16 @@ import { predictionsApi, matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 
+function formatMatchDateTime(dateValue: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateValue));
+}
+
 const ALL_GROUPS = [
   "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",
   "Grupo G", "Grupo H", "Grupo I", "Grupo J", "Grupo K", "Grupo L",
@@ -483,12 +493,7 @@ export default function CopaGamesPage() {
                       <span className="flex items-center gap-1.5">
                         <span className="text-[#ffd700] tracking-widest">{groupName}</span>
                         <span className="text-white/20">•</span>
-                        <span>{new Date(game.date).toLocaleString("pt-BR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}{game.stadium && ` • ${game.stadium}`}</span>
+                        <span>{formatMatchDateTime(game.date)}{game.stadium && ` • ${game.stadium}`}</span>
                       </span>
                       {isLive ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)]">
