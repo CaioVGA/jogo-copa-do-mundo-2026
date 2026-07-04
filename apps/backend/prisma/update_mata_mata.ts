@@ -44,7 +44,7 @@ async function main() {
     },
     {
       homeTeamId: getTeamId('MEX'), awayTeamId: getTeamId('ECU'),
-      date: new Date('2026-06-30T22:00:00-03:00'), stadium: 'Mexico City Stadium', city: 'Cidade do México', stage: 'Dezesseisavos de Final'
+      date: new Date('2026-06-30T22:00:00-03:00'), stadium: 'Estádio Azteca', city: 'Cidade do México', stage: 'Dezesseisavos de Final'
     },
     {
       homeTeamId: getTeamId('ENG'), awayTeamId: getTeamId('COD'),
