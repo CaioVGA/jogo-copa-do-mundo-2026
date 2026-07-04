@@ -8,6 +8,7 @@ import { useToast, useConfirm } from "@/components/ui/toast";
 import type { MatchPredictionData, PlayerData } from "@/lib/api";
 import { SearchableDropdown } from "@/components/ui/SearchableDropdown";
 import EditGroupModal from "@/components/groups/EditGroupModal";
+import { formatMatchDateTime, getMatchKickoffTimestamp, isMatchClosed } from "@/lib/match-time";
 
 type TabType = "geral" | "bolao" | "oraculo" | "participantes";
 
@@ -26,16 +27,6 @@ const MATA_MATA_SUB = [
   "ALL_MATA_MATA", "Dezesseisavos de Final", "Oitavas de Final", "Quartas de Final", "Semifinais", "Terceiro Lugar", "Final"
 ];
 
-function formatMatchDateTime(dateValue: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "UTC",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateValue));
-}
-
 const MOCK_ORACLE_QUESTIONS = [
   { id: 1, question: "Quem será o campeão?", answer: null, options: ["Brasil", "França", "Argentina", "Inglaterra"], points: 50 },
   { id: 2, question: "Artilheiro da Copa", answer: "Mbappé", options: ["Mbappé", "Messi", "Kane", "Vini Jr"], points: 30 },
@@ -52,11 +43,12 @@ interface BracketMatchCardProps {
 function BracketMatchCard({ game, predScores, setPredScores, savingMatchId, handleSavePrediction }: BracketMatchCardProps) {
   const isFinished = game.status === "FINISHED";
   const isLive = game.status === "LIVE";
-  const isClosed = new Date(game.date).getTime() < Date.now();
+  const nowMs = Date.now();
+  const isClosed = isMatchClosed(game.date, nowMs);
   const saving = savingMatchId === game.id;
   
   // Deadline text
-  const diffMs = new Date(game.date).getTime() - Date.now();
+  const diffMs = getMatchKickoffTimestamp(game.date) - nowMs;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   let deadlineText = "Aberto";
   let deadlineColor = "text-emerald-400 border-emerald-500/20 bg-emerald-500/10";
@@ -259,7 +251,7 @@ function OracleBracketCircleMatch({
 }: OracleBracketCircleMatchProps) {
   const isFinished = game.status === "FINISHED";
   const isLive = game.status === "LIVE";
-  const isClosed = !isOracleMode && new Date(game.date).getTime() < Date.now();
+  const isClosed = !isOracleMode && isMatchClosed(game.date);
   const saving = savingMatchId === game.id;
 
   const homePredicted = game.predictedHomeScore !== null && game.predictedAwayScore !== null && game.predictedHomeScore > game.predictedAwayScore;
@@ -578,7 +570,7 @@ export default function GroupDetailsPage() {
   };
 
   const isKnockoutMatchLocked = (match: MatchPredictionData) =>
-    match.status !== "PENDING" || new Date(match.date).getTime() <= Date.now();
+    match.status !== "PENDING" || isMatchClosed(match.date);
 
   const handleOracleKnockoutSelect = async (matchId: string, teamCode: string) => {
     const previousKnockout = { ...oracleKnockout };
@@ -1535,13 +1527,13 @@ export default function GroupDetailsPage() {
                           const game = resolvedGames.find(rg => rg.id === g.id) || g;
                           const isFinished = game.status === "FINISHED";
                           const isLive = game.status === "LIVE";
-                          const gameDate = new Date(game.date);
-                          const isStarted = new Date() >= gameDate;
+                          const gameDateMs = getMatchKickoffTimestamp(game.date);
+                          const isStarted = Date.now() >= gameDateMs;
                           const isClosed = isFinished || isStarted;
 
                           // Calcula o prazo dos palpites dinamicamente
-                          const now = new Date();
-                          const diffMs = gameDate.getTime() - now.getTime();
+                          const nowMs = Date.now();
+                          const diffMs = gameDateMs - nowMs;
                           let deadlineText = "";
                           let deadlineColor = "";
 
@@ -1915,13 +1907,13 @@ export default function GroupDetailsPage() {
                           const game = resolvedGames.find(rg => rg.id === g.id) || g;
                           const isFinished = game.status === "FINISHED";
                           const isLive = game.status === "LIVE";
-                          const gameDate = new Date(game.date);
-                          const isStarted = new Date() >= gameDate;
+                          const gameDateMs = getMatchKickoffTimestamp(game.date);
+                          const isStarted = Date.now() >= gameDateMs;
                           const isClosed = isFinished || isStarted;
 
                           // Calcula o prazo dos palpites dinamicamente
-                          const now = new Date();
-                          const diffMs = gameDate.getTime() - now.getTime();
+                          const nowMs = Date.now();
+                          const diffMs = gameDateMs - nowMs;
                           let deadlineText = "";
                           let deadlineColor = "";
 

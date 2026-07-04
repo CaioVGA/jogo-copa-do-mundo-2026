@@ -4,16 +4,7 @@ import { useEffect, useState } from "react";
 import { matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { Loader2, AlertCircle, Trophy, Crown, Sparkles } from "lucide-react";
-
-function formatMatchDateTime(dateValue: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "UTC",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateValue));
-}
+import { formatMatchDateTime } from "@/lib/match-time";
 
 // Simplified CircleMatch component for display only (no predictions)
 function BracketCircleMatch({ game }: { game: MatchPredictionData }) {

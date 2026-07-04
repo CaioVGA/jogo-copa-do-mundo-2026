@@ -5,16 +5,7 @@ import { CalendarDays, Loader2, AlertCircle, RefreshCw, Trophy, Edit2, Save, X, 
 import { predictionsApi, matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
-
-function formatMatchDateTime(dateValue: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "UTC",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateValue));
-}
+import { formatMatchDateTime } from "@/lib/match-time";
 
 const ALL_GROUPS = [
   "Grupo A", "Grupo B", "Grupo C", "Grupo D", "Grupo E", "Grupo F",

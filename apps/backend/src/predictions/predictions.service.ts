@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/com
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../prisma/redis.service';
 import { SavePredictionsDto } from './dto/save-predictions.dto';
+import { isMatchLockedByKickoff } from '../common/utils/match-time';
 
 @Injectable()
 export class PredictionsService {
@@ -329,7 +330,7 @@ export class PredictionsService {
       }
 
       // Security rule: block predictions if the match has already started
-      if (new Date(match.date) <= now || match.status !== 'PENDING') {
+      if (isMatchLockedByKickoff(match.date, now) || match.status !== 'PENDING') {
         throw new ForbiddenException(
           `Não é permitido palpitar na partida entre ${match.homeTeamName || 'Time A'} e ${
             match.awayTeamName || 'Time B'
