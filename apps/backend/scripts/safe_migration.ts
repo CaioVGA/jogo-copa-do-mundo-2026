@@ -32,8 +32,8 @@ const migrations = [
     stage: 'Quartas de Final',
     matches: [
       { home: 'Vencedor do jogo 89', away: 'Vencedor do jogo 90', date: new Date('2026-07-09T17:00:00-03:00') },
-      { home: 'Vencedor do jogo 91', away: 'Vencedor do jogo 92', date: new Date('2026-07-10T16:00:00-03:00') },
-      { home: 'Vencedor do jogo 93', away: 'Vencedor do jogo 94', date: new Date('2026-07-11T18:00:00-03:00') },
+      { home: 'Vencedor do jogo 93', away: 'Vencedor do jogo 94', date: new Date('2026-07-10T16:00:00-03:00') },
+      { home: 'Vencedor do jogo 91', away: 'Vencedor do jogo 92', date: new Date('2026-07-11T18:00:00-03:00') },
       { home: 'Vencedor do jogo 95', away: 'Vencedor do jogo 96', date: new Date('2026-07-11T22:00:00-03:00') },
     ]
   },
@@ -60,6 +60,57 @@ const migrations = [
 
 async function main() {
   console.log('Iniciando migração segura das partidas do Mata-Mata V2...');
+
+  // Garante confrontos e horários de Brasília dos jogos 86-88 dos Dezesseisavos.
+  const [teamAUS, teamEGY, teamARG, teamCPV, teamCOL, teamGHA] = await Promise.all([
+    prisma.team.findUnique({ where: { code: 'AUS' }, select: { id: true } }),
+    prisma.team.findUnique({ where: { code: 'EGY' }, select: { id: true } }),
+    prisma.team.findUnique({ where: { code: 'ARG' }, select: { id: true } }),
+    prisma.team.findUnique({ where: { code: 'CPV' }, select: { id: true } }),
+    prisma.team.findUnique({ where: { code: 'COL' }, select: { id: true } }),
+    prisma.team.findUnique({ where: { code: 'GHA' }, select: { id: true } }),
+  ]);
+
+  if (teamAUS?.id && teamEGY?.id && teamARG?.id && teamCPV?.id && teamCOL?.id && teamGHA?.id) {
+    await prisma.match.updateMany({
+      where: {
+        stage: 'Dezesseisavos de Final',
+        date: new Date('2026-07-03T15:00:00-03:00'),
+      },
+      data: {
+        homeTeamId: teamAUS.id,
+        awayTeamId: teamEGY.id,
+        homeTeamName: null,
+        awayTeamName: null,
+      },
+    });
+
+    await prisma.match.updateMany({
+      where: {
+        stage: 'Dezesseisavos de Final',
+        date: new Date('2026-07-03T19:00:00-03:00'),
+      },
+      data: {
+        homeTeamId: teamARG.id,
+        awayTeamId: teamCPV.id,
+        homeTeamName: null,
+        awayTeamName: null,
+      },
+    });
+
+    await prisma.match.updateMany({
+      where: {
+        stage: 'Dezesseisavos de Final',
+        date: new Date('2026-07-03T22:30:00-03:00'),
+      },
+      data: {
+        homeTeamId: teamCOL.id,
+        awayTeamId: teamGHA.id,
+        homeTeamName: null,
+        awayTeamName: null,
+      },
+    });
+  }
   
   // FIX CRÍTICO: Corrige o estágio do Jogo 88 (Colômbia x Gana) que estava errado no banco
   console.log('Verificando erro de estágio no Jogo 88...');
