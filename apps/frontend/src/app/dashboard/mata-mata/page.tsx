@@ -155,8 +155,9 @@ export default function MataMataPage() {
 
   const leftR32Order = [75, 78, 73, 76, 84, 83, 82, 81];
   const rightR32Order = [74, 77, 79, 80, 87, 86, 85, 88];
-  const leftR16Order = [89, 90, 91, 92];
-  const rightR16Order = [93, 94, 95, 96];
+  // O print oficial usa 90 acima de 89 no lado esquerdo.
+  const leftR16Order = [90, 89, 93, 94];
+  const rightR16Order = [91, 92, 95, 96];
   const leftR8Order = [97, 98];
   const rightR8Order = [99, 100];
   const leftR4Order = [101];

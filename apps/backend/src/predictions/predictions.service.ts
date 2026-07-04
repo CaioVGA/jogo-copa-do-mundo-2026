@@ -11,6 +11,85 @@ export class PredictionsService {
     private readonly redis: RedisService,
   ) {}
 
+  private normalizeKnockoutKey(homeName: string | null, awayName: string | null): string {
+    const normalize = (value: string | null) =>
+      (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    return `${normalize(homeName)}|${normalize(awayName)}`;
+  }
+
+  private buildOfficialMatchNumberMap(matches: any[]): Map<string, number> {
+    const byDateThenId = (a: any, b: any) => {
+      const timeDiff = a.date.getTime() - b.date.getTime();
+      if (timeDiff !== 0) return timeDiff;
+      return a.id.localeCompare(b.id);
+    };
+
+    const byStage = (stage: string) =>
+      matches.filter((m) => m.stage === stage).sort(byDateThenId);
+
+    const officialById = new Map<string, number>();
+
+    const groupMatches = matches
+      .filter((m) => m.stage && m.stage.startsWith('Fase de Grupos'))
+      .sort(byDateThenId);
+    groupMatches.forEach((m, index) => officialById.set(m.id, index + 1));
+
+    const roundOf32 = byStage('Dezesseisavos de Final');
+    roundOf32.forEach((m, index) => officialById.set(m.id, 73 + index));
+
+    const roundOf16Expected = new Map<string, number>([
+      [this.normalizeKnockoutKey('Vencedor do jogo 73', 'Vencedor do jogo 76'), 90],
+      [this.normalizeKnockoutKey('Vencedor do jogo 75', 'Vencedor do jogo 78'), 89],
+      [this.normalizeKnockoutKey('Vencedor do jogo 74', 'Vencedor do jogo 77'), 91],
+      [this.normalizeKnockoutKey('Vencedor do jogo 79', 'Vencedor do jogo 80'), 92],
+      [this.normalizeKnockoutKey('Vencedor do jogo 84', 'Vencedor do jogo 83'), 93],
+      [this.normalizeKnockoutKey('Vencedor do jogo 82', 'Vencedor do jogo 81'), 94],
+      [this.normalizeKnockoutKey('Vencedor do jogo 87', 'Vencedor do jogo 86'), 95],
+      [this.normalizeKnockoutKey('Vencedor do jogo 85', 'Vencedor do jogo 88'), 96],
+    ]);
+
+    const quarterExpected = new Map<string, number>([
+      [this.normalizeKnockoutKey('Vencedor do jogo 89', 'Vencedor do jogo 90'), 97],
+      [this.normalizeKnockoutKey('Vencedor do jogo 93', 'Vencedor do jogo 94'), 98],
+      [this.normalizeKnockoutKey('Vencedor do jogo 91', 'Vencedor do jogo 92'), 99],
+      [this.normalizeKnockoutKey('Vencedor do jogo 95', 'Vencedor do jogo 96'), 100],
+    ]);
+
+    const semiExpected = new Map<string, number>([
+      [this.normalizeKnockoutKey('Vencedor do jogo 97', 'Vencedor do jogo 98'), 101],
+      [this.normalizeKnockoutKey('Vencedor do jogo 99', 'Vencedor do jogo 100'), 102],
+    ]);
+
+    const thirdExpected = new Map<string, number>([
+      [this.normalizeKnockoutKey('Perdedor do jogo 101', 'Perdedor do jogo 102'), 103],
+    ]);
+
+    const finalExpected = new Map<string, number>([
+      [this.normalizeKnockoutKey('Vencedor do jogo 101', 'Vencedor do jogo 102'), 104],
+    ]);
+
+    const assignByFallback = (
+      stage: string,
+      expected: Map<string, number>,
+      fallbackBase: number,
+    ) => {
+      const stageMatches = byStage(stage);
+      stageMatches.forEach((m, index) => {
+        const key = this.normalizeKnockoutKey(m.homeTeamName, m.awayTeamName);
+        const official = expected.get(key) ?? fallbackBase + index;
+        officialById.set(m.id, official);
+      });
+    };
+
+    assignByFallback('Oitavas de Final', roundOf16Expected, 89);
+    assignByFallback('Quartas de Final', quarterExpected, 97);
+    assignByFallback('Semifinais', semiExpected, 101);
+    assignByFallback('Terceiro Lugar', thirdExpected, 103);
+    assignByFallback('Final', finalExpected, 104);
+
+    return officialById;
+  }
+
   private async getLiveBracketResolver() {
     const stageOrder = {
       'Fase de Grupos - Rodada 1': 1,
@@ -37,9 +116,13 @@ export class PredictionsService {
       return a.id.localeCompare(b.id);
     });
 
-    const matchByIndex = new Map<number, any>();
-    allMatches.forEach((m, index) => {
-      matchByIndex.set(index + 1, m);
+    const officialMatchNumberById = this.buildOfficialMatchNumberMap(allMatches);
+    const matchByNumber = new Map<number, any>();
+    allMatches.forEach((m) => {
+      const officialNumber = officialMatchNumberById.get(m.id);
+      if (officialNumber) {
+        matchByNumber.set(officialNumber, m);
+      }
     });
 
     const groupMatches = allMatches.filter(m => m.stage && m.stage.startsWith('Fase de Grupos'));
@@ -167,7 +250,7 @@ export class PredictionsService {
       if (knockoutMatch) {
         const type = knockoutMatch[1];
         const matchNumber = parseInt(knockoutMatch[2], 10);
-        const sourceMatch = matchByIndex.get(matchNumber);
+        const sourceMatch = matchByNumber.get(matchNumber);
 
         if (sourceMatch && sourceMatch.status === 'FINISHED') {
           const home = resolveTeam(sourceMatch.homeTeam, sourceMatch.homeTeamName);
@@ -202,11 +285,12 @@ export class PredictionsService {
 
       return { id: null, name: teamNameFallback, code: 'TBD', flag: null, group: null };
     };
-    return { resolver: resolveTeam, sortedMatches: allMatches };
+    return { resolver: resolveTeam, sortedMatches: allMatches, officialMatchNumberById };
   }
 
   async getMatches() {
-    const { resolver, sortedMatches: matches } = await this.getLiveBracketResolver();
+    const { resolver, sortedMatches: matches, officialMatchNumberById } =
+      await this.getLiveBracketResolver();
 
     const grouped: Record<string, any[]> = {};
 
@@ -227,7 +311,7 @@ export class PredictionsService {
         pointsEarned: 0,
         homeTeam: resolver(match.homeTeam, match.homeTeamName),
         awayTeam: resolver(match.awayTeam, match.awayTeamName),
-        matchNumber: index + 1,
+        matchNumber: officialMatchNumberById.get(match.id) ?? index + 1,
         homeTeamFallback: match.homeTeamName,
         awayTeamFallback: match.awayTeamName,
       };
@@ -253,7 +337,8 @@ export class PredictionsService {
       throw new ForbiddenException('Você não faz parte deste grupo.');
     }
 
-    const { resolver, sortedMatches: matches } = await this.getLiveBracketResolver();
+    const { resolver, sortedMatches: matches, officialMatchNumberById } =
+      await this.getLiveBracketResolver();
 
     // 2. Fetch all predictions by this user in this group
     const userPredictions = await this.prisma.matchPrediction.findMany({
@@ -287,7 +372,7 @@ export class PredictionsService {
         pointsEarned: pred ? pred.points : 0,
         homeTeam: resolver(match.homeTeam, match.homeTeamName),
         awayTeam: resolver(match.awayTeam, match.awayTeamName),
-        matchNumber: index + 1,
+        matchNumber: officialMatchNumberById.get(match.id) ?? index + 1,
         homeTeamFallback: match.homeTeamName,
         awayTeamFallback: match.awayTeamName,
       };
