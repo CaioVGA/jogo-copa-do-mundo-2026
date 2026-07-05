@@ -90,6 +90,82 @@ export class PredictionsService {
     return officialById;
   }
 
+  private async persistKnockoutAdvancement(
+    sourceMatchId: string,
+    resolvedHome: any,
+    resolvedAway: any,
+    homeScore: number,
+    awayScore: number,
+    homePenalties: number | null | undefined,
+    awayPenalties: number | null | undefined,
+    officialMatchNumberById: Map<string, number>,
+  ): Promise<string | null> {
+    // Persiste os times efetivos que chegaram neste confronto.
+    await this.prisma.match.update({
+      where: { id: sourceMatchId },
+      data: {
+        homeTeamId: resolvedHome?.id ?? null,
+        awayTeamId: resolvedAway?.id ?? null,
+      },
+    });
+
+    let winnerTeam: any = null;
+    let loserTeam: any = null;
+
+    if (homeScore > awayScore) {
+      winnerTeam = resolvedHome;
+      loserTeam = resolvedAway;
+    } else if (awayScore > homeScore) {
+      winnerTeam = resolvedAway;
+      loserTeam = resolvedHome;
+    } else if (
+      homePenalties !== null &&
+      homePenalties !== undefined &&
+      awayPenalties !== null &&
+      awayPenalties !== undefined
+    ) {
+      if (homePenalties > awayPenalties) {
+        winnerTeam = resolvedHome;
+        loserTeam = resolvedAway;
+      } else if (awayPenalties > homePenalties) {
+        winnerTeam = resolvedAway;
+        loserTeam = resolvedHome;
+      }
+    }
+
+    if (!winnerTeam?.code) return null;
+
+    const sourceMatchNumber = officialMatchNumberById.get(sourceMatchId);
+    if (!sourceMatchNumber) return winnerTeam.code;
+
+    const winnerToken = `Vencedor do jogo ${sourceMatchNumber}`;
+    const loserToken = `Perdedor do jogo ${sourceMatchNumber}`;
+
+    if (winnerTeam?.id) {
+      await this.prisma.match.updateMany({
+        where: { homeTeamName: winnerToken },
+        data: { homeTeamId: winnerTeam.id },
+      });
+      await this.prisma.match.updateMany({
+        where: { awayTeamName: winnerToken },
+        data: { awayTeamId: winnerTeam.id },
+      });
+    }
+
+    if (loserTeam?.id) {
+      await this.prisma.match.updateMany({
+        where: { homeTeamName: loserToken },
+        data: { homeTeamId: loserTeam.id },
+      });
+      await this.prisma.match.updateMany({
+        where: { awayTeamName: loserToken },
+        data: { awayTeamId: loserTeam.id },
+      });
+    }
+
+    return winnerTeam.code;
+  }
+
   private async getLiveBracketResolver() {
     const stageOrder = {
       'Fase de Grupos - Rodada 1': 1,
@@ -526,8 +602,8 @@ export class PredictionsService {
       }
 
       // 4. Se for mata-mata, calcular os pontos do Oráculo (quem acertou quem passou ganha +5)
-      if (match.stage && !match.stage.startsWith('Fase de Grupos')) {
-        const { resolver } = await this.getLiveBracketResolver();
+        if (match.stage && !match.stage.startsWith('Fase de Grupos')) {
+          const { resolver, officialMatchNumberById } = await this.getLiveBracketResolver();
         const fullMatch = await this.prisma.match.findUnique({
           where: { id: matchId },
           include: { homeTeam: true, awayTeam: true },
@@ -538,36 +614,33 @@ export class PredictionsService {
           const resolvedAway = resolver(fullMatch.awayTeam, fullMatch.awayTeamName);
 
           if (resolvedHome && resolvedHome.code !== 'TBD' && resolvedAway && resolvedAway.code !== 'TBD') {
-            let winnerTeamCode: string | null = null;
-            
-            if (homeScore > awayScore) {
-              winnerTeamCode = resolvedHome.code;
-            } else if (awayScore > homeScore) {
-              winnerTeamCode = resolvedAway.code;
-            } else if (homePenalties !== undefined && awayPenalties !== undefined) {
-              if (homePenalties > awayPenalties) {
-                winnerTeamCode = resolvedHome.code;
-              } else if (awayPenalties > homePenalties) {
-                winnerTeamCode = resolvedAway.code;
-              }
-            }
+              const winnerTeamCode = await this.persistKnockoutAdvancement(
+                matchId,
+                resolvedHome,
+                resolvedAway,
+                homeScore,
+                awayScore,
+                homePenalties,
+                awayPenalties,
+                officialMatchNumberById,
+              );
 
-            if (winnerTeamCode) {
-              const oraclePredictions = await this.prisma.oracleKnockoutPrediction.findMany({
-                where: { matchId },
-              });
-
-              for (const oraclePred of oraclePredictions) {
-                const points = oraclePred.predictedWinner === winnerTeamCode ? 5 : 0;
-                await this.prisma.oracleKnockoutPrediction.update({
-                  where: { id: oraclePred.id },
-                  data: { points },
+              if (winnerTeamCode) {
+                const oraclePredictions = await this.prisma.oracleKnockoutPrediction.findMany({
+                  where: { matchId },
                 });
+
+                for (const oraclePred of oraclePredictions) {
+                  const points = oraclePred.predictedWinner === winnerTeamCode ? 5 : 0;
+                  await this.prisma.oracleKnockoutPrediction.update({
+                    where: { id: oraclePred.id },
+                    data: { points },
+                  });
+                }
               }
             }
           }
         }
-      }
 
     // Invalida todos os caches de grupos globalmente porque os placares e pontuações mudaram
     await this.redis.delByPattern('group:details:*');
@@ -609,7 +682,7 @@ export class PredictionsService {
         }
 
         if (match.stage && !match.stage.startsWith('Fase de Grupos')) {
-          const { resolver } = await this.getLiveBracketResolver();
+          const { resolver, officialMatchNumberById } = await this.getLiveBracketResolver();
           const fullMatch = await this.prisma.match.findUnique({
             where: { id: matchId },
             include: { homeTeam: true, awayTeam: true },
@@ -620,40 +693,73 @@ export class PredictionsService {
             const resolvedAway = resolver(fullMatch.awayTeam, fullMatch.awayTeamName);
 
             if (resolvedHome && resolvedHome.code !== 'TBD' && resolvedAway && resolvedAway.code !== 'TBD') {
-              let winnerTeamCode: string | null = null;
-              
-              if (homeScore > awayScore) {
-                winnerTeamCode = resolvedHome.code;
-              } else if (awayScore > homeScore) {
-                winnerTeamCode = resolvedAway.code;
-              } else if (homePenalties !== undefined && awayPenalties !== undefined) {
-                if (homePenalties > awayPenalties) {
-                  winnerTeamCode = resolvedHome.code;
-                } else if (awayPenalties > homePenalties) {
-                  winnerTeamCode = resolvedAway.code;
-                }
-              }
+              const winnerTeamCode = await this.persistKnockoutAdvancement(
+                matchId,
+                resolvedHome,
+                resolvedAway,
+                homeScore,
+                awayScore,
+                homePenalties,
+                awayPenalties,
+                officialMatchNumberById,
+              );
 
-            if (winnerTeamCode) {
-              const oraclePredictions = await this.prisma.oracleKnockoutPrediction.findMany({
-                where: { matchId },
-              });
-
-              for (const oraclePred of oraclePredictions) {
-                const points = oraclePred.predictedWinner === winnerTeamCode ? 5 : 0;
-                await this.prisma.oracleKnockoutPrediction.update({
-                  where: { id: oraclePred.id },
-                  data: { points },
+              if (winnerTeamCode) {
+                const oraclePredictions = await this.prisma.oracleKnockoutPrediction.findMany({
+                  where: { matchId },
                 });
+
+                for (const oraclePred of oraclePredictions) {
+                  const points = oraclePred.predictedWinner === winnerTeamCode ? 5 : 0;
+                  await this.prisma.oracleKnockoutPrediction.update({
+                    where: { id: oraclePred.id },
+                    data: { points },
+                  });
+                }
               }
             }
           }
         }
       }
-    }
 
     await this.redis.delByPattern('group:details:*');
 
     return { success: true, message: 'Placar sincronizado com sucesso!' };
+  }
+
+  async backfillKnockoutTeamsFromFinishedMatches() {
+    const { resolver, sortedMatches, officialMatchNumberById } =
+      await this.getLiveBracketResolver();
+
+    let updatedCount = 0;
+    for (const match of sortedMatches) {
+      if (!match.stage || match.stage.startsWith('Fase de Grupos')) continue;
+      if (match.status !== 'FINISHED') continue;
+      if (match.homeScore === null || match.awayScore === null) continue;
+
+      const resolvedHome = resolver(match.homeTeam, match.homeTeamName);
+      const resolvedAway = resolver(match.awayTeam, match.awayTeamName);
+      if (!resolvedHome || !resolvedAway) continue;
+      if (resolvedHome.code === 'TBD' || resolvedAway.code === 'TBD') continue;
+
+      const winnerCode = await this.persistKnockoutAdvancement(
+        match.id,
+        resolvedHome,
+        resolvedAway,
+        match.homeScore,
+        match.awayScore,
+        match.homePenalties,
+        match.awayPenalties,
+        officialMatchNumberById,
+      );
+
+      if (winnerCode) updatedCount++;
+    }
+
+    if (updatedCount > 0) {
+      await this.redis.delByPattern('group:details:*');
+    }
+
+    return { updatedCount };
   }
 }

@@ -30,6 +30,14 @@ export class SyncService implements OnApplicationBootstrap {
     } catch (err) {
       this.logger.error('Erro ao limpar cache de grupos na inicialização:', err);
     }
+    try {
+      const result = await this.predictionsService.backfillKnockoutTeamsFromFinishedMatches();
+      if (result.updatedCount > 0) {
+        this.logger.log(`Backfill de chaveamento aplicado em ${result.updatedCount} jogo(s) finalizado(s).`);
+      }
+    } catch (err) {
+      this.logger.error('Erro no backfill de chaveamento pós-inicialização:', err);
+    }
     this.startPolling();
     this.startKickoffWatcher();
   }
