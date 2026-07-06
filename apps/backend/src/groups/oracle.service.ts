@@ -353,7 +353,7 @@ export class OracleService {
         if (!matchInfo) continue;
 
         // Regra do Oráculo mata-mata: trava no apito inicial de cada confronto.
-        if (isMatchLockedByKickoff(matchInfo.date, now) || matchInfo.status !== 'PENDING') {
+        if (isMatchLockedByKickoff(matchInfo.date, now)) {
           const previousWinner = existingPredictionsMap.get(pred.matchId);
           const isNoopUpdate = previousWinner === pred.predictedWinner;
           if (!isNoopUpdate) {
@@ -405,7 +405,7 @@ export class OracleService {
         select: { id: true, date: true, status: true }
       });
       const lockedMatchIds = lockedMatches
-        .filter((m) => isMatchLockedByKickoff(m.date, now) || m.status !== 'PENDING')
+        .filter((m) => isMatchLockedByKickoff(m.date, now))
         .map((m) => m.id);
 
       await this.prisma.oracleKnockoutPrediction.deleteMany({
