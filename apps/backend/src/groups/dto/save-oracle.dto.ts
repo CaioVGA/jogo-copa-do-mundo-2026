@@ -1,9 +1,22 @@
-import { IsArray, IsString, IsNotEmpty, ValidateNested, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsArray,
+  IsString,
+  IsNotEmpty,
+  ValidateNested,
+  IsOptional,
+  IsBoolean,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
+
+const ENTITY_ID_REGEX = /^[a-zA-Z0-9_-]{8,64}$/;
+const TEAM_REFERENCE_REGEX = /^[\p{L}\p{N}\s|.'-]{2,80}$/u;
 
 export class GroupPredictionDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(32)
   groupName: string;
 
   @IsArray()
@@ -14,10 +27,13 @@ export class GroupPredictionDto {
 export class KnockoutPredictionDto {
   @IsString()
   @IsNotEmpty()
+  @Matches(ENTITY_ID_REGEX)
   matchId: string;
 
   @IsString()
   @IsNotEmpty()
+  @Matches(TEAM_REFERENCE_REGEX)
+  @MaxLength(80)
   predictedWinner: string;
 }
 

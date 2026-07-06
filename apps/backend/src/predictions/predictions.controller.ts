@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { PredictionsService } from './predictions.service';
 import { UpdateMatchScoreDto } from './dto/save-predictions.dto';
 
@@ -28,6 +29,7 @@ export class PredictionsController {
   }
 
   @Post('matches/:id/score')
+  @UseGuards(AdminGuard)
   updateMatchScore(
     @Param('id') id: string,
     @Body() dto: UpdateMatchScoreDto,
