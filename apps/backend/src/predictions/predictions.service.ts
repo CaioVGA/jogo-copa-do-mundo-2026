@@ -491,7 +491,7 @@ export class PredictionsService {
       }
 
       // Security rule: block predictions if the match has already started
-      if (isMatchLockedByKickoff(match.date, now) || match.status !== 'PENDING') {
+      if (isMatchLockedByKickoff(match.date, now)) {
         throw new ForbiddenException(
           `Não é permitido palpitar na partida entre ${match.homeTeamName || 'Time A'} e ${
             match.awayTeamName || 'Time B'
