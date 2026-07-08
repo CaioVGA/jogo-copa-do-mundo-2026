@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { matchesApi } from "@/lib/api";
 import type { MatchPredictionData } from "@/lib/api";
 import { Loader2, AlertCircle, Trophy, Crown, Sparkles } from "lucide-react";
@@ -107,6 +107,8 @@ export default function MataMataPage() {
   const [matches, setMatches] = useState<MatchPredictionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const bracketScrollRef = useRef<HTMLDivElement | null>(null);
+  const finalsColumnRef = useRef<HTMLDivElement | null>(null);
 
   const [bracketRound, setBracketRound] = useState<"all" | "r32" | "r16" | "r8" | "r4" | "r2">("all");
 
@@ -124,6 +126,21 @@ export default function MataMataPage() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (bracketRound !== "all") return;
+    if (!bracketScrollRef.current || !finalsColumnRef.current) return;
+
+    const scrollContainer = bracketScrollRef.current;
+    const finalsColumn = finalsColumnRef.current;
+    const targetScrollLeft =
+      finalsColumn.offsetLeft - scrollContainer.clientWidth / 2 + finalsColumn.clientWidth / 2;
+
+    scrollContainer.scrollTo({
+      left: Math.max(0, targetScrollLeft),
+      behavior: "smooth",
+    });
+  }, [bracketRound, matches.length]);
 
   if (loading) {
     return (
@@ -305,7 +322,10 @@ export default function MataMataPage() {
 
         {/* Exibição da Árvore Symmetrical ou Grade Focada */}
         {bracketRound === "all" ? (
-          <div className="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 justify-start items-stretch scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent w-full">
+          <div
+            ref={bracketScrollRef}
+            className="flex overflow-x-auto gap-4 md:gap-6 pb-6 pt-2 justify-start items-stretch scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent w-full"
+          >
             <div className="flex gap-4 md:gap-6 items-stretch py-2 min-w-max px-4 mx-auto">
               {/* COLUNA 1: Dezesseisavos (Lado Esquerdo) */}
               <div className="flex flex-col gap-2 w-44">
@@ -348,7 +368,10 @@ export default function MataMataPage() {
               </div>
 
               {/* COLUNA 5: FINAIS (Centro do Chaveamento) */}
-              <div className="flex flex-col gap-4 justify-center items-center px-4 min-w-[210px] bg-black/10 border border-white/5 rounded-3xl relative overflow-hidden py-6 mx-2">
+              <div
+                ref={finalsColumnRef}
+                className="flex flex-col gap-4 justify-center items-center px-4 min-w-[210px] bg-black/10 border border-white/5 rounded-3xl relative overflow-hidden py-6 mx-2"
+              >
                 <div className="absolute inset-0 bg-gradient-to-b from-[#ffd700]/5 to-transparent pointer-events-none" />
                 
                 {/* Campeão / Final */}
