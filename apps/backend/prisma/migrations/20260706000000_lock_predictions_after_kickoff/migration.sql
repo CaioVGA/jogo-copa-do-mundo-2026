@@ -35,7 +35,7 @@ BEGIN
     END IF;
   END IF;
 
-  IF v_match_date <= NOW() OR v_match_status <> 'PENDING' THEN
+  IF (v_match_date + INTERVAL '3 hours') <= NOW() OR v_match_status <> 'PENDING' THEN
     RAISE EXCEPTION 'Palpite bloqueado: a partida já iniciou ou foi encerrada.'
       USING ERRCODE = 'P0001';
   END IF;
@@ -83,7 +83,7 @@ BEGIN
     END IF;
   END IF;
 
-  IF v_match_date <= NOW() OR v_match_status <> 'PENDING' THEN
+  IF (v_match_date + INTERVAL '3 hours') <= NOW() OR v_match_status <> 'PENDING' THEN
     RAISE EXCEPTION 'Palpite do Oráculo bloqueado: a partida já iniciou ou foi encerrada.'
       USING ERRCODE = 'P0001';
   END IF;

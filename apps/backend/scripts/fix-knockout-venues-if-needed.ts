@@ -37,6 +37,89 @@ async function main() {
 
     let totalUpdated = 0;
 
+    await client.query(`
+      CREATE OR REPLACE FUNCTION "lock_match_predictions_after_kickoff"()
+      RETURNS TRIGGER
+      LANGUAGE plpgsql
+      AS $$
+      DECLARE
+        v_match_date TIMESTAMP;
+        v_is_non_prediction_update BOOLEAN;
+      BEGIN
+        SELECT m."date"
+        INTO v_match_date
+        FROM "matches" m
+        WHERE m."id" = COALESCE(NEW."matchId", OLD."matchId");
+
+        IF NOT FOUND THEN
+          RAISE EXCEPTION 'Partida não encontrada para validar bloqueio de palpite.';
+        END IF;
+
+        IF TG_OP = 'UPDATE' THEN
+          v_is_non_prediction_update := (
+            NEW."home_score" IS NOT DISTINCT FROM OLD."home_score"
+            AND NEW."away_score" IS NOT DISTINCT FROM OLD."away_score"
+            AND NEW."userId" IS NOT DISTINCT FROM OLD."userId"
+            AND NEW."matchId" IS NOT DISTINCT FROM OLD."matchId"
+            AND NEW."group_id" IS NOT DISTINCT FROM OLD."group_id"
+          );
+
+          IF v_is_non_prediction_update THEN
+            RETURN NEW;
+          END IF;
+        END IF;
+
+        IF (v_match_date + INTERVAL '3 hours') <= NOW() THEN
+          RAISE EXCEPTION 'Palpite bloqueado: a partida já iniciou ou foi encerrada.'
+            USING ERRCODE = 'P0001';
+        END IF;
+
+        RETURN NEW;
+      END;
+      $$;
+    `);
+
+    await client.query(`
+      CREATE OR REPLACE FUNCTION "lock_oracle_knockout_predictions_after_kickoff"()
+      RETURNS TRIGGER
+      LANGUAGE plpgsql
+      AS $$
+      DECLARE
+        v_match_date TIMESTAMP;
+        v_is_non_prediction_update BOOLEAN;
+      BEGIN
+        SELECT m."date"
+        INTO v_match_date
+        FROM "matches" m
+        WHERE m."id" = COALESCE(NEW."match_id", OLD."match_id");
+
+        IF NOT FOUND THEN
+          RAISE EXCEPTION 'Partida não encontrada para validar bloqueio do Oráculo.';
+        END IF;
+
+        IF TG_OP = 'UPDATE' THEN
+          v_is_non_prediction_update := (
+            NEW."predicted_winner" IS NOT DISTINCT FROM OLD."predicted_winner"
+            AND NEW."userId" IS NOT DISTINCT FROM OLD."userId"
+            AND NEW."groupId" IS NOT DISTINCT FROM OLD."groupId"
+            AND NEW."match_id" IS NOT DISTINCT FROM OLD."match_id"
+          );
+
+          IF v_is_non_prediction_update THEN
+            RETURN NEW;
+          END IF;
+        END IF;
+
+        IF (v_match_date + INTERVAL '3 hours') <= NOW() THEN
+          RAISE EXCEPTION 'Palpite do Oráculo bloqueado: a partida já iniciou ou foi encerrada.'
+            USING ERRCODE = 'P0001';
+        END IF;
+
+        RETURN NEW;
+      END;
+      $$;
+    `);
+
     const roundOf32Update = await client.query(
       `
         WITH ranked AS (
@@ -143,6 +226,43 @@ async function main() {
     );
     totalUpdated += roundOf16Update.rowCount ?? 0;
 
+    const quarterFinalsUpdate = await client.query(
+      `
+        WITH ranked AS (
+          SELECT id, ROW_NUMBER() OVER (ORDER BY "date", id) AS rn
+          FROM matches
+          WHERE "stage" = 'Quartas de Final'
+        ),
+        expected AS (
+          SELECT *
+          FROM (VALUES
+            (1, 'Vencedor do jogo 89', 'Vencedor do jogo 90', TIMESTAMP '2026-07-09 17:00:00', 'Gillette Stadium', 'Boston'),
+            (2, 'Vencedor do jogo 93', 'Vencedor do jogo 94', TIMESTAMP '2026-07-10 16:00:00', 'SoFi Stadium', 'Los Angeles'),
+            (3, 'Vencedor do jogo 91', 'Vencedor do jogo 92', TIMESTAMP '2026-07-11 18:00:00', 'Hard Rock Stadium', 'Miami'),
+            (4, 'Vencedor do jogo 95', 'Vencedor do jogo 96', TIMESTAMP '2026-07-11 22:00:00', 'Arrowhead Stadium', 'Kansas City')
+          ) AS t(rn, "homeTeamName", "awayTeamName", "date", "stadium", "city")
+        )
+        UPDATE matches m
+        SET
+          "homeTeamName" = e."homeTeamName",
+          "awayTeamName" = e."awayTeamName",
+          "date" = e."date",
+          "stadium" = e."stadium",
+          "city" = e."city"
+        FROM ranked r
+        JOIN expected e ON e.rn = r.rn
+        WHERE m.id = r.id
+          AND (
+            m."homeTeamName" <> e."homeTeamName" OR
+            m."awayTeamName" <> e."awayTeamName" OR
+            m."date" <> e."date" OR
+            m."stadium" <> e."stadium" OR
+            m."city" <> e."city"
+          )
+      `,
+    );
+    totalUpdated += quarterFinalsUpdate.rowCount ?? 0;
+
     for (const fix of KNOCKOUT_VENUE_FIXES) {
       const result = await client.query(
         `
@@ -211,6 +331,36 @@ async function main() {
       `,
     );
     console.log(`[fix-knockout-venues] Verificação Oitavas: divergências restantes = ${roundOf16Mismatches.rows[0]?.count ?? '0'}.`);
+
+    const quarterFinalsMismatches = await client.query<{ count: string }>(
+      `
+        WITH ranked AS (
+          SELECT id, "homeTeamName", "awayTeamName", "date", "stadium", "city",
+                 ROW_NUMBER() OVER (ORDER BY "date", id) AS rn
+          FROM matches
+          WHERE "stage" = 'Quartas de Final'
+        ),
+        expected AS (
+          SELECT *
+          FROM (VALUES
+            (1, 'Vencedor do jogo 89', 'Vencedor do jogo 90', TIMESTAMP '2026-07-09 17:00:00', 'Gillette Stadium', 'Boston'),
+            (2, 'Vencedor do jogo 93', 'Vencedor do jogo 94', TIMESTAMP '2026-07-10 16:00:00', 'SoFi Stadium', 'Los Angeles'),
+            (3, 'Vencedor do jogo 91', 'Vencedor do jogo 92', TIMESTAMP '2026-07-11 18:00:00', 'Hard Rock Stadium', 'Miami'),
+            (4, 'Vencedor do jogo 95', 'Vencedor do jogo 96', TIMESTAMP '2026-07-11 22:00:00', 'Arrowhead Stadium', 'Kansas City')
+          ) AS t(rn, "homeTeamName", "awayTeamName", "date", "stadium", "city")
+        )
+        SELECT COUNT(*)::text AS count
+        FROM expected e
+        LEFT JOIN ranked r ON r.rn = e.rn
+        WHERE r.id IS NULL
+           OR r."homeTeamName" <> e."homeTeamName"
+           OR r."awayTeamName" <> e."awayTeamName"
+           OR r."date" <> e."date"
+           OR r."stadium" <> e."stadium"
+           OR r."city" <> e."city"
+      `,
+    );
+    console.log(`[fix-knockout-venues] Verificação Quartas: divergências restantes = ${quarterFinalsMismatches.rows[0]?.count ?? '0'}.`);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
